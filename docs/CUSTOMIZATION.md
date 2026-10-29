@@ -2,7 +2,7 @@
 
 > Back to [README](../README.md) | See also: [Environment](./ENVIRONMENT.md), [Architecture](./ARCHITECTURE.md)
 
-Personal Agent Template ships with **V** as the example persona. This guide covers how to fork and make it yours.
+Personal Agent Template ships with **Thinky** as the example persona. This guide covers how to fork and make it yours.
 
 ## 1. Rename your agent
 

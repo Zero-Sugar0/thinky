@@ -66,14 +66,14 @@ async function tryHandleSlackLinkCommand(
 
   if (result.ok) {
     await ctx.thread.post(
-      "Your Slack account is now linked to V. Mentions and DMs will use your profile and integrations.",
+      "Your Slack account is now linked to Thinky. Mentions and DMs will use your profile and integrations.",
     );
     return true;
   }
 
   const reason = result.reason === "expired"
-    ? "That link code has expired. Generate a new one in V → Integrations."
-    : "That link code is invalid. Generate a fresh code in V → Integrations.";
+    ? "That link code has expired. Generate a new one in Thinky → Integrations."
+    : "That link code is invalid. Generate a fresh code in Thinky → Integrations.";
 
   await ctx.thread.post(reason);
   return true;
@@ -141,7 +141,7 @@ async function buildSlackTurn(ctx: SlackContext, message: SlackMessage) {
   });
   if (prior.length > 0) {
     const transcript = prior
-      .map((m) => `${m.isMe ? "V" : (m.user ?? "user")}: ${m.markdown}`)
+      .map((m) => `${m.isMe ? "Thinky" : (m.user ?? "user")}: ${m.markdown}`)
       .join("\n");
     context.push(`Recent thread messages since your last reply:\n\n${transcript}`);
   }
