@@ -1,7 +1,7 @@
 {
-  "name": "personal-agent-template",
+  "name": "thinky",
   "version": "0.0.0",
-  "description": "A durable personal AI assistant template built with Eve, Nuxt 4, and Better Auth",
+  "description": "Thinky, a durable personal AI assistant built with Eve, Nuxt 4, and Better Auth",
   "license": "MIT",
   "author": "Hugo Richard",
   "repository": {

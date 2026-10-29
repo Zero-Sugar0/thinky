@@ -2,7 +2,7 @@
 
 > Back to [README](../README.md) | See also: [Environment](./ENVIRONMENT.md), [Architecture](./ARCHITECTURE.md)
 
-Personal Agent Template ships with **Thinky** as the example persona. This guide covers how to fork and make it yours.
+Thinky is the example agent persona. This guide covers how to customize it.
 
 ## 1. Rename your agent
 

@@ -1,4 +1,4 @@
-# Contributing to Personal Agent Template
+# Contributing to Thinky
 
 Thank you for your interest in contributing!
 
@@ -12,14 +12,14 @@ Thank you for your interest in contributing!
 ## Suggesting Features
 
 - Open a [feature request](https://github.com/vercel-labs/personal-agent-template/issues/new?template=feature-request.yml)
-- Describe the use case and why it would be valuable for a **template** (reusable by many forks)
+- Describe the use case and why it would be valuable to Thinky users
 - If possible, outline a proposed implementation
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/vercel-labs/personal-agent-template.git
-cd personal-agent-template
+git clone https://github.com/vercel-labs/personal-agent-template.git thinky
+cd thinky
 
 pnpm install
 cp .env.example .env
@@ -32,7 +32,7 @@ Set real values in `.env`. Never commit secrets or `.data/`.
 ## Project Structure
 
 ```
-personal-agent-template/
+thinky/
 ├── agent/          # Eve agent: channels, tools, skills, connections
 ├── app/            # Nuxt 4 UI: chat, settings, profile
 ├── server/         # Nitro API, Drizzle schema, auth, memory

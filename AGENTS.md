@@ -1,4 +1,4 @@
-# Personal Agent Template
+# Thinky
 
 Durable personal AI assistant built with Eve and Nuxt.
 
@@ -19,7 +19,7 @@ Durable personal AI assistant built with Eve and Nuxt.
 ## Structure
 
 ```
-personal-agent-template/
+thinky/
 ├── agent/          # Eve agent (channels, tools, skills, connections)
 ├── app/            # Nuxt UI (pages, components, composables)
 ├── server/         # Nitro API, Drizzle schema, server utils

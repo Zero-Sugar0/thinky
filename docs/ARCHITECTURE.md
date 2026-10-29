@@ -1,8 +1,8 @@
-# Personal Agent Template — Architecture
+# Thinky — Architecture
 
 > Back to [README](../README.md) | See also: [Environment](./ENVIRONMENT.md), [Customization](./CUSTOMIZATION.md)
 
-This document describes the technical architecture of Personal Agent Template — a durable personal AI assistant built with Eve, Nuxt 4, and Better Auth.
+This document describes Thinky's architecture — a durable personal AI assistant built with Eve, Nuxt 4, and Better Auth.
 
 ## System overview
 
@@ -49,7 +49,7 @@ The `eve/nuxt` module generates the Vercel service and its `/eve/v1/*` route at 
 ## Project structure
 
 ```
-personal-agent-template/
+thinky/
 ├── agent/                    # Eve agent
 │   ├── agent.ts              # Model and agent config
 │   ├── channels/             # eve (web), slack, photon (iMessage)

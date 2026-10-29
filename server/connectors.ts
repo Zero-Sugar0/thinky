@@ -23,7 +23,7 @@ export const connectors: ConnectorDef[] = [
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/vnd.github+json",
-            "User-Agent": "personal-agent-template",
+            "User-Agent": "thinky",
           },
         });
 
