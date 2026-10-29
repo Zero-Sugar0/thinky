@@ -40,7 +40,7 @@ This name appears in the navbar, settings, and integration cards.
 
 Edit [`agent/instructions.ts`](../agent/instructions.ts) — system prompt, tone, tool usage rules, memory behavior.
 
-Search the codebase for `V` to update remaining UI copy in Vue components.
+Search the codebase for `Thinky` to update remaining UI copy in Vue components when renaming your fork.
 
 ### Package metadata
 

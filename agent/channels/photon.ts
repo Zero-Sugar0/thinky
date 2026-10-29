@@ -41,7 +41,7 @@ export default photonIMessageChannel({
         auth: defaultPhotonAuth(message),
         title: TITLE,
         context: [
-          "This number is not on any V profile, so you have no access to the caller's memory or integrations.",
+          "This number is not on any Thinky profile, so you have no access to the caller's memory or integrations.",
           "If they ask for anything that needs those, tell them to add this number under Settings → Profile.",
         ],
       };

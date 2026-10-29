@@ -19,7 +19,7 @@ export function useSlackLink() {
       await refresh();
       toast.add({
         title: "Link code ready",
-        description: "Send it to @V in Slack to finish linking.",
+        description: "Send it to @Thinky in Slack to finish linking.",
         color: "success",
         icon: "i-lucide-link",
       });

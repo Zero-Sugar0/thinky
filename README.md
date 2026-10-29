@@ -99,7 +99,7 @@ rm -rf .data/db && pnpm db:migrate
 
 ## Customization
 
-Personal Agent Template ships with **V** as the example persona. See the [Customization Guide](./docs/CUSTOMIZATION.md) for how to:
+Personal Agent Template ships with **Thinky** as the example persona. See the [Customization Guide](./docs/CUSTOMIZATION.md) for how to:
 
 - Rename your agent (name, slug, persona)
 - Change the AI model

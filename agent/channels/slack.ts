@@ -163,9 +163,9 @@ async function buildSlackTurn(ctx: SlackContext, message: SlackMessage) {
   if (!linked) {
     const linkUrl = process.env.BETTER_AUTH_URL
       ? `${process.env.BETTER_AUTH_URL.replace(/\/$/, "")}/settings/integrations`
-      : "V → Integrations";
+      : "Thinky → Integrations";
     context.push(
-      `This Slack account is not linked to a V profile yet. Open ${linkUrl}, generate a link code, then message \`link <code>\` here.`,
+      `This Slack account is not linked to a Thinky profile yet. Open ${linkUrl}, generate a link code, then message \`link <code>\` here.`,
     );
   }
 

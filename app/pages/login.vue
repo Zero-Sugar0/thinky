@@ -173,7 +173,7 @@ async function handleSubmit() {
         <div class="max-w-md space-y-5">
           <div class="space-y-3">
             <h1 class="text-3xl font-semibold tracking-tight text-highlighted sm:text-4xl">
-              V
+              Thinky
             </h1>
             <p class="text-sm leading-relaxed text-muted sm:text-base">
               A durable AI assistant with long-term memory. Chat on the web, Slack, or iMessage — query Linear and pick up where you left off.

@@ -41,7 +41,7 @@ const servicesDescription = computed(() => {
         <div class="space-y-8">
           <SettingsSection
             title="Channels"
-            description="Link messaging platforms to your V account."
+            description="Link messaging platforms to your Thinky account."
           >
             <IntegrationsSlackLinkCard />
           </SettingsSection>

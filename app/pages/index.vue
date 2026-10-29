@@ -74,7 +74,7 @@ const quickChats = [
               {{ greeting }}
             </h1>
             <p class="text-sm text-muted sm:text-base">
-              V — your personal agent
+              Thinky — your personal agent
             </p>
           </div>
 
