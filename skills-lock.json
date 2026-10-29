@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "building-agents-with-eve": {
+      "source": "vercel-labs/academy-skills",
+      "sourceType": "github",
+      "skillPath": "skills/building-agents-with-eve/SKILL.md",
+      "computedHash": "1a96489c333b9d30338fcbb0fe51e330443c92707f113dd1d009334fe1b4f34f"
+    }
+  }
+}

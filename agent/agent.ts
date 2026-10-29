@@ -1,7 +1,7 @@
 import { defineAgent } from "eve";
 
 export default defineAgent({
-  model: "anthropic/claude-sonnet-5",
+  model: "anthropic/claude-haiku-5.5",
   modelOptions: {
     providerOptions: {
       anthropic: {

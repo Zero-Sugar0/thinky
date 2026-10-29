@@ -63,7 +63,7 @@ export default defineNuxtConfig({
         { name: "robots", content: "index, follow" },
       ],
       link: [
-        { rel: "icon", href: "/favicon.ico" },
+        { rel: "icon", type: "image/svg+xml", href: "/thinky.svg" },
       ],
     },
   },

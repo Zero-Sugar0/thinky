@@ -1,7 +1,8 @@
 <template>
-  <UIcon
-    name="i-lucide-brain"
+  <img
+    src="/thinky.svg"
+    alt=""
     aria-hidden="true"
-    class="inline-block shrink-0"
-  />
+    class="inline-block aspect-square shrink-0 object-contain"
+  >
 </template>
