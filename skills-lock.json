@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/building-agents-with-eve/SKILL.md",
       "computedHash": "1a96489c333b9d30338fcbb0fe51e330443c92707f113dd1d009334fe1b4f34f"
+    },
+    "research": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/research/SKILL.md",
+      "computedHash": "5d85b64ecceed6b3f6d5996dc8af07180be8d1ff11ef3d26eda2acff078fbd39"
     }
   }
 }
