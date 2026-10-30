@@ -2,6 +2,11 @@ import type { ConnectorDef } from "#shared/types/connector";
 import { connectGithubScopesForPreset } from "@github-tools/sdk/connect";
 import { GITHUB_CONNECTOR, GITHUB_PRESET } from "#shared/connect";
 import { fetchLinearIssuesViaMcp } from "~~/server/utils/linear-mcp";
+import { listMcpTools } from "~~/server/utils/mcp-tools";
+
+const ZOMATO_MCP_URL = "https://mcp-server.zomato.com/mcp";
+const AGENTCARD_MCP_URL = "https://mcp.agentcard.sh/mcp";
+const ZOMATO_SCOPES = ["mcp:tools", "mcp:resources", "mcp:prompts"];
 
 export const connectors: ConnectorDef[] = [
   {
@@ -54,6 +59,32 @@ export const connectors: ConnectorDef[] = [
     test: {
       label: "List my issues",
       run: token => fetchLinearIssuesViaMcp(token),
+    },
+  },
+  {
+    id: "zomato",
+    name: "Zomato",
+    description: "Restaurant discovery and ordering through Zomato.",
+    connector: "zomato/thinky",
+    connectionName: "zomato",
+    icon: "i-lucide-utensils",
+    scopes: ZOMATO_SCOPES,
+    test: {
+      label: "List available tools",
+      run: token => listMcpTools(ZOMATO_MCP_URL, token),
+    },
+  },
+  {
+    id: "agentcard",
+    name: "AgentCard",
+    description: "AgentCard tools, resources, and prompts.",
+    connector: "agentcard/thinky",
+    connectionName: "agentcard",
+    icon: "i-lucide-id-card",
+    scopes: [],
+    test: {
+      label: "List available tools",
+      run: token => listMcpTools(AGENTCARD_MCP_URL, token),
     },
   },
 ];
