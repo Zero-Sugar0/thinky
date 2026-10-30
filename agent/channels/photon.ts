@@ -21,7 +21,7 @@ function asPhoneNumber(handle: string) {
 // Replace with your Vercel Connect Photon slug, created by
 // `eve add channel/photon-imessage`.
 export default photonIMessageChannel({
-  credentials: connectPhotonCredentials("photon/personal-agent-template"),
+  credentials: connectPhotonCredentials("photon/thinky"),
 
   // The Chat SDK runtime labels the sender "eve" unless told otherwise.
   userName: agent.name,

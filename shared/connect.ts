@@ -5,7 +5,7 @@
 export const CONNECT_USER_ISSUER = "app";
 
 /** Vercel Connect connector UID — keep in sync with `server/connectors.ts`. */
-export const GITHUB_CONNECTOR = "github/personal-agent";
+export const GITHUB_CONNECTOR = "github/thinky";
 
 /**
  * Tool preset the agent mounts. The Connect grant the web app requests is
