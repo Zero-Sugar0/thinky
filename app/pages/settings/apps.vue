@@ -4,10 +4,7 @@ import type { ComposioAppSummary } from "~~/server/utils/composio";
 interface ComposioAppsResponse {
   configured: boolean;
   apps: ComposioAppSummary[];
-  page: number;
-  totalPages: number;
   totalCount: number;
-  nextCursor?: string;
 }
 
 const toast = useToast();
@@ -35,10 +32,6 @@ const categories = [
 
 const { data, pending, error, refresh } = useFetch<ComposioAppsResponse>("/api/composio/apps", {
   server: false,
-  query: computed(() => ({
-    limit: 100,
-    category: selectedCategory.value !== "all" ? selectedCategory.value : undefined,
-  })),
 });
 
 const isConfigured = computed(() => data.value?.configured ?? true);
@@ -110,28 +103,14 @@ watch([searchQuery, selectedCategory], () => {
 async function connectApp(app: ComposioAppSummary) {
   try {
     connectingSlug.value = app.slug;
-    const callbackUrl = typeof window !== "undefined"
-      ? `${window.location.origin}/settings/apps?status=success&app=${encodeURIComponent(app.name)}`
-      : undefined;
-
-    const res = await $fetch<{ redirectUrl?: string }>("/api/composio/connect", {
+    const res = await $fetch<{ redirectUrl: string }>("/api/composio/connect", {
       method: "POST",
       body: {
         toolkitSlug: app.slug,
-        callbackUrl,
       },
     });
 
-    if (res.redirectUrl) {
-      window.location.href = res.redirectUrl;
-    } else {
-      toast.add({
-        title: "Connection initiated",
-        description: `Please follow the instructions to connect ${app.name}.`,
-        color: "info",
-      });
-      await refresh();
-    }
+    window.location.assign(res.redirectUrl);
   } catch (err) {
     toast.add({
       title: `Failed to connect ${app.name}`,
@@ -175,14 +154,26 @@ async function confirmDisconnect() {
   }
 }
 
-onMounted(() => {
-  if (route.query.status === "success" || route.query.connected) {
-    const appName = route.query.app ? String(route.query.app) : "App";
+onMounted(async () => {
+  const status = typeof route.query.status === "string" ? route.query.status : undefined;
+  if (status === "success" || route.query.connected) {
+    await refresh();
+    const appSlug = typeof route.query.app === "string" ? route.query.app : undefined;
+    const appName = apps.value.find(app => app.slug === appSlug)?.name
+      ?? appSlug?.replaceAll("_", " ")
+      ?? "App";
     toast.add({
       title: `${appName} connected`,
       description: "You can now use this app with Thinky.",
       color: "success",
       icon: "i-lucide-check-circle",
+    });
+    void router.replace({ query: {} });
+  } else if (status === "failed") {
+    toast.add({
+      title: "App connection was not completed",
+      description: "You can try connecting the app again.",
+      color: "error",
     });
     void router.replace({ query: {} });
   }

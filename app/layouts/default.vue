@@ -72,6 +72,10 @@ defineShortcuts({
           v-if="!collapsed"
           class="ms-auto"
         />
+        <UDashboardSidebarCollapse
+          v-else
+          class="mx-auto mt-2"
+        />
       </template>
 
       <template #default="{ collapsed }">

@@ -4,7 +4,6 @@ import { z } from "zod";
 
 const connectSchema = z.object({
   toolkitSlug: z.string().min(1),
-  callbackUrl: z.string().optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -28,21 +27,32 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, connectSchema.parse);
 
   try {
-    const connectionRequest = await composio.toolkits.authorize(userId, body.toolkitSlug);
+    const authConfigs = await composio.authConfigs.list({ toolkit: body.toolkitSlug });
+    let authConfigId = authConfigs.items[0]?.id;
 
-    let redirectUrl = connectionRequest.redirectUrl;
-    if (redirectUrl && body.callbackUrl) {
-      try {
-        const parsed = new URL(redirectUrl);
-        parsed.searchParams.set("callback_url", body.callbackUrl);
-        redirectUrl = parsed.toString();
-      } catch {
-        // use original if not valid URL
+    if (!authConfigId) {
+      const toolkit = await composio.toolkits.get(body.toolkitSlug);
+      if (!toolkit.authConfigDetails?.length) {
+        throw new Error(`No auth configuration is available for ${body.toolkitSlug}`);
       }
+
+      const authConfig = await composio.authConfigs.create(body.toolkitSlug, {
+        type: "use_composio_managed_auth",
+        name: `${toolkit.name} Auth Config`,
+      });
+      authConfigId = authConfig.id;
     }
 
+    const callbackUrl = new URL("/settings/apps", getRequestURL(event).origin);
+    callbackUrl.searchParams.set("app", body.toolkitSlug);
+
+    const connectionRequest = await composio.connectedAccounts.link(userId, authConfigId, {
+      allowMultiple: true,
+      callbackUrl: callbackUrl.toString(),
+    });
+
     return {
-      redirectUrl,
+      redirectUrl: connectionRequest.redirectUrl,
       connectionRequestId: connectionRequest.id,
     };
   } catch (error) {

@@ -49,25 +49,3 @@ export const COMPOSIO_APP_ICONS: Record<string, string> = {
   google_sheets: "i-simple-icons-googlesheets",
   google_docs: "i-simple-icons-googledocs",
 };
-
-// Curated list of popular and high-utility apps for productivity, email, calendar, and dev
-export const POPULAR_COMPOSIO_APPS = [
-  "googlecalendar",
-  "gmail",
-  "slack",
-  "github",
-  "notion",
-  "linear",
-  "jira",
-  "trello",
-  "asana",
-  "discord",
-  "twitter",
-  "spotify",
-  "zoom",
-  "airtable",
-  "hubspot",
-  "clickup",
-  "google_sheets",
-  "google_docs",
-];
