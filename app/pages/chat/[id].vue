@@ -40,6 +40,17 @@ const { resetTurnEventCounts } = useStreamLog();
 const { pendingChallenges, failedChallenges, tryResumeConnectedChallenges } = useAuthorizationChallenges();
 
 const input = ref("");
+const attachmentInput = ref<HTMLInputElement>();
+const attachmentName = ref("");
+
+function openAttachmentPicker() {
+  attachmentInput.value?.click();
+}
+
+function handleAttachmentChange(event: Event) {
+  const target = event.target as HTMLInputElement;
+  attachmentName.value = target.files?.[0]?.name ?? "";
+}
 
 watch(status, (value) => {
   if (value === "submitted") {
@@ -152,6 +163,29 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             @submit="handleSubmit"
           >
             <template #footer>
+              <input
+                ref="attachmentInput"
+                type="file"
+                accept="image/*"
+                class="sr-only"
+                @change="handleAttachmentChange"
+              />
+              <UButton
+                icon="i-lucide-plus"
+                color="neutral"
+                variant="ghost"
+                size="sm"
+                aria-label="Attach an image"
+                title="Attach an image"
+                @click="openAttachmentPicker"
+              />
+              <span
+                v-if="attachmentName"
+                class="max-w-48 truncate text-xs text-dimmed"
+                :title="attachmentName"
+              >
+                {{ attachmentName }}
+              </span>
               <ChatStreamInspector :status="status" />
 
               <UChatPromptSubmit
