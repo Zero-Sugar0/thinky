@@ -3,11 +3,19 @@ import { requireSessionUserId } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {
   const userId = await requireSessionUserId(event);
+  const query = getQuery(event);
+  const page = Math.max(1, Number(query.page) || 1);
+  const limit = Math.max(1, Math.min(100, Number(query.limit) || 20));
+  const category = typeof query.category === "string" && query.category !== "all" ? query.category : undefined;
 
   if (!isComposioConfigured()) {
     return {
       configured: false,
       apps: [] as ComposioAppSummary[],
+      page: 1,
+      totalPages: 1,
+      totalCount: 0,
+      nextCursor: undefined as string | undefined,
     };
   }
 
@@ -16,6 +24,10 @@ export default defineEventHandler(async (event) => {
     return {
       configured: false,
       apps: [] as ComposioAppSummary[],
+      page: 1,
+      totalPages: 1,
+      totalCount: 0,
+      nextCursor: undefined as string | undefined,
     };
   }
 
@@ -32,15 +44,46 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    // Fetch popular toolkits
-    const toolkits = await composio.toolkits.getMany(POPULAR_COMPOSIO_APPS);
+    // Try fetching toolkits from Composio API catalog with pagination
+    let rawToolkits: Array<Record<string, unknown>> = [];
+    let nextCursor: string | undefined;
 
-    const apps: ComposioAppSummary[] = toolkits.map((toolkit) => {
-      const slugLower = toolkit.slug.toLowerCase();
+    try {
+      const toolkitsRes = await composio.toolkits.get({
+        limit,
+        cursor: typeof query.cursor === "string" ? query.cursor : undefined,
+        category,
+      } as Record<string, unknown>);
+
+      if (toolkitsRes && typeof toolkitsRes === "object" && "items" in toolkitsRes && Array.isArray(toolkitsRes.items)) {
+        rawToolkits = toolkitsRes.items as unknown as Array<Record<string, unknown>>;
+        if ("nextCursor" in toolkitsRes && typeof toolkitsRes.nextCursor === "string") {
+          nextCursor = toolkitsRes.nextCursor;
+        }
+      } else if (Array.isArray(toolkitsRes)) {
+        rawToolkits = toolkitsRes as unknown as Array<Record<string, unknown>>;
+      }
+    } catch {
+      // Fallback to getMany popular apps if full catalog query is restricted or failing
+      const fallbackList = await composio.toolkits.getMany(POPULAR_COMPOSIO_APPS);
+      rawToolkits = fallbackList as unknown as Array<Record<string, unknown>>;
+    }
+
+    if (rawToolkits.length === 0) {
+      try {
+        const fallbackList = await composio.toolkits.getMany(POPULAR_COMPOSIO_APPS);
+        rawToolkits = fallbackList as unknown as Array<Record<string, unknown>>;
+      } catch {
+        // preserve empty if neither succeeded
+      }
+    }
+
+    const apps: ComposioAppSummary[] = rawToolkits.map((toolkit) => {
+      const slug = String(toolkit.slug || "");
+      const slugLower = slug.toLowerCase();
       const connectedAccountId = activeConnectionsMap.get(slugLower);
 
-      const toolkitRecord = toolkit as Record<string, unknown>;
-      const meta = (toolkitRecord.meta as Record<string, unknown> | undefined) || {};
+      const meta = (toolkit.meta as Record<string, unknown> | undefined) || {};
       const rawCategories = (meta.categories as unknown[] | undefined) || [];
       const categories = rawCategories
         .map((c) => {
@@ -54,12 +97,12 @@ export default defineEventHandler(async (event) => {
         .filter(Boolean);
 
       return {
-        slug: toolkit.slug,
-        name: toolkit.name,
+        slug,
+        name: String(toolkit.name || slug),
         description: (typeof meta.description === "string" ? meta.description : "")
-          || (typeof toolkitRecord.description === "string" ? toolkitRecord.description : ""),
+          || (typeof toolkit.description === "string" ? toolkit.description : ""),
         logo: (typeof meta.logo === "string" ? meta.logo : undefined)
-          || (typeof toolkitRecord.logo === "string" ? toolkitRecord.logo : undefined),
+          || (typeof toolkit.logo === "string" ? toolkit.logo : undefined),
         icon: COMPOSIO_APP_ICONS[slugLower],
         categories,
         isConnected: Boolean(connectedAccountId),
@@ -70,6 +113,10 @@ export default defineEventHandler(async (event) => {
     return {
       configured: true,
       apps,
+      page,
+      totalPages: nextCursor ? page + 1 : page,
+      totalCount: apps.length,
+      nextCursor,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to fetch Composio apps";
