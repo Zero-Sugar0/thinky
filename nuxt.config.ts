@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 const privateNoStore = { "cache-control": "private, no-store" } as const;
 const noStore = { "cache-control": "no-store" } as const;
 
@@ -40,6 +42,22 @@ export default defineNuxtConfig({
   },
   nitro: {
     compressPublicAssets: true,
+    rollupConfig: {
+      plugins: [
+        {
+          name: "eve-shared-imports",
+          resolveId: {
+            order: "pre",
+            handler(source, importer) {
+              const eveSource = importer?.match(/^(.*\/node_modules\/eve\/dist\/src)\//)?.[1];
+              if (!eveSource || !source.startsWith("#shared/")) return null;
+
+              return resolve(eveSource, "shared", source.slice("#shared/".length));
+            },
+          },
+        },
+      ],
+    },
     prerender: {
       routes: ["/login"],
       crawlLinks: false,
