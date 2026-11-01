@@ -122,6 +122,12 @@ Integrations use [Vercel Connect](https://vercel.com/docs/connect) — no extra 
 
 See [Customization](./CUSTOMIZATION.md#integrations) for setup steps.
 
+## Composio (optional)
+
+### `COMPOSIO_API_KEY` (optional)
+
+Composio Platform API key (`ak_...`) from [https://dashboard.composio.dev](https://dashboard.composio.dev). Used by Thinky to search and execute 1700+ tools from connected apps and generate user connect links, and by the web interface in **Settings → Apps** to manage connected app accounts.
+
 ## GitHub (optional)
 
 GitHub tools use per-user OAuth via Vercel Connect. Connect in **Settings → Integrations**, then start a new chat session so GitHub tools load at `session.started`.
