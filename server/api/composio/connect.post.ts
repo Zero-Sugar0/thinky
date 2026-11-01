@@ -30,8 +30,19 @@ export default defineEventHandler(async (event) => {
   try {
     const connectionRequest = await composio.toolkits.authorize(userId, body.toolkitSlug);
 
+    let redirectUrl = connectionRequest.redirectUrl;
+    if (redirectUrl && body.callbackUrl) {
+      try {
+        const parsed = new URL(redirectUrl);
+        parsed.searchParams.set("callback_url", body.callbackUrl);
+        redirectUrl = parsed.toString();
+      } catch {
+        // use original if not valid URL
+      }
+    }
+
     return {
-      redirectUrl: connectionRequest.redirectUrl,
+      redirectUrl,
       connectionRequestId: connectionRequest.id,
     };
   } catch (error) {

@@ -4,6 +4,10 @@ import type { ComposioAppSummary } from "~~/server/utils/composio";
 interface ComposioAppsResponse {
   configured: boolean;
   apps: ComposioAppSummary[];
+  page: number;
+  totalPages: number;
+  totalCount: number;
+  nextCursor?: string;
 }
 
 const toast = useToast();
@@ -17,6 +21,10 @@ const connectingSlug = ref<string | null>(null);
 const disconnectingId = ref<string | null>(null);
 const appToDisconnect = ref<ComposioAppSummary | null>(null);
 
+// Pagination
+const currentPage = ref(1);
+const pageSize = 12;
+
 const categories = [
   { id: "all", label: "All" },
   { id: "productivity", label: "Productivity" },
@@ -27,6 +35,10 @@ const categories = [
 
 const { data, pending, error, refresh } = useFetch<ComposioAppsResponse>("/api/composio/apps", {
   server: false,
+  query: computed(() => ({
+    limit: 100,
+    category: selectedCategory.value !== "all" ? selectedCategory.value : undefined,
+  })),
 });
 
 const isConfigured = computed(() => data.value?.configured ?? true);
@@ -80,15 +92,34 @@ const appsDescription = computed(() => {
   if (pending.value && !data.value) {
     return "Connect apps and services to enable actions in Thinky.";
   }
-  return `${connectedCount.value} of ${apps.value.length} connected · Powered by Composio's tool router.`;
+  return `${connectedCount.value} connected · ${filteredApps.value.length} apps available`;
+});
+
+// Client-side pagination over filtered results
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredApps.value.length / pageSize)));
+
+const paginatedApps = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return filteredApps.value.slice(start, start + pageSize);
+});
+
+watch([searchQuery, selectedCategory], () => {
+  currentPage.value = 1;
 });
 
 async function connectApp(app: ComposioAppSummary) {
   try {
     connectingSlug.value = app.slug;
+    const callbackUrl = typeof window !== "undefined"
+      ? `${window.location.origin}/settings/apps?status=success&app=${encodeURIComponent(app.name)}`
+      : undefined;
+
     const res = await $fetch<{ redirectUrl?: string }>("/api/composio/connect", {
       method: "POST",
-      body: { toolkitSlug: app.slug },
+      body: {
+        toolkitSlug: app.slug,
+        callbackUrl,
+      },
     });
 
     if (res.redirectUrl) {
@@ -146,8 +177,9 @@ async function confirmDisconnect() {
 
 onMounted(() => {
   if (route.query.status === "success" || route.query.connected) {
+    const appName = route.query.app ? String(route.query.app) : "App";
     toast.add({
-      title: "App connected successfully",
+      title: `${appName} connected`,
       description: "You can now use this app with Thinky.",
       color: "success",
       icon: "i-lucide-check-circle",
@@ -158,10 +190,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
+  <div class="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
     <UDashboardPanel
       id="apps"
-      class="min-h-0"
+      class="min-h-0 flex-1 overflow-y-auto"
       :ui="{ body: 'p-0 sm:p-0' }"
     >
       <template #header>
@@ -169,19 +201,19 @@ onMounted(() => {
       </template>
 
       <template #body>
-        <div class="mx-auto w-full max-w-2xl px-6 py-8">
-          <header class="mb-8">
-            <h1 class="mb-1 text-lg font-medium text-highlighted">
+        <div class="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 sm:py-8">
+          <header class="mb-6 sm:mb-8">
+            <h1 class="mb-1 text-base font-medium text-highlighted sm:text-lg">
               Settings
             </h1>
-            <p class="max-w-lg text-sm text-muted">
+            <p class="max-w-lg text-xs text-muted sm:text-sm">
               Manage your identity, memory, integrations, and connected apps.
             </p>
           </header>
 
-          <SettingsNav class="mb-8" />
+          <SettingsNav class="mb-6 sm:mb-8" />
 
-          <div class="space-y-8">
+          <div class="space-y-6 sm:space-y-8">
             <SettingsSection
               title="Connected Apps"
               :description="appsDescription"
@@ -201,7 +233,7 @@ onMounted(() => {
               <template #default>
                 <div
                   v-if="!isConfigured"
-                  class="px-4 py-4"
+                  class="px-3 py-3 sm:px-4 sm:py-4"
                 >
                   <UAlert
                     color="warning"
@@ -213,16 +245,16 @@ onMounted(() => {
 
                 <div
                   v-else-if="pending && !data"
-                  class="space-y-3 px-4 py-3"
+                  class="space-y-2 px-3 py-3 sm:px-4"
                 >
-                  <USkeleton class="h-14 rounded-md" />
-                  <USkeleton class="h-14 rounded-md" />
-                  <USkeleton class="h-14 rounded-md" />
+                  <USkeleton class="h-12 rounded-md sm:h-14" />
+                  <USkeleton class="h-12 rounded-md sm:h-14" />
+                  <USkeleton class="h-12 rounded-md sm:h-14" />
                 </div>
 
                 <div
                   v-else-if="error"
-                  class="px-4 py-3"
+                  class="px-3 py-3 sm:px-4"
                 >
                   <UAlert
                     color="error"
@@ -233,19 +265,20 @@ onMounted(() => {
                 </div>
 
                 <template v-else>
-                  <div class="border-b border-default px-4 py-2.5 space-y-2.5">
+                  <div class="border-b border-default px-3 py-2.5 sm:px-4 space-y-2">
                     <UInput
                       v-model="searchQuery"
                       icon="i-lucide-search"
-                      size="sm"
-                      placeholder="Search apps (e.g. Gmail, Google Calendar, Notion)..."
-                      class="w-full"
+                      size="xs"
+                      placeholder="Search apps (e.g. Gmail, Calendar, Slack)..."
+                      class="w-full text-xs"
                     />
                     <div class="flex flex-wrap gap-1">
                       <UButton
                         v-for="cat in categories"
                         :key="cat.id"
                         size="xs"
+                        class="text-[11px] px-2 py-0.5 h-6"
                         :color="selectedCategory === cat.id ? 'primary' : 'neutral'"
                         :variant="selectedCategory === cat.id ? 'soft' : 'ghost'"
                         @click="selectedCategory = cat.id"
@@ -257,69 +290,102 @@ onMounted(() => {
 
                   <div
                     v-if="filteredApps.length === 0"
-                    class="px-4 py-8 text-center text-sm text-muted"
+                    class="px-4 py-8 text-center text-xs text-muted"
                   >
                     No apps found matching "{{ searchQuery }}".
                   </div>
 
-                  <div
-                    v-for="app in filteredApps"
-                    :key="app.slug"
-                    class="flex items-center gap-3 border-b border-default px-4 py-3 last:border-b-0"
-                  >
-                    <div class="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-default bg-elevated">
-                      <img
-                        v-if="app.logo && !failedLogos[app.slug]"
-                        :src="app.logo"
-                        :alt="app.name"
-                        class="size-6 object-contain"
-                        @error="failedLogos[app.slug] = true"
-                      >
-                      <UIcon
-                        v-else
-                        :name="app.icon || 'i-lucide-box'"
-                        class="size-5 text-toned"
-                      />
-                    </div>
-
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2">
-                        <h2 class="text-sm font-medium text-highlighted">
-                          {{ app.name }}
-                        </h2>
-                        <span
-                          v-if="app.isConnected"
-                          class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-500"
+                  <div class="divide-y divide-default">
+                    <div
+                      v-for="app in paginatedApps"
+                      :key="app.slug"
+                      class="flex items-center gap-2.5 px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3 transition-colors hover:bg-muted/5"
+                    >
+                      <div class="flex size-7 shrink-0 items-center justify-center overflow-hidden rounded-md border border-default bg-elevated sm:size-8">
+                        <img
+                          v-if="app.logo && !failedLogos[app.slug]"
+                          :src="app.logo"
+                          :alt="app.name"
+                          class="size-5 sm:size-6 object-contain"
+                          @error="failedLogos[app.slug] = true"
                         >
-                          <span class="size-1.5 rounded-full bg-emerald-500" />
-                          Connected
-                        </span>
+                        <UIcon
+                          v-else
+                          :name="app.icon || 'i-lucide-box'"
+                          class="size-4 sm:size-5 text-toned"
+                        />
                       </div>
-                      <p class="truncate text-xs text-muted">
-                        {{ app.description || `${app.name} toolkit actions and tools.` }}
-                      </p>
-                    </div>
 
-                    <div class="flex shrink-0 items-center">
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                          <h2 class="text-xs font-medium text-highlighted sm:text-sm">
+                            {{ app.name }}
+                          </h2>
+                          <span
+                            v-if="app.isConnected"
+                            class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-1.5 py-0.2 text-[9px] font-medium text-emerald-500 sm:text-[10px]"
+                          >
+                            <span class="size-1 rounded-full bg-emerald-500 sm:size-1.5" />
+                            Connected
+                          </span>
+                        </div>
+                        <p class="truncate text-[11px] text-muted sm:text-xs">
+                          {{ app.description || `${app.name} toolkit actions and tools.` }}
+                        </p>
+                      </div>
+
+                      <div class="flex shrink-0 items-center">
+                        <UButton
+                          v-if="!app.isConnected"
+                          color="neutral"
+                          variant="soft"
+                          size="xs"
+                          class="text-xs px-2 py-1"
+                          :loading="connectingSlug === app.slug"
+                          trailing-icon="i-lucide-arrow-up-right"
+                          @click="connectApp(app)"
+                        >
+                          Connect
+                        </UButton>
+                        <UButton
+                          v-else
+                          color="neutral"
+                          variant="ghost"
+                          size="xs"
+                          icon="i-lucide-unplug"
+                          aria-label="Disconnect app"
+                          @click="appToDisconnect = app"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Pagination Controls -->
+                  <div
+                    v-if="totalPages > 1"
+                    class="flex items-center justify-between border-t border-default px-3 py-2 text-xs text-muted sm:px-4"
+                  >
+                    <span>
+                      Page {{ currentPage }} of {{ totalPages }}
+                    </span>
+                    <div class="flex items-center gap-1">
                       <UButton
-                        v-if="!app.isConnected"
-                        color="neutral"
-                        variant="soft"
-                        size="xs"
-                        :loading="connectingSlug === app.slug"
-                        trailing-icon="i-lucide-arrow-up-right"
-                        @click="connectApp(app)"
-                      >
-                        Connect
-                      </UButton>
-                      <UButton
-                        v-else
                         color="neutral"
                         variant="ghost"
                         size="xs"
-                        icon="i-lucide-unplug"
-                        aria-label="Disconnect app"
-                        @click="appToDisconnect = app"
+                        icon="i-lucide-chevron-left"
+                        :disabled="currentPage <= 1"
+                        aria-label="Previous page"
+                        @click="currentPage--"
+                      />
+                      <UButton
+                        color="neutral"
+                        variant="ghost"
+                        size="xs"
+                        icon="i-lucide-chevron-right"
+                        :disabled="currentPage >= totalPages"
+                        aria-label="Next page"
+                        @click="currentPage++"
                       />
                     </div>
                   </div>
@@ -341,13 +407,14 @@ onMounted(() => {
         <UButton
           color="neutral"
           variant="ghost"
+          size="xs"
           @click="appToDisconnect = null"
         >
           Cancel
         </UButton>
         <UButton
           color="error"
-          size="sm"
+          size="xs"
           :loading="Boolean(disconnectingId)"
           @click="confirmDisconnect"
         >
