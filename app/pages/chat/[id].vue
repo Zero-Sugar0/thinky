@@ -42,14 +42,27 @@ const { pendingChallenges, failedChallenges, tryResumeConnectedChallenges } = us
 const input = ref("");
 const attachmentInput = ref<HTMLInputElement>();
 const attachmentName = ref("");
+const attachment = ref<{ data: string; mediaType: string; filename: string }>();
 
 function openAttachmentPicker() {
   attachmentInput.value?.click();
 }
 
 function handleAttachmentChange(event: Event) {
-  const target = event.target as HTMLInputElement;
-  attachmentName.value = target.files?.[0]?.name ?? "";
+  const file = (event.target as HTMLInputElement).files?.[0];
+  if (!file) {
+    attachment.value = undefined;
+    attachmentName.value = "";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    if (typeof reader.result !== "string") return;
+    attachment.value = { data: reader.result, mediaType: file.type || "application/octet-stream", filename: file.name };
+    attachmentName.value = file.name;
+  };
+  reader.readAsDataURL(file);
 }
 
 watch(status, (value) => {
@@ -76,9 +89,13 @@ onMounted(() => {
 function handleSubmit(e: Event) {
   e.preventDefault();
   const text = input.value.trim();
-  if (!text || isBusy.value) return;
+  if ((!text && !attachment.value) || isBusy.value) return;
+  const selectedAttachment = attachment.value;
   input.value = "";
-  void send(text);
+  attachment.value = undefined;
+  attachmentName.value = "";
+  if (attachmentInput.value) attachmentInput.value.value = "";
+  void send(text, selectedAttachment);
 }
 
 function handleInputResponses(responses: Parameters<typeof respond>[0]) {
@@ -166,7 +183,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
               <input
                 ref="attachmentInput"
                 type="file"
-                accept="image/*"
+                accept="image/*,.pdf,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                 class="sr-only"
                 @change="handleAttachmentChange"
               />
@@ -175,16 +192,40 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
                 color="neutral"
                 variant="ghost"
                 size="sm"
-                aria-label="Attach an image"
-                title="Attach an image"
+                aria-label="Attach an image or file"
+                title="Attach an image or file"
                 @click="openAttachmentPicker"
               />
               <span
-                v-if="attachmentName"
-                class="max-w-48 truncate text-xs text-dimmed"
-                :title="attachmentName"
+                v-if="attachment"
+                class="inline-flex max-w-56 items-center gap-2 rounded-lg border border-default bg-elevated px-1.5 py-1"
               >
-                {{ attachmentName }}
+                <img
+                  v-if="attachment.mediaType.startsWith('image/')"
+                  :src="attachment.data"
+                  :alt="attachment.filename"
+                  class="size-7 rounded object-cover"
+                >
+                <UIcon
+                  v-else
+                  name="i-lucide-file"
+                  class="ms-1 size-4 text-dimmed"
+                  aria-hidden="true"
+                />
+                <span
+                  class="min-w-0 truncate text-xs text-dimmed"
+                  :title="attachmentName"
+                >
+                  {{ attachmentName }}
+                </span>
+                <UButton
+                  icon="i-lucide-x"
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  aria-label="Remove attachment"
+                  @click="attachment = undefined; attachmentName = ''; if (attachmentInput) attachmentInput.value = ''"
+                />
               </span>
               <ChatStreamInspector :status="status" />
 

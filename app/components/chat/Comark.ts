@@ -1,3 +1,4 @@
+import math, { Math } from "@comark/nuxt/plugins/math";
 import highlight from "@comark/nuxt/plugins/highlight";
 import html from "@shikijs/langs/html";
 import css from "@shikijs/langs/css";
@@ -22,6 +23,7 @@ import SourceLink from "./SourceLink.vue";
 export default defineMarkdownComponent({
   name: "ChatComark",
   plugins: [
+    math(),
     highlight({
       languages: [
         html,
@@ -46,6 +48,7 @@ export default defineMarkdownComponent({
     }),
   ],
   components: {
+    math: Math,
     "source-link": SourceLink,
   },
   class: "*:first:mt-0 *:last:mb-0",

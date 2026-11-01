@@ -1,5 +1,5 @@
 import type { EveMessageData } from "eve/vue";
-import type { UIMessage } from "ai";
+import type { UIMessage, UserContent } from "ai";
 import type { ThreadRecord } from "#shared/types/thread";
 import type { AgentInputResponse } from "~/components/AgentInputRequest.vue";
 import { recordAuthorizationEvent } from "~/composables/chat/useAuthorizationChallenges";
@@ -106,13 +106,21 @@ export function useChatSession(thread: ThreadRecord) {
     }
   }
 
-  async function send(text: string) {
+  async function send(text: string, attachment?: { data: string; mediaType: string; filename: string }) {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    if (!trimmed && !attachment) return;
 
     clearTurnFailure(chatId);
-    await whenSendable(trimmed);
-    await agent.send(trimmed);
+    await whenSendable(trimmed || attachment?.filename);
+
+    const content: UserContent = attachment
+      ? [
+          ...(trimmed ? [{ type: "text" as const, text: trimmed }] : []),
+          { type: "file" as const, data: attachment.data, mediaType: attachment.mediaType, filename: attachment.filename },
+        ]
+      : trimmed;
+
+    await agent.send(content);
   }
 
   async function respond(responses: AgentInputResponse[]) {

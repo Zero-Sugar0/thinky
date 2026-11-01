@@ -6,7 +6,7 @@ import {
   isTextUIPart,
   isToolUIPart,
 } from "ai";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import type { EveDynamicToolPart } from "eve/vue";
 import { isPartStreaming, isToolStreaming } from "@nuxt/ui/utils/ai";
 import type { AgentInputResponse } from "~/components/AgentInputRequest.vue";
@@ -111,6 +111,11 @@ const showThinking = computed(
         @input-responses="emit('inputResponses', $event)"
       />
     </template>
+
+    <ChatMessageMessageAttachment
+      v-else-if="part.type === 'file'"
+      :part="part as FileUIPart"
+    />
 
     <template v-else-if="isTextUIPart(part)">
       <div
