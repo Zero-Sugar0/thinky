@@ -23,27 +23,19 @@ export function parseMemoryEntriesFromDocument(content: string): string[] {
 }
 
 /**
- * Attempts to read memory entries for a user from Vercel Blob or local storage.
+ * Attempts to read memory entries for a user using Eve's Vercel Blob backend
+ * or local memory storage.
  */
 export async function fetchUserMemoryEntries(userId: string): Promise<string[]> {
   try {
-    const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) return [];
-
-    // The key format for byPrincipal is the principalId (userId)
-    const blobPath = `eve/memory/file/${encodeURIComponent(userId)}/MEMORY.md`;
-    const res = await fetch(`https://blob.vercel-storage.com/${blobPath}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (!res.ok) {
+    const { vercelBlob } = await import("eve/memory/file/vercel");
+    const backend = vercelBlob();
+    const controller = new AbortController();
+    const doc = await backend.read({ key: userId, signal: controller.signal });
+    if (!doc || !doc.content) {
       return [];
     }
-
-    const text = await res.text();
-    return parseMemoryEntriesFromDocument(text);
+    return parseMemoryEntriesFromDocument(doc.content);
   }
   catch {
     return [];

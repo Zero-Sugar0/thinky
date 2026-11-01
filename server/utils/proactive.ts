@@ -107,8 +107,7 @@ export async function analyzeUserContextForProactiveSuggestion(params: {
   // Try AI-driven synthesis if an LLM API endpoint or key is available
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (apiKey) {
-    try {
-      const prompt = `You are Thinky, a thoughtful and proactive personal AI assistant.
+    const prompt = `You are Thinky, a thoughtful and proactive personal AI assistant.
 User: ${name || "User"}
 Timezone: ${tz} (Current local hour: ${currentHour}:00)
 User bio / context: ${params.bio || "None"}
@@ -129,6 +128,8 @@ Formulate a very brief, helpful check-in that asks if you should handle them, or
 If you decide to suggest something, respond ONLY with a raw JSON object (no markdown, no extra words):
 {"type": "deadline"|"todo"|"client_followup"|"undone_task"|"reminder", "content": "..."}`;
 
+    try {
+      // Use Vercel AI SDK when available or direct API call
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
