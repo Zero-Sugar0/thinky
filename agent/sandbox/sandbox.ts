@@ -3,7 +3,4 @@ import { vercel } from "eve/sandbox/vercel";
 
 export default defineSandbox({
   backend: vercel({ resources: { vcpus: 2 } }),
-  networkPolicy: {
-    allow: ["registry.npmjs.org", "api.github.com"],
-  },
 });
