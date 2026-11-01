@@ -9,7 +9,15 @@ const form = reactive({
   timezone: "UTC",
   locale: "en",
   bio: "",
+  proactiveEnabled: true,
+  proactiveChannel: "chat" as "chat" | "slack" | "all",
 });
+
+const proactiveChannels = [
+  { value: "chat", label: "Web Chat (Default)", description: "Post in active or latest chat thread" },
+  { value: "slack", label: "Slack DM", description: "Direct message via connected Slack account" },
+  { value: "all", label: "All Channels", description: "Deliver to both Web Chat and Slack" },
+];
 
 const saving = ref(false);
 const toast = useToast();
@@ -20,7 +28,9 @@ const isDirty = computed(() => {
     || form.phoneNumber !== (profile.value.phoneNumber ?? "")
     || form.timezone !== profile.value.timezone
     || form.locale !== profile.value.locale
-    || form.bio !== profile.value.bio;
+    || form.bio !== profile.value.bio
+    || form.proactiveEnabled !== profile.value.proactiveEnabled
+    || form.proactiveChannel !== profile.value.proactiveChannel;
 });
 
 watch(profile, (value) => {
@@ -30,6 +40,8 @@ watch(profile, (value) => {
   form.timezone = value.timezone;
   form.locale = value.locale;
   form.bio = value.bio;
+  form.proactiveEnabled = value.proactiveEnabled ?? true;
+  form.proactiveChannel = value.proactiveChannel ?? "chat";
 }, { immediate: true });
 
 async function handleSave() {
@@ -43,6 +55,8 @@ async function handleSave() {
       timezone: form.timezone,
       locale: form.locale,
       bio: form.bio,
+      proactiveEnabled: form.proactiveEnabled,
+      proactiveChannel: form.proactiveChannel,
     });
     await authClient.getSession({ query: { disableCookieCache: true } });
     toast.add({ title: "Profile saved", color: "success" });
@@ -62,6 +76,8 @@ function resetForm() {
   form.timezone = profile.value.timezone;
   form.locale = profile.value.locale;
   form.bio = profile.value.bio;
+  form.proactiveEnabled = profile.value.proactiveEnabled ?? true;
+  form.proactiveChannel = profile.value.proactiveChannel ?? "chat";
 }
 </script>
 
@@ -188,6 +204,37 @@ function resetForm() {
                 placeholder="Search language…"
                 icon="i-lucide-languages"
                 class="w-40"
+              />
+            </SettingsRow>
+          </SettingsSection>
+
+          <SettingsSection
+            title="Proactive Assistant"
+            description="Allow Thinky to periodically check memory, history, and schedules to offer helpful suggestions."
+          >
+            <SettingsRow
+              label="Proactive Check-ins"
+              description="Thinky will periodically review undone items, lunch hours, and client follow-ups."
+            >
+              <USwitch
+                v-model="form.proactiveEnabled"
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              v-if="form.proactiveEnabled"
+              inline
+              label="Preferred Channel"
+              description="Where proactive notifications and reminders should appear."
+            >
+              <UInputMenu
+                v-model="form.proactiveChannel"
+                :items="proactiveChannels"
+                value-key="value"
+                label-key="label"
+                description-key="description"
+                placeholder="Select channel…"
+                class="w-60"
               />
             </SettingsRow>
           </SettingsSection>

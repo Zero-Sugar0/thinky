@@ -1,8 +1,12 @@
+export type ProactiveChannel = "chat" | "slack" | "all";
+
 export interface UserProfile {
   userId: string;
   timezone: string;
   locale: string;
   bio: string;
+  proactiveEnabled: boolean;
+  proactiveChannel: ProactiveChannel;
   updatedAt: number;
 }
 
@@ -11,6 +15,8 @@ export interface UserProfilePatch {
   timezone?: string;
   locale?: string;
   bio?: string;
+  proactiveEnabled?: boolean;
+  proactiveChannel?: ProactiveChannel;
   phoneNumber?: string | null;
 }
 

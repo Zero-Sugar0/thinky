@@ -155,6 +155,11 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             </template>
           </UChatMessages>
 
+          <ProactiveSuggestionBanner
+            :thread-id="chatId"
+            @select="(text: string) => { input = text; }"
+          />
+
           <div
             v-if="pendingChallenges.length || failedChallenges.length"
             class="space-y-2"
@@ -186,7 +191,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
                 accept="image/*,.pdf,.txt,.csv,.md,.json,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
                 class="sr-only"
                 @change="handleAttachmentChange"
-              />
+              >
               <UButton
                 icon="i-lucide-plus"
                 color="neutral"

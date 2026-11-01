@@ -43,6 +43,7 @@
     "@nuxt/ui": "^4.11.0",
     "@nuxthub/core": "^0.10.8",
     "@shikijs/langs": "^4.4.3",
+    "@upstash/qstash": "^2.12.1",
     "@vercel/analytics": "^2.0.1",
     "@vercel/connect": "2.0.1",
     "ai": "^7.0.85",
