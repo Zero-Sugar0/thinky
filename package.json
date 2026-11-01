@@ -37,6 +37,7 @@
   "dependencies": {
     "@ai-sdk/mcp": "^2.0.41",
     "@comark/nuxt": "^0.6.2",
+    "@composio/core": "^0.27.0",
     "@github-tools/eve-extension": "^0.7.0",
     "@github-tools/sdk": "^1.16.0",
     "@nuxt/ui": "^4.11.0",

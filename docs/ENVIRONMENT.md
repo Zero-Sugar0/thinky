@@ -134,6 +134,11 @@ Configure a QStash schedule pointing to:
 | `QSTASH_CURRENT_SIGNING_KEY` | Current signing key from Upstash QStash console |
 | `QSTASH_NEXT_SIGNING_KEY` | Next signing key from Upstash QStash console (for key rotation) |
 | `CRON_SECRET` | Optional fallback bearer token for cron jobs |
+## Composio (optional)
+
+### `COMPOSIO_API_KEY` (optional)
+
+Composio Platform API key (`ak_...`) from [https://dashboard.composio.dev](https://dashboard.composio.dev). Used by Thinky to search and execute 1700+ tools from connected apps and generate user connect links, and by the web interface in **Settings → Apps** to manage connected app accounts.
 
 ## GitHub (optional)
 
