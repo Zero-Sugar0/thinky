@@ -122,6 +122,19 @@ Integrations use [Vercel Connect](https://vercel.com/docs/connect) — no extra 
 
 See [Customization](./CUSTOMIZATION.md#integrations) for setup steps.
 
+## Upstash QStash & Proactive Check (optional)
+
+Thinky can proactively review user memories, current timezone, and unfinished tasks on an hourly schedule (e.g. asking about lunch, client follow-ups, or undone tasks) and send suggestions to the user's preferred channel (Web chat or Slack).
+
+Configure a QStash schedule pointing to:
+`POST https://your-domain.vercel.app/api/cron/proactive-check`
+
+| Variable | Description |
+|----------|-------------|
+| `QSTASH_CURRENT_SIGNING_KEY` | Current signing key from Upstash QStash console |
+| `QSTASH_NEXT_SIGNING_KEY` | Next signing key from Upstash QStash console (for key rotation) |
+| `CRON_SECRET` | Optional fallback bearer token for cron jobs |
+
 ## GitHub (optional)
 
 GitHub tools use per-user OAuth via Vercel Connect. Connect in **Settings → Integrations**, then start a new chat session so GitHub tools load at `session.started`.

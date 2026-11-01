@@ -9,6 +9,8 @@ export const userProfiles = pgTable("user_profiles", {
   timezone: text("timezone").notNull().default("UTC"),
   locale: text("locale").notNull().default("en"),
   bio: text("bio").notNull().default(""),
+  proactiveEnabled: text("proactive_enabled").notNull().default("true"),
+  proactiveChannel: text("proactive_channel").notNull().default("chat"),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date())

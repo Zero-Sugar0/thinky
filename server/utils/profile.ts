@@ -13,6 +13,8 @@ function rowToProfile(row: typeof schema.userProfiles.$inferSelect): UserProfile
     timezone: row.timezone,
     locale: row.locale,
     bio: row.bio,
+    proactiveEnabled: row.proactiveEnabled !== "false",
+    proactiveChannel: (row.proactiveChannel === "slack" || row.proactiveChannel === "all") ? row.proactiveChannel : "chat",
     updatedAt: row.updatedAt.getTime(),
   };
 }
@@ -87,6 +89,8 @@ export async function updateProfileForUser(userId: string, patch: UserProfilePat
       ...(patch.timezone !== undefined ? { timezone: patch.timezone } : {}),
       ...(patch.locale !== undefined ? { locale: patch.locale } : {}),
       ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
+      ...(patch.proactiveEnabled !== undefined ? { proactiveEnabled: String(patch.proactiveEnabled) } : {}),
+      ...(patch.proactiveChannel !== undefined ? { proactiveChannel: patch.proactiveChannel } : {}),
     })
     .where(eq(schema.userProfiles.userId, userId));
 
