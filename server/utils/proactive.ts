@@ -6,7 +6,7 @@ import { getSlackLinkForAppUser } from "~~/server/utils/slack-links";
 import { listThreadsForUser } from "~~/server/utils/threads";
 
 export interface ProactiveSuggestionCandidate {
-  type: "lunch" | "client_followup" | "undone_task" | "reminder";
+  type: "deadline" | "todo" | "client_followup" | "undone_task" | "reminder";
   content: string;
 }
 
@@ -112,23 +112,22 @@ export async function analyzeUserContextForProactiveSuggestion(params: {
 User: ${name || "User"}
 Timezone: ${tz} (Current local hour: ${currentHour}:00)
 User bio / context: ${params.bio || "None"}
-Stored user memories & commitments:
-${params.memories && params.memories.length > 0 ? params.memories.map(m => `- ${m}`).join("\n") : "No specific memories recorded yet."}
-Recent chat history context:
-${params.recentChatSummary || "No recent unresolved chat items."}
+Stored user memories, tasks, commitments & dealings:
+${params.memories && params.memories.length > 0 ? params.memories.map(m => `- ${m}`).join("\n") : "None recorded yet."}
+Recent conversation topics / active threads:
+${params.recentChatSummary || "None."}
 Suggestions already sent recently:
 ${params.recentSuggestions.map(s => `- [${s.type}] ${s.content}`).join("\n") || "None"}
 
 Your job:
-Decide whether a proactive check-in is warranted right now.
-For example:
-- If it's around lunch time (12:00-14:00) and hasn't been asked today: ask about lunch.
-- If there is an undone task, pending client follow-up, or milestone from memory/chat: ask about it directly.
-- If no action is needed or recent suggestion was already sent for this, respond with "NONE".
+Proactively inspect the stored memories and chat history to identify 1-3 pending todos, upcoming deadlines, client dealings, or unfinished tasks.
+Formulate a very brief, helpful check-in that asks if you should handle them, or if the user would like to take care of them:
+- "Hey, I noticed [task/deadline/client dealing]. Would you like me to handle this, or would you prefer to take care of it?"
+- Keep it brief, actionable, and direct (1-2 short sentences).
+- If no pending items exist and no follow-up is needed, respond with "NONE".
 
 If you decide to suggest something, respond ONLY with a raw JSON object (no markdown, no extra words):
-{"type": "lunch"|"client_followup"|"undone_task"|"reminder", "content": "..."}
-Keep the content warm, concise, and direct (1-2 sentences).`;
+{"type": "deadline"|"todo"|"client_followup"|"undone_task"|"reminder", "content": "..."}`;
 
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -160,34 +159,43 @@ Keep the content warm, concise, and direct (1-2 sentences).`;
     }
   }
 
-  // Check if lunch suggestion was already sent today
-  const hasSentLunchToday = params.recentSuggestions.some(
-    s => s.type === "lunch" && (Date.now() - new Date(s.createdAt).getTime()) < 12 * 60 * 60 * 1000,
-  );
+  // Inspect stored memories for tasks, deadlines, dealings, or client follow-ups
+  const memories = params.memories || [];
+  const taskKeywords = /todo|task|deadline|client|project|send|call|email|review|follow\s*up|due|finish|deliver/i;
+  const pendingMemoryItems = memories.filter(m => taskKeywords.test(m));
 
-  // Lunch window: between 12:00 and 14:00
-  if (!hasSentLunchToday && currentHour >= 12 && currentHour <= 14) {
-    const timeStr = currentHour > 12 ? `${currentHour - 12}pm` : `${currentHour}pm`;
-    return {
-      type: "lunch",
-      content: `${greetingPrefix}, it's ${timeStr} — had your lunch already? Remember to take a break and recharge!`,
-    };
+  if (pendingMemoryItems.length > 0) {
+    const selected = pendingMemoryItems[0];
+    if (selected) {
+      const hasSentForThis = params.recentSuggestions.some(
+        s => (Date.now() - new Date(s.createdAt).getTime()) < 8 * 60 * 60 * 1000
+          && s.content.toLowerCase().includes(selected.slice(0, 15).toLowerCase()),
+      );
+
+      if (!hasSentForThis) {
+        return {
+          type: "todo",
+          content: `${greetingPrefix}, I noticed from your notes: "${selected}". Would you like me to handle this, or would you like to take care of it?`,
+        };
+      }
+    }
   }
 
-  // Check if bio or memory mentions clients or projects
+  // Check recent chat context for projects / client dealings
+  const chatContext = params.recentChatSummary || "";
   const bio = params.bio || "";
-  const memoriesStr = (params.memories || []).join(" ");
-  const combinedContext = `${bio} ${memoriesStr}`;
+  const combinedContext = `${bio} ${chatContext}`;
   const mentionsClientOrProject = /client|project|launch|feature|customer|partner/i.test(combinedContext);
 
   const hasSentClientFollowupToday = params.recentSuggestions.some(
-    s => s.type === "client_followup" && (Date.now() - new Date(s.createdAt).getTime()) < 12 * 60 * 60 * 1000,
+    s => (s.type === "client_followup" || s.type === "deadline")
+      && (Date.now() - new Date(s.createdAt).getTime()) < 8 * 60 * 60 * 1000,
   );
 
-  if (!hasSentClientFollowupToday && mentionsClientOrProject && currentHour >= 10 && currentHour <= 17) {
+  if (!hasSentClientFollowupToday && mentionsClientOrProject && currentHour >= 9 && currentHour <= 18) {
     return {
       type: "client_followup",
-      content: `${greetingPrefix}, have you contacted the client about the project yet? Let me know if you need help drafting a message or reviewing the updates!`,
+      content: `${greetingPrefix}, checking on your open project dealings. Shall I prepare updates and follow up with the client for you, or do you have this covered?`,
     };
   }
 
@@ -199,7 +207,7 @@ Keep the content warm, concise, and direct (1-2 sentences).`;
   if (!hasSentTaskReminder && currentHour >= 9 && currentHour <= 18) {
     return {
       type: "undone_task",
-      content: `${greetingPrefix}, checking in on your active priorities. Is there anything left undone from earlier that needs attention today?`,
+      content: `${greetingPrefix}, checking your active priorities for today. Are there pending tasks or deadlines you'd like me to assist with?`,
     };
   }
 

@@ -50,14 +50,14 @@ function reply(suggestion: ProactiveItem) {
     >
       <div class="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
         <UIcon
-          :name="s.type === 'lunch' ? 'i-lucide-utensils' : s.type === 'client_followup' ? 'i-lucide-briefcase' : 'i-lucide-sparkles'"
+          :name="s.type === 'deadline' ? 'i-lucide-alarm-clock' : s.type === 'client_followup' ? 'i-lucide-briefcase' : s.type === 'todo' ? 'i-lucide-check-circle-2' : 'i-lucide-sparkles'"
           class="size-4"
         />
       </div>
 
       <div class="min-w-0 flex-1">
         <p class="font-medium text-highlighted">
-          {{ s.type === 'lunch' ? 'Lunch Reminder' : s.type === 'client_followup' ? 'Client Follow-up' : 'Proactive Check-in' }}
+          {{ s.type === 'deadline' ? 'Upcoming Deadline' : s.type === 'client_followup' ? 'Client Follow-up' : s.type === 'todo' ? 'Pending Todo' : 'Proactive Check-in' }}
         </p>
         <p class="mt-0.5 text-xs text-muted sm:text-sm">
           {{ s.content }}
