@@ -23,7 +23,7 @@ export default defineTool({
           statuses: ["ACTIVE"],
           limit: 100,
           cursor: accountCursor,
-        });
+        }, { signal: ctx.abortSignal });
 
         for (const account of page.items) {
           if (account.status === "ACTIVE" && account.toolkit?.slug) {
@@ -55,7 +55,7 @@ export default defineTool({
       }
 
       try {
-        const session = await getOrCreateComposioSession(userId);
+        const session = await getOrCreateComposioSession(userId, ctx.abortSignal);
         const toolkitSlugs = connectedAccounts.map(account => account.slug);
         const sessionToolkits = new Map<string, { name: string; isActive: boolean }>();
         const seenToolkitCursors = new Set<string>();
@@ -66,7 +66,7 @@ export default defineTool({
             toolkits: toolkitSlugs,
             limit: 100,
             cursor: toolkitCursor,
-          });
+          }, { signal: ctx.abortSignal });
 
           for (const toolkit of page.items) {
             sessionToolkits.set(toolkit.slug.toLowerCase(), {
@@ -99,6 +99,7 @@ export default defineTool({
           sessionAccess: { checked: true },
         };
       } catch (error) {
+        if (ctx.abortSignal.aborted) throw error;
         return {
           success: true,
           checkedAt: new Date().toISOString(),
@@ -114,6 +115,7 @@ export default defineTool({
         };
       }
     } catch (error) {
+      if (ctx.abortSignal.aborted) throw error;
       return {
         success: false,
         error: error instanceof Error ? error.message : "Failed to check Composio connections.",

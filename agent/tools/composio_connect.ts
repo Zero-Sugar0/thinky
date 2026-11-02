@@ -16,7 +16,7 @@ export default defineTool({
         throw new Error("COMPOSIO_API_KEY is not configured in the environment.");
       }
 
-      const connectionRequest = await composio.toolkits.authorize(userId, toolkit);
+      const connectionRequest = await composio.toolkits.authorize(userId, toolkit, undefined, { signal: ctx.abortSignal });
 
       return {
         success: true,
@@ -26,6 +26,7 @@ export default defineTool({
         message: `Please connect your ${toolkit} account using this link: ${connectionRequest.redirectUrl}`,
       };
     } catch (error) {
+      if (ctx.abortSignal.aborted) throw error;
       const message = error instanceof Error ? error.message : `Failed to initiate connection for ${toolkit}`;
       return {
         success: false,

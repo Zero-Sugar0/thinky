@@ -2,8 +2,27 @@ import { Composio } from "@composio/core";
 
 let composioClient: Composio | null = null;
 
-export type ComposioSession = Awaited<ReturnType<Composio["create"]>>;
-const userSessions = new Map<string, ComposioSession>();
+type ComposioSessionBase = Awaited<ReturnType<Composio["create"]>>;
+type ComposioSessionRequestOptions = { signal?: AbortSignal };
+// The SDK implementation accepts request options for these methods, but its
+// public Session interface currently omits them.
+export type ComposioSession = ComposioSessionBase & {
+  search: (
+    params: Parameters<ComposioSessionBase["search"]>[0],
+    requestOptions?: ComposioSessionRequestOptions,
+  ) => ReturnType<ComposioSessionBase["search"]>;
+  toolkits: (
+    options?: Parameters<ComposioSessionBase["toolkits"]>[0],
+    requestOptions?: ComposioSessionRequestOptions,
+  ) => ReturnType<ComposioSessionBase["toolkits"]>;
+  execute: (
+    toolSlug: string,
+    arguments_?: Record<string, unknown>,
+    options?: Parameters<ComposioSessionBase["execute"]>[2],
+    requestOptions?: ComposioSessionRequestOptions,
+  ) => ReturnType<ComposioSessionBase["execute"]>;
+};
+const userSessions = new Map<string, ComposioSessionBase>();
 
 export function getAgentComposioClient(): Composio | null {
   const apiKey = process.env.COMPOSIO_API_KEY;
@@ -23,7 +42,7 @@ export function requireComposioUserId(userId: string | undefined): string {
   return userId;
 }
 
-export async function getOrCreateComposioSession(userId: string): Promise<ComposioSession> {
+export async function getOrCreateComposioSession(userId: string, signal?: AbortSignal): Promise<ComposioSession> {
   const composio = getAgentComposioClient();
   if (!composio) {
     throw new Error("COMPOSIO_API_KEY is not configured in the environment.");
@@ -34,7 +53,7 @@ export async function getOrCreateComposioSession(userId: string): Promise<Compos
     return existing;
   }
 
-  const session = await composio.create(userId);
+  const session = await composio.create(userId, {}, { signal });
   userSessions.set(userId, session);
   return session;
 }

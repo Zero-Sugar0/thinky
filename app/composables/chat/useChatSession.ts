@@ -61,6 +61,7 @@ export function useChatSession(thread: ThreadRecord) {
   // user message once the turn is handed over, so it is shown here instead —
   // in the transcript, where a sent message belongs.
   const queued = ref<string>();
+  const cancelError = ref<Error>();
 
   const messages = computed(() => {
     const sent = [...agent.data.value.messages] as UIMessage[];
@@ -80,6 +81,7 @@ export function useChatSession(thread: ThreadRecord) {
   });
 
   const error = computed(() => {
+    if (cancelError.value) return cancelError.value;
     if (agent.error.value) return agent.error.value;
     const failure = turnFailure(chatId);
     return failure ? new Error(failure) : undefined;
@@ -110,6 +112,7 @@ export function useChatSession(thread: ThreadRecord) {
     const trimmed = text.trim();
     if (!trimmed && !attachment) return;
 
+    cancelError.value = undefined;
     clearTurnFailure(chatId);
     await whenSendable(trimmed || attachment?.filename);
 
@@ -124,6 +127,7 @@ export function useChatSession(thread: ThreadRecord) {
   }
 
   async function respond(responses: AgentInputResponse[]) {
+    cancelError.value = undefined;
     clearTurnFailure(chatId);
     await whenSendable();
     await agent.respond(responses);
@@ -135,9 +139,21 @@ export function useChatSession(thread: ThreadRecord) {
     const text = lastUserMessageText(agent.data.value);
     if (!text) return;
 
+    cancelError.value = undefined;
     clearTurnFailure(chatId);
     await whenSendable(text);
     await agent.send(text);
+  }
+
+  async function cancel() {
+    cancelError.value = undefined;
+    try {
+      await agent.cancel();
+    } catch (error) {
+      cancelError.value = error instanceof Error
+        ? error
+        : new Error("Unable to stop the active response. Please try again.");
+    }
   }
 
   return {
@@ -148,6 +164,6 @@ export function useChatSession(thread: ThreadRecord) {
     send,
     respond,
     retry,
-    cancel: agent.cancel,
+    cancel,
   };
 }

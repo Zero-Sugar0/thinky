@@ -12,13 +12,13 @@ export default defineTool({
   async execute({ useCase, toolkit }, ctx) {
     try {
       const userId = requireComposioUserId(ctx.session.auth.current?.principalId);
-      const session = await getOrCreateComposioSession(userId);
+      const session = await getOrCreateComposioSession(userId, ctx.abortSignal);
       const searchParams = {
         query: useCase,
         ...(toolkit ? { toolkits: [toolkit] } : {}),
       };
 
-      const searchResult = await session.search(searchParams);
+      const searchResult = await session.search(searchParams, { signal: ctx.abortSignal });
       const items = searchResult.results || [];
       return {
         success: searchResult.success,
@@ -45,6 +45,7 @@ export default defineTool({
         })),
       };
     } catch (error) {
+      if (ctx.abortSignal.aborted) throw error;
       const message = error instanceof Error ? error.message : "Failed to search tools via Composio";
       return {
         success: false,
