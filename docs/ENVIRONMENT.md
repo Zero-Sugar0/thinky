@@ -116,8 +116,8 @@ On Vercel, Eve handles provider configuration through the platform. For local de
 
 Integrations use [Vercel Connect](https://vercel.com/docs/connect) — no extra env vars in this repo for Linear or GitHub OAuth, but you must:
 
-1. Create Connect resources (GitHub, Linear MCP, Slack) in your Vercel team
-2. Update connector UIDs in [`shared/connect.ts`](../shared/connect.ts) (GitHub) or [`agent/channels/slack.ts`](../agent/channels/slack.ts) (Slack, default: `slack/personal-agent-template`)
+1. Create Connect resources for the active Vercel Connect integrations in your Vercel team (for example Slack)
+2. Update connector UIDs in [`agent/channels/slack.ts`](../agent/channels/slack.ts) or the relevant active integration definition
 3. Connect clients in **Settings → Integrations** in the app
 
 See [Customization](./CUSTOMIZATION.md#integrations) for setup steps.
@@ -139,10 +139,6 @@ Configure a QStash schedule pointing to:
 ### `COMPOSIO_API_KEY` (optional)
 
 Composio Platform API key (`ak_...`) from [https://dashboard.composio.dev](https://dashboard.composio.dev). Used by Thinky to search and execute 1700+ tools from connected apps and generate user connect links, and by the web interface in **Settings → Apps** to manage connected app accounts.
-
-## GitHub (optional)
-
-GitHub tools use per-user OAuth via Vercel Connect. Connect in **Settings → Integrations**, then start a new chat session so GitHub tools load at `session.started`.
 
 ## Local-only files
 

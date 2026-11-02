@@ -2,7 +2,7 @@ Use when the user asks for a daily summary, morning briefing, or "summarize my d
 
 Steps:
 1. Load the user's active focus from recalled memory when available.
-2. Use the Linear connection to list issues assigned to the user that are not done (backlog, unstarted, triage, started). Never use `state: "open"`.
+2. Use `composio_search` to find the relevant Linear issue-list action, then use `composio_execute` to list issues assigned to the user that are not done (backlog, unstarted, triage, started). Never use `state: "open"`.
 3. Produce a concise briefing with three sections:
    - **Today** — top priorities and active focus
    - **Linear** — assigned issues grouped by status (identifier, title, status)

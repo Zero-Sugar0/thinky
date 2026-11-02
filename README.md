@@ -24,11 +24,11 @@ DMs and @mentions on Slack. Link your Slack account to your web profile so memor
 
 ### GitHub — Repos, PRs, and CI
 
-Connect GitHub via Vercel Connect. Ask about repositories, pull requests, issues, and workflows — the agent mounts the [@github-tools/eve-extension](https://github-tools.com/frameworks/eve) tools with durable approval on writes.
+Use Composio to discover and run GitHub actions on demand. Connect GitHub from the Apps settings page before asking about repositories, pull requests, issues, or workflows.
 
 ### Linear — Issues On Demand
 
-Connect Linear via Vercel Connect MCP. Ask about issues, projects, and cycles — the agent queries Linear tools, never guesses from memory.
+Use Composio to discover and run Linear actions on demand. Connect Linear from the Apps settings page before asking about issues, projects, or cycles.
 
 ### Persistent Memory — Eve's Memory Slot
 
@@ -54,7 +54,7 @@ Morning briefing skill: active focus from recalled memory, assigned Linear issue
 │       Nuxt (UI + Nitro API + Better Auth + PostgreSQL)         │
 └───────────────────────────────┬─────────────────────────────────┘
                                 ▼
-                      Vercel Connect (Linear, Slack)
+                      Vercel Connect (Slack and other integrations)
 ```
 
 On Vercel the deployment splits into two services: `web` (Nuxt) and `eve` (agent runtime). The `eve/nuxt` module generates the eve service and its `/eve/v1/*` route during the build — nothing to declare in `vercel.json`.
@@ -121,7 +121,7 @@ Documents live in private Vercel Blob storage — attach a Blob store to the pro
 1. **Auth**: Users sign in via Better Auth (email/password)
 2. **Each turn**: Eve recalls the `profile` memory slot for the authenticated principal
 3. **Chat**: Web UI streams through Eve; Slack events hit the slack channel
-4. **Tools**: Agent calls weather, GitHub, Linear MCP and its memory tools as needed
+4. **Tools**: Agent calls weather, Composio app actions, and memory tools as needed
 5. **Internal API**: Agent reads Slack and phone links via authenticated Nitro routes
 
 ## Development
@@ -144,7 +144,7 @@ See [AGENTS.md](./AGENTS.md) for notes aimed at AI coding assistants.
 - [NuxtHub](https://hub.nuxt.com) — PostgreSQL database
 - [Better Auth](https://www.better-auth.com) — Authentication
 - [Drizzle ORM](https://orm.drizzle.team) — Type-safe database queries
-- [Vercel Connect](https://vercel.com/docs/connect) — Linear and Slack integrations
+- [Vercel Connect](https://vercel.com/docs/connect) — Slack and other integrations
 
 ## Contributing
 

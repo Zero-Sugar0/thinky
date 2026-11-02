@@ -1,3 +1,8 @@
+/*
+Disabled: Composio provides Linear actions. Keep this configuration as a
+reference; do not move it under agent/connections unless direct Vercel Connect
+access is intentionally restored.
+
 import { connect } from "@vercel/connect/eve";
 import { defineMcpClientConnection } from "eve/connections";
 
@@ -11,3 +16,4 @@ export default defineMcpClientConnection({
     validate: true,
   }),
 });
+*/

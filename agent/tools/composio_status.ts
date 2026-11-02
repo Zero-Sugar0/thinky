@@ -1,10 +1,11 @@
 import { defineTool } from "eve/tools";
+import { z } from "zod";
 import { getAgentComposioClient, getOrCreateComposioSession, requireComposioUserId } from "../lib/composio-session.js";
 
 export default defineTool({
   description:
     "Check the current user's live Composio connections. Use this whenever asked which apps or toolkits are connected; tool search results are not connection status.",
-  inputSchema: {},
+  inputSchema: z.object({}),
   async execute(_input, ctx) {
     try {
       const userId = requireComposioUserId(ctx.session.auth.current?.principalId);

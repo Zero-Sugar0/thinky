@@ -100,33 +100,11 @@ Skills are markdown files in [`agent/skills/`](../agent/skills/). See [`daily-su
 
 ### GitHub
 
-Uses Vercel Connect OAuth and the [@github-tools/eve-extension](https://github-tools.com/frameworks/eve) mount. Connector UID: [`shared/connect.ts`](../shared/connect.ts) (`GITHUB_CONNECTOR`), registry: [`server/connectors.ts`](../server/connectors.ts), mount: [`agent/extensions/github.ts`](../agent/extensions/github.ts).
-
-The mount filename is the namespace, so tools reach the model as `github__listPullRequests`, `github__createIssue`, and so on. Narrow the catalog with `preset`, `include` and `exclude`, and set per-tool approval with `requireApproval`.
-
-`connect.subject` resolves per caller, so each user reaches GitHub through their
-own Connect grant. Leave it out and the extension mints `{ type: "app" }` — the
-project's own installation — which every signed-in user would share whether or
-not they connected an account.
-
-1. Create a GitHub connector in Vercel Connect:
-
-   ```bash
-   vercel connect create github --name personal-agent
-   vercel connect attach github/personal-agent
-   ```
-
-2. Update `GITHUB_CONNECTOR` in [`shared/connect.ts`](../shared/connect.ts) if it differs from `vercel connect list`
-3. Open **Settings → Integrations** and connect
-4. Ask about repos, PRs, or issues in chat
+GitHub actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. The former direct Vercel Connect extension is preserved as a commented-out reference under [`docs/disabled-agent-integrations/`](./disabled-agent-integrations/).
 
 ### Linear
 
-Uses Vercel Connect MCP (`mcp.linear.app/linear`). Connection logic: [`agent/connections/linear.ts`](../agent/connections/linear.ts).
-
-1. Create a Linear MCP connector in Vercel Connect
-2. Open **Settings → Integrations** and connect
-3. Ask about issues in chat
+Linear actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. The former direct Vercel Connect MCP definition is preserved as a commented-out reference under [`docs/disabled-agent-integrations/`](./disabled-agent-integrations/).
 
 ### Slack
 

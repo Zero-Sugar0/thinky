@@ -18,8 +18,8 @@ flowchart TB
 
   subgraph eve [Eve agent — agent/]
     channels[Channels: eve · slack · photon]
-    tools[Tools: weather · github]
-    skills[Skills · memory · connections: Linear MCP]
+    tools[Tools: weather · Composio apps]
+    skills[Skills · memory · connections: Zomato · AgentCard]
   end
 
   subgraph nuxt [Nuxt app — app/ + server/]
@@ -29,7 +29,7 @@ flowchart TB
     db[(NuxtHub PostgreSQL — Drizzle)]
   end
 
-  connect[Vercel Connect — GitHub · Linear · Slack · Photon]
+  connect[Vercel Connect — Slack · Photon · other connections]
 
   surfaces --> eve
   eve -->|"HTTP + Bearer INTERNAL_API_SECRET"| nuxt
@@ -54,10 +54,10 @@ thinky/
 │   ├── agent.ts              # Model and agent config
 │   ├── channels/             # eve (web), slack, photon (iMessage)
 │   ├── tools/                # weather
-│   ├── extensions/           # mounted eve extensions (github)
+│   ├── disabled/             # commented-out direct GitHub and Linear agents
 │   ├── memory/               # memory slots (profile)
 │   ├── skills/               # e.g. daily-summary.md
-│   ├── connections/          # Linear MCP
+│   ├── connections/          # Zomato and AgentCard MCP
 │   ├── lib/                  # profile-internal, slack-internal, phone-internal, internal-api
 │   └── instructions.ts       # system instructions
 ├── app/                      # Nuxt frontend
@@ -99,11 +99,14 @@ The agent maintains them with `profile__save_memory` and `profile__remove_memory
 3. Unlinked users get instructions to generate a link code in the web app
 4. Link flow: web generates code → user DMs `link <code>` → agent consumes via internal API
 
-### Integrations (Linear)
+### Connected apps (Composio)
 
-1. User connects Linear in **Settings → Integrations**
-2. Vercel Connect provisions MCP credentials
-3. Eve connection ([`agent/connections/linear.ts`](../agent/connections/linear.ts)) exposes Linear tools to the agent
+1. User connects an app in **Settings → Apps**
+2. The agent discovers matching actions with `composio_search`
+3. The agent invokes the selected action with `composio_execute`
+
+GitHub and Linear use this Composio path. Vercel Connect remains available for
+the other active integrations and channels.
 
 ## Internal API
 

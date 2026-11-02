@@ -1,0 +1,20 @@
+/*
+Disabled: Composio provides GitHub actions. Keep this configuration as a
+reference; do not move it under agent/extensions unless direct Vercel Connect
+access is intentionally restored.
+
+import githubExtension from "@github-tools/eve-extension";
+import { CONNECT_USER_ISSUER, GITHUB_CONNECTOR, GITHUB_PRESET } from "../../shared/connect.js";
+
+export default githubExtension({
+  connector: GITHUB_CONNECTOR,
+  preset: GITHUB_PRESET,
+  connect: {
+    subject: ctx => ({
+      type: "user",
+      id: ctx.session.auth.current!.principalId,
+      issuer: ctx.session.auth.current?.issuer ?? CONNECT_USER_ISSUER,
+    }),
+  },
+});
+*/
