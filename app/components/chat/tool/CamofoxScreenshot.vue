@@ -6,12 +6,25 @@ const props = defineProps<{
 }>();
 
 const imageFailed = ref(false);
-const screenshotUrl = computed(() => {
-  const output = props.invocation.output;
-  return output && !imageFailed.value
-    ? `data:${output.mimeType};base64,${output.screenshotBase64}`
-    : undefined;
-});
+const screenshotUrl = ref<string>();
+watch(
+  () => props.invocation.output?.screenshotBase64,
+  (screenshotBase64, _previous, onCleanup) => {
+    imageFailed.value = false;
+    const output = props.invocation.output;
+    if (!output || !screenshotBase64) {
+      screenshotUrl.value = undefined;
+      return;
+    }
+
+    const binary = atob(screenshotBase64);
+    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+    const objectUrl = URL.createObjectURL(new Blob([bytes], { type: output.mimeType }));
+    screenshotUrl.value = objectUrl;
+    onCleanup(() => URL.revokeObjectURL(objectUrl));
+  },
+  { immediate: true },
+);
 const filename = computed(() => {
   const extension = {
     "image/jpeg": "jpg",
