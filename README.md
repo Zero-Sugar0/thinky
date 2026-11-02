@@ -10,7 +10,7 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fpersonal-agent-template&env=BETTER_AUTH_SECRET,BETTER_AUTH_URL,INTERNAL_API_SECRET&envDescription=BETTER_AUTH_SECRET%3A%20run%20openssl%20rand%20-base64%2032%20%7C%20BETTER_AUTH_URL%3A%20your%20production%20URL%20%7C%20INTERNAL_API_SECRET%3A%20shared%20secret%20for%20web%20%2B%20eve&envLink=https%3A%2F%2Fgithub.com%2Fvercel-labs%2Fpersonal-agent-template%2Fblob%2Fmain%2Fdocs%2FENVIRONMENT.md&stores=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22database%22%2C%22protocol%22%3A%22storage%22%7D%5D&project-name=thinky&repository-name=thinky)
 
-Web chat, Slack, GitHub, Linear, and persistent memory — one codebase, durable sessions.
+Web chat, Slack, iMessage, Telegram, GitHub, Linear, and persistent memory — one codebase, durable sessions.
 
 ## Features
 
@@ -21,6 +21,10 @@ Chat with your agent in the browser. Threads resume across sessions and tool cal
 ### Slack — Same Agent, Different Surface
 
 DMs and @mentions on Slack. Link your Slack account to your web profile so memory and context follow you across channels.
+
+### Telegram — Private Chats and Groups
+
+Reach the agent from a Telegram bot in private chats, groups, and forum topics. Configure a BotFather token and webhook; see [Telegram setup](./docs/CUSTOMIZATION.md#telegram).
 
 ### GitHub — Repos, PRs, and CI
 
@@ -42,7 +46,7 @@ Morning briefing skill: active focus from recalled memory, assigned Linear issue
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                  Web chat · Slack DMs / mentions                 │
+│           Web · Slack · iMessage · Telegram                      │
 └───────────────────────────────┬─────────────────────────────────┘
                                 ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -120,7 +124,7 @@ Documents live in private Vercel Blob storage — attach a Blob store to the pro
 
 1. **Auth**: Users sign in via Better Auth (email/password)
 2. **Each turn**: Eve recalls the `profile` memory slot for the authenticated principal
-3. **Chat**: Web UI streams through Eve; Slack events hit the slack channel
+3. **Chat**: Web UI streams through Eve; Slack, iMessage, and Telegram events hit their channels
 4. **Tools**: Agent calls weather, Composio app actions, and memory tools as needed
 5. **Internal API**: Agent reads Slack and phone links via authenticated Nitro routes
 

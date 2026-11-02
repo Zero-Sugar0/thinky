@@ -22,7 +22,6 @@ export type ComposioSession = ComposioSessionBase & {
     requestOptions?: ComposioSessionRequestOptions,
   ) => ReturnType<ComposioSessionBase["execute"]>;
 };
-const userSessions = new Map<string, ComposioSessionBase>();
 
 export function getAgentComposioClient(): Composio | null {
   const apiKey = process.env.COMPOSIO_API_KEY;
@@ -42,18 +41,11 @@ export function requireComposioUserId(userId: string | undefined): string {
   return userId;
 }
 
-export async function getOrCreateComposioSession(userId: string, signal?: AbortSignal): Promise<ComposioSession> {
+export async function createComposioSession(userId: string, signal?: AbortSignal): Promise<ComposioSession> {
   const composio = getAgentComposioClient();
   if (!composio) {
     throw new Error("COMPOSIO_API_KEY is not configured in the environment.");
   }
 
-  const existing = userSessions.get(userId);
-  if (existing) {
-    return existing;
-  }
-
-  const session = await composio.create(userId, {}, { signal });
-  userSessions.set(userId, session);
-  return session;
+  return composio.create(userId, {}, { signal });
 }

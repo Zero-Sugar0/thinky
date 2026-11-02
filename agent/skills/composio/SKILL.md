@@ -52,13 +52,6 @@ Do not turn an explanation, documentation lookup, or narrow bug fix into onboard
 - For an operational request, connect only the apps the task needs and execute the requested workflow.
 - For debugging, get the Composio log or request ID, identify the failing boundary, fix that boundary, and retry when the user authorized execution.
 
-## Connection status versus tool discovery
-
-- For questions about which apps or toolkits the current user has connected, call `composio_status`. It reports live ACTIVE connected accounts and whether the current Composio session can access them.
-- `composio_search` discovers matching actions and reports connection state for the searched toolkits. Its matching tools are not proof that an account is connected.
-- If an account is ACTIVE but session access is unavailable, report both facts and treat it as a session-access mismatch. Do not say the account is disconnected, and do not retry failed actions repeatedly.
-- Never substitute a shared placeholder identity when the authenticated principal is missing.
-
 ## Stable rules
 
 1. Establish the product before choosing credentials, URLs, SDKs, or commands.

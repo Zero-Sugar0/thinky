@@ -137,6 +137,29 @@ Inbound senders are recognised by the E.164 number they set on **Profile**,
 stored in `phone_links`. A number nobody claimed still gets an answer, without
 the caller's memory or integrations.
 
+### Telegram
+
+1. Create a bot with [@BotFather](https://t.me/botfather).
+2. Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET_TOKEN`, and
+   `TELEGRAM_BOT_USERNAME` on the **eve service**. The username is the bot name
+   without `@`; it enables group mention detection.
+3. Deploy, then register the webhook (replace the domain with your public app
+   URL):
+
+```bash
+curl --fail-with-body --request POST \
+  "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/setWebhook" \
+  --data-urlencode "url=${BETTER_AUTH_URL}/eve/v1/telegram" \
+  --data-urlencode "secret_token=${TELEGRAM_WEBHOOK_SECRET_TOKEN}" \
+  --data-urlencode 'allowed_updates=["message","callback_query"]'
+```
+
+Telegram sends private messages to the agent. In groups, it responds to
+commands, bot mentions, and replies to its own messages. Each Telegram user has
+a Telegram-scoped identity; it is not automatically linked to a Thinky web
+account. Configure BotFather's group privacy mode separately if the bot needs to
+receive group messages.
+
 ## 7. Theme the UI
 
 - Global styles: [`app/assets/css/main.css`](../app/assets/css/main.css)

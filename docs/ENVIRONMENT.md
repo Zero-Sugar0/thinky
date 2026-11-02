@@ -140,6 +140,22 @@ Configure a QStash schedule pointing to:
 
 Composio Platform API key (`ak_...`) from [https://dashboard.composio.dev](https://dashboard.composio.dev). Used by Thinky to search and execute 1700+ tools from connected apps and generate user connect links, and by the web interface in **Settings → Apps** to manage connected app accounts.
 
+## Telegram (optional)
+
+Create a bot with [@BotFather](https://t.me/botfather), then set these variables
+on the **eve service**:
+
+| Variable | Description |
+|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | Bot API token from BotFather |
+| `TELEGRAM_WEBHOOK_SECRET_TOKEN` | Secret used to verify Telegram webhook requests |
+| `TELEGRAM_BOT_USERNAME` | Bot username without `@`, used to detect group mentions |
+
+After deploying, register the webhook URL
+`https://your-domain.example.com/eve/v1/telegram` with Telegram's `setWebhook`
+API. Eve does not register the webhook automatically. See the [Telegram setup
+guide](./CUSTOMIZATION.md#telegram).
+
 ## Local-only files
 
 These paths are gitignored and should never be committed:

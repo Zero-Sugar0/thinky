@@ -14,10 +14,11 @@ flowchart TB
     web[Web chat — Nuxt]
     slack[Slack DMs and mentions]
     imessage[iMessage — Photon]
+    telegram[Telegram bot]
   end
 
   subgraph eve [Eve agent — agent/]
-    channels[Channels: eve · slack · photon]
+    channels[Channels: eve · slack · photon · telegram]
     tools[Tools: weather · Composio apps]
     skills[Skills · memory · connections: Zomato · AgentCard]
   end
@@ -52,7 +53,7 @@ The `eve/nuxt` module generates the Vercel service and its `/eve/v1/*` route at 
 thinky/
 ├── agent/                    # Eve agent
 │   ├── agent.ts              # Model and agent config
-│   ├── channels/             # eve (web), slack, photon (iMessage)
+│   ├── channels/             # eve (web), slack, photon (iMessage), telegram
 │   ├── tools/                # weather
 │   ├── disabled/             # commented-out direct GitHub and Linear agents
 │   ├── memory/               # memory slots (profile)
@@ -98,6 +99,14 @@ The agent maintains them with `profile__save_memory` and `profile__remove_memory
 2. Linked users map Slack ID → app user via `slack_links` table
 3. Unlinked users get instructions to generate a link code in the web app
 4. Link flow: web generates code → user DMs `link <code>` → agent consumes via internal API
+
+### Telegram
+
+1. Telegram sends bot updates to Eve's `/eve/v1/telegram` webhook.
+2. Eve verifies the webhook secret and dispatches private messages, group
+   commands/mentions, and replies to the bot.
+3. Telegram users receive their own Telegram-scoped identity; Telegram is not
+   automatically linked to a Thinky web profile.
 
 ### Connected apps (Composio)
 

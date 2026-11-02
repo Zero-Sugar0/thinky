@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { getAgentComposioClient, getOrCreateComposioSession, requireComposioUserId } from "../lib/composio-session.js";
+import { createComposioSession, getAgentComposioClient, requireComposioUserId } from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -56,7 +56,7 @@ export default defineTool({
       }
 
       try {
-        const session = await getOrCreateComposioSession(userId, ctx.abortSignal);
+        const session = await createComposioSession(userId, ctx.abortSignal);
         const toolkitSlugs = connectedAccounts.map(account => account.slug);
         const sessionToolkits = new Map<string, { name: string; isActive: boolean }>();
         const seenToolkitCursors = new Set<string>();

@@ -8,7 +8,7 @@
       "computedHash": "1a96489c333b9d30338fcbb0fe51e330443c92707f113dd1d009334fe1b4f34f"
     },
     "composio": {
-      "source": "ComposioHQ/composio",
+      "source": "composiohq/composio",
       "sourceType": "github",
       "skillPath": "skills/composio/SKILL.md",
       "computedHash": "1f52e312ab582897f9d4011ebf4915085b3a3c4b39d4b98d8eec4e26fa1aed38"

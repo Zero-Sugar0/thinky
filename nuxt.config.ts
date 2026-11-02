@@ -74,7 +74,7 @@ export default defineNuxtConfig({
         {
           name: "description",
           content:
-            "Thinky is your personal AI agent. Chat on the web, Slack, or iMessage — query Linear and pick up where you left off.",
+            "Thinky is your personal AI agent. Chat on the web, Slack, iMessage, or Telegram — query Linear and pick up where you left off.",
         },
         { name: "theme-color", content: "#1b1718" },
         { name: "color-scheme", content: "light dark" },

@@ -3,7 +3,7 @@ export default defineAppConfig({
     name: "Thinky",
     title: "Thinky",
     description:
-      "Thinky is your personal AI agent. Chat on the web, Slack, or iMessage — query Linear and pick up where you left off.",
+      "Thinky is your personal AI agent. Chat on the web, Slack, iMessage, or Telegram — query Linear and pick up where you left off.",
     tagline: "Vercel × Eve",
     author: "Hugo Richard",
     repo: "https://github.com/vercel-labs/personal-agent-template",
