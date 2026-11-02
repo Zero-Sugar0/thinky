@@ -94,13 +94,13 @@ export default defineNuxtConfig({
   },
 
   hub: {
-    // Pinned rather than auto-detected: without a URL the module falls back to
-    // pglite, whose WASM payload does not survive eve's agent bundling. Pinning
-    // turns that into a build-time error naming the missing DATABASE_URL.
+    // Apply migrations during deployment builds so schema changes are live
+    // before requests reach the new code. Local builds avoid mutating a
+    // configured database; `pnpm dev` and `pnpm db:migrate` apply migrations.
     db: {
       dialect: "postgresql",
       driver: "postgres-js",
-      applyMigrationsDuringBuild: false,
+      applyMigrationsDuringBuild: process.env.VERCEL === "1",
     },
   },
   runtimeConfig: {

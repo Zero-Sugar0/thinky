@@ -47,7 +47,9 @@ vercel env pull
 ```
 
 Migrations in [`server/db/migrations/postgresql/`](../server/db/migrations/postgresql/)
-are applied at build time, and on `pnpm dev`. To apply them by hand:
+are applied during Vercel deployment builds and when running `pnpm dev`.
+Local production builds do not mutate a configured database. To apply
+migrations by hand:
 
 ```bash
 pnpm db:migrate

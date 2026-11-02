@@ -96,7 +96,31 @@ See [`agent/tools/weather.ts`](../agent/tools/weather.ts) for a worked example.
 
 Skills are markdown files in [`agent/skills/`](../agent/skills/). See [`daily-summary.md`](../agent/skills/daily-summary.md) for an example. Reference skills from home quick actions in [`app/pages/index.vue`](../app/pages/index.vue).
 
-## 6. Integrations
+## 6. Specialists and evals
+
+Thinky has three declared specialists under
+[`agent/subagents/`](../agent/subagents/):
+
+- [`researcher`](../agent/subagents/researcher/) handles substantial
+  multi-source research and returns source-backed findings.
+- [`planner`](../agent/subagents/planner/) prioritizes commitments and creates
+  realistic next-step plans from context supplied by Thinky.
+- [`communicator`](../agent/subagents/communicator/) drafts and revises
+  messages without sending them.
+
+Each specialist has its own role instructions and does not inherit Thinky's
+authored tools, skills, connections, memory, or conversation history. Thinky
+delegates only substantial work that benefits from a focused role and remains
+responsible for verifying results and handling external actions.
+
+Repeatable behavior checks live in [`evals/`](../evals/). The greeting eval
+checks that a simple greeting needs no tools, and the calculator eval checks
+that a requested calculation uses the calculator and returns the right result.
+List discovered evals with `pnpm exec eve eval --list`; run them with
+`pnpm exec eve eval`. Running evals calls the configured live model and
+requires its credentials.
+
+## 7. Integrations
 
 ### GitHub
 
@@ -160,13 +184,13 @@ a Telegram-scoped identity; it is not automatically linked to a Thinky web
 account. Configure BotFather's group privacy mode separately if the bot needs to
 receive group messages.
 
-## 7. Theme the UI
+## 8. Theme the UI
 
 - Global styles: [`app/assets/css/main.css`](../app/assets/css/main.css)
 - Nuxt UI config: [`app/app.config.ts`](../app/app.config.ts)
 - Layout and navigation: [`app/layouts/default.vue`](../app/layouts/default.vue), [`app/components/Navbar.vue`](../app/components/Navbar.vue)
 
-## 8. Deploy your fork
+## 9. Deploy your fork
 
 See [Deploy on Vercel](../README.md#deploy-on-vercel) in the README. Remember:
 

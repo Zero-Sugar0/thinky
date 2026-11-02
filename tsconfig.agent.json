@@ -17,6 +17,7 @@
     }
   },
   "include": [
-    "agent/**/*.ts"
+    "agent/**/*.ts",
+    "evals/**/*.ts"
   ]
 }
