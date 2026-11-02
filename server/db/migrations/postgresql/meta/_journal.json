@@ -8,6 +8,13 @@
       "when": 1788337791582,
       "tag": "0000_initial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793582978908,
+      "tag": "0001_typical_network",
+      "breakpoints": true
     }
   ]
 }
