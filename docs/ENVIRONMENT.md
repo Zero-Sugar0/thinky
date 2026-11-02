@@ -148,6 +148,26 @@ connected-account ID for the requesting user; a different key or project on
 either service makes an account appear connected in Settings but unavailable
 to agent tool sessions.
 
+## Camofox browser (optional)
+
+Set these variables on the **Eve service**:
+
+| Variable | Description |
+|----------|-------------|
+| `CAMOFOX_BASE_URL` | HTTPS origin of the Camofox service |
+| `CAMOFOX_API_KEY` | Camofox service API key |
+
+The browser tools derive an opaque, stable owner ID from the authenticated
+Thinky principal. Do not configure a shared `CAMOFOX_USER_ID`. Every operation
+sends this owner ID to Camofox, but the Camofox service must enforce ownership
+for every tab/session endpoint; client-side scoping alone cannot isolate a
+service that ignores `userId`. The tools only accept public HTTPS target URLs,
+bound request time and response size, and do not retry browser actions.
+
+The URL check protects the initial destination only. Configure Camofox's
+network egress to block private, loopback, and link-local addresses as well,
+including after redirects.
+
 ## Telegram (optional)
 
 Create a bot with [@BotFather](https://t.me/botfather), then set these variables
