@@ -3,6 +3,7 @@ import { isIP } from "node:net";
 import { z } from "zod";
 
 const REQUEST_TIMEOUT_MS = 20_000;
+const RETRY_DELAY_MS = 300;
 const MAX_JSON_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
 const LOCAL_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".test", ".invalid"];
@@ -94,6 +95,7 @@ export async function camofoxRequest(
   signal: AbortSignal,
   operation: string,
   init: RequestInit = {},
+  options: { retryUnavailable?: boolean } = {},
 ): Promise<Response> {
   const { baseUrl, apiKey } = getCamofoxConfig();
   const url = new URL(path, baseUrl);
@@ -101,32 +103,41 @@ export async function camofoxRequest(
 
   const timeoutSignal = AbortSignal.timeout(REQUEST_TIMEOUT_MS);
   const requestSignal = AbortSignal.any([signal, timeoutSignal]);
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      ...init,
-      cache: "no-store",
-      credentials: "omit",
-      headers: requestHeaders(init.headers, apiKey, Boolean(init.body)),
-      redirect: "error",
-      signal: requestSignal,
-    });
-  } catch {
-    if (signal.aborted) {
-      throw new Error(`Camofox ${operation} was cancelled.`);
+  const canRetry = options.retryUnavailable && (init.method ?? "GET").toUpperCase() === "GET";
+  for (let attempt = 0; ; attempt++) {
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...init,
+        cache: "no-store",
+        credentials: "omit",
+        headers: requestHeaders(init.headers, apiKey, Boolean(init.body)),
+        redirect: "error",
+        signal: requestSignal,
+      });
+    } catch {
+      if (signal.aborted) {
+        throw new Error(`Browser ${operation} was cancelled.`);
+      }
+      if (timeoutSignal.aborted) {
+        throw new Error(
+          `Browser ${operation} timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds. Check the tab state before retrying.`,
+        );
+      }
+      throw new Error(`Browser ${operation} could not reach the configured browser service.`);
     }
-    if (timeoutSignal.aborted) {
-      throw new Error(
-        `Camofox ${operation} timed out after ${REQUEST_TIMEOUT_MS / 1000} seconds. Check the tab state before retrying.`,
-      );
-    }
-    throw new Error(`Camofox ${operation} could not reach the configured browser service.`);
-  }
 
-  if (!response.ok) {
-    throw new Error(`Camofox ${operation} failed with HTTP ${response.status}.`);
+    if (canRetry && attempt === 0 && [502, 503, 504].includes(response.status)) {
+      await response.body?.cancel();
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      continue;
+    }
+    if (!response.ok) {
+      const availability = response.status >= 500 ? "is temporarily unavailable" : "failed";
+      throw new Error(`Browser ${operation} ${availability} (HTTP ${response.status}).`);
+    }
+    return response;
   }
-  return response;
 }
 
 function requestHeaders(existing: HeadersInit | undefined, apiKey: string, hasBody: boolean): Headers {

@@ -109,6 +109,74 @@ test("Camofox includes the same owner in URL and mutation payload", async () => 
   }
 });
 
+test("Camofox retries transient screenshot GET failures once", async () => {
+  const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
+  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  process.env.CAMOFOX_BASE_URL = "https://browser.example";
+  process.env.CAMOFOX_API_KEY = "test-api-key";
+  globalThis.fetch = async () => {
+    attempts++;
+    return attempts === 1
+      ? new Response(null, { status: 503 })
+      : new Response("screenshot", { status: 200 });
+  };
+
+  try {
+    const response = await camofoxRequest(
+      "/tabs/tab-1/screenshot",
+      "thinky_test",
+      new AbortController().signal,
+      "capture screenshot",
+      {},
+      { retryUnavailable: true },
+    );
+    assert.equal(attempts, 2);
+    assert.equal(await response.text(), "screenshot");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
+    else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
+    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
+    else process.env.CAMOFOX_API_KEY = previousApiKey;
+  }
+});
+
+test("Camofox does not retry failed browser mutations", async () => {
+  const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
+  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const originalFetch = globalThis.fetch;
+  let attempts = 0;
+  process.env.CAMOFOX_BASE_URL = "https://browser.example";
+  process.env.CAMOFOX_API_KEY = "test-api-key";
+  globalThis.fetch = async () => {
+    attempts++;
+    return new Response(null, { status: 503 });
+  };
+
+  try {
+    await assert.rejects(
+      camofoxRequest(
+        "/tabs",
+        "thinky_test",
+        new AbortController().signal,
+        "open tab",
+        { method: "POST", body: "{}" },
+        { retryUnavailable: true },
+      ),
+      /Browser open tab is temporarily unavailable \(HTTP 503\)/,
+    );
+    assert.equal(attempts, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
+    else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
+    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
+    else process.env.CAMOFOX_API_KEY = previousApiKey;
+  }
+});
+
 test("Camofox propagates caller cancellation", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
   const previousApiKey = process.env.CAMOFOX_API_KEY;

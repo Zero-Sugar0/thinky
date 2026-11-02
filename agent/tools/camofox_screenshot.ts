@@ -26,6 +26,8 @@ export default defineTool({
       userId,
       ctx.abortSignal,
       "capture screenshot",
+      {},
+      { retryUnavailable: true },
     );
     return {
       ok: true,

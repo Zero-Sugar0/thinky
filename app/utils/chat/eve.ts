@@ -36,6 +36,16 @@ export function getToolDisplayName(part: EveDynamicToolPart): string {
   }
 
   const name = part.toolName.split("__").at(-1) ?? part.toolName;
+  if (name.startsWith("camofox_")) {
+    const action = name
+      .slice("camofox_".length)
+      .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+      .replace(/[_-]+/g, " ")
+      .trim()
+      .toLowerCase();
+    return `Browser ${action}`;
+  }
+
   const words = name
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
