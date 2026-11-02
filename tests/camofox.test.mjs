@@ -47,7 +47,10 @@ test("Camofox tab IDs cannot alter endpoint paths", () => {
 });
 
 test("Camofox screenshot bytes are returned as a model- and UI-usable base64 image", async () => {
-  const imageBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const imageBytes = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jZC8AAAAASUVORK5CYII=",
+    "base64",
+  );
   const screenshot = await readCamofoxScreenshot(
     new Response(imageBytes, { headers: { "content-type": "image/png" } }),
   );
@@ -55,6 +58,15 @@ test("Camofox screenshot bytes are returned as a model- and UI-usable base64 ima
   assert.equal(screenshot.mimeType, "image/png");
   assert.equal(screenshot.bytes, imageBytes.byteLength);
   assert.equal(Buffer.from(screenshot.screenshotBase64, "base64").toString("hex"), imageBytes.toString("hex"));
+});
+
+test("Camofox rejects screenshot data whose bytes do not match the content type", async () => {
+  await assert.rejects(
+    readCamofoxScreenshot(
+      new Response("not a png image", { headers: { "content-type": "image/png" } }),
+    ),
+    /do not match the declared image\/png format/,
+  );
 });
 
 test("Camofox includes the same owner in URL and mutation payload", async () => {

@@ -5,9 +5,10 @@ const props = defineProps<{
   invocation: CamofoxScreenshotUIToolInvocation;
 }>();
 
+const imageFailed = ref(false);
 const screenshotUrl = computed(() => {
   const output = props.invocation.output;
-  return output
+  return output && !imageFailed.value
     ? `data:${output.mimeType};base64,${output.screenshotBase64}`
     : undefined;
 });
@@ -28,14 +29,23 @@ const filename = computed(() => {
       :src="screenshotUrl"
       alt="Screenshot of the current browser tab"
       class="block h-auto max-h-[75vh] w-full object-contain"
+      @error="imageFailed = true"
     >
     <div
-      v-else
+      v-else-if="!invocation.output"
       class="p-4 text-sm"
       :class="invocation.errorText ? 'text-error' : 'text-muted'"
       role="status"
     >
       {{ invocation.errorText ?? "Capturing browser screenshot..." }}
+    </div>
+    <div
+      v-else-if="imageFailed"
+      class="p-4 text-sm text-error"
+      role="alert"
+    >
+      The screenshot data was received but this browser could not display it.
+      Try downloading the image to inspect the file.
     </div>
     <figcaption
       v-if="invocation.output"

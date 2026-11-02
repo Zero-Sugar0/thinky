@@ -168,6 +168,18 @@ The URL check protects the initial destination only. Configure Camofox's
 network egress to block private, loopback, and link-local addresses as well,
 including after redirects.
 
+To check whether the configured service returns a viewer URL in its health or
+open-tab response, run `node scripts/test-camofox-live-url.mjs`. The script
+opens a temporary `example.com` tab using a random test identity and cleans it
+up afterward. It does not probe undocumented viewer routes or establish that a
+returned link is private; verify user isolation before sharing a viewer URL.
+
+To test screenshot capture against the configured service, run
+`node scripts/test-camofox-screenshot.mjs`. It opens `example.com`, validates
+the screenshot content type and image signature, and cleans up its temporary
+tab and session. Pass an output path to keep a copy for visual inspection:
+`node scripts/test-camofox-screenshot.mjs /tmp/camofox-check.png`.
+
 ## Telegram (optional)
 
 Create a bot with [@BotFather](https://t.me/botfather), then set these variables
