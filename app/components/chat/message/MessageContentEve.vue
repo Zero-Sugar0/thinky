@@ -14,7 +14,10 @@ import type { ChatStatus } from "~/composables/chat/useChatSession";
 import { getMergedParts } from "~/utils/chat/ai";
 import { hasVisibleParts, getToolDisplayName, getToolNamespace, normalizeEveParts, shouldShowToolInput } from "~/utils/chat/eve";
 import type { WeatherUIToolInvocation } from "~~/shared/utils/tools/weather";
-import type { CamofoxScreenshotUIToolInvocation } from "~~/shared/utils/tools/camofox";
+import type {
+  CamofoxOpenUIToolInvocation,
+  CamofoxScreenshotUIToolInvocation,
+} from "~~/shared/utils/tools/camofox";
 
 const props = defineProps<{
   message: UIMessage;
@@ -63,6 +66,10 @@ const showThinking = computed(
     </UChatReasoning>
 
     <template v-else-if="isToolUIPart(part) || isDynamicToolUIPart(part)">
+      <ChatToolCamofoxLiveView
+        v-if="getToolName(part) === 'camofox_open' || getToolName(part) === 'camofox_live_viewer'"
+        :invocation="part as CamofoxOpenUIToolInvocation"
+      />
       <ChatToolCamofoxScreenshot
         v-if="getToolName(part) === 'camofox_screenshot'"
         :invocation="part as CamofoxScreenshotUIToolInvocation"

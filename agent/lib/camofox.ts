@@ -4,6 +4,7 @@ import { z } from "zod";
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const RETRY_DELAY_MS = 300;
+export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 120;
 const MAX_JSON_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
 const LOCAL_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".test", ".invalid"];
@@ -200,6 +201,47 @@ export async function readCamofoxJson(response: Response, operation: string): Pr
   } catch {
     throw new Error(`Camofox ${operation} returned invalid JSON.`);
   }
+}
+
+export async function createCamofoxLiveViewerUrl(
+  tabId: string,
+  userId: string,
+  signal: AbortSignal,
+): Promise<string> {
+  const response = await camofoxRequest(
+    "/live-viewer/links",
+    userId,
+    signal,
+    "issue live viewer link",
+    {
+      method: "POST",
+      body: camofoxPostBody(userId, {
+        tabId,
+        ttlSeconds: CAMOFOX_LIVE_VIEWER_TTL_SECONDS,
+      }),
+    },
+  );
+  const result = parseCamofoxResponse(
+    z.object({ url: z.string().url() }),
+    await readCamofoxJson(response, "issue live viewer link"),
+    "issue live viewer link",
+  );
+
+  const viewerUrl = new URL(result.url);
+  const localHttpAllowed =
+    process.env.NODE_ENV !== "production" &&
+    viewerUrl.protocol === "http:" &&
+    ["localhost", "127.0.0.1", "[::1]"].includes(viewerUrl.hostname);
+  if (
+    (viewerUrl.protocol !== "https:" && !localHttpAllowed) ||
+    viewerUrl.username ||
+    viewerUrl.password ||
+    !viewerUrl.searchParams.get("t")
+  ) {
+    throw new Error("Camofox returned an invalid signed live viewer URL.");
+  }
+
+  return viewerUrl.toString();
 }
 
 export async function readCamofoxScreenshot(

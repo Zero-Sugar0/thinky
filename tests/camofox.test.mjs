@@ -3,6 +3,7 @@ import { test } from "node:test";
 import {
   camofoxPostBody,
   camofoxRequest,
+  createCamofoxLiveViewerUrl,
   getCamofoxUserId,
   CamofoxTabIdSchema,
   readCamofoxScreenshot,
@@ -134,6 +135,75 @@ test("Camofox retries transient screenshot GET failures once", async () => {
     );
     assert.equal(attempts, 2);
     assert.equal(await response.text(), "screenshot");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
+    else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
+  }
+});
+
+test("Camofox issues a short-lived signed viewer link for the authenticated owner and tab", async () => {
+  const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
+  const originalFetch = globalThis.fetch;
+  const userId = getCamofoxUserId({ principalId: "user-1", principalType: "user" });
+  let requestUrl;
+  let requestInit;
+
+  process.env.CAMOFOX_BASE_URL = "https://browser.example";
+  process.env.CAMOFOX_ACCESS_KEY = "test-access-key";
+  globalThis.fetch = async (url, init) => {
+    requestUrl = new URL(url);
+    requestInit = init;
+    return new Response(JSON.stringify({
+      url: "https://browser.example/live-viewer/view?t=signed.token",
+    }), {
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const viewerUrl = await createCamofoxLiveViewerUrl(
+      "tab-123",
+      userId,
+      new AbortController().signal,
+    );
+    assert.equal(viewerUrl, "https://browser.example/live-viewer/view?t=signed.token");
+    assert.equal(requestUrl.pathname, "/live-viewer/links");
+    assert.equal(requestUrl.searchParams.get("userId"), userId);
+    assert.equal(new Headers(requestInit.headers).get("authorization"), "Bearer test-access-key");
+    assert.deepEqual(JSON.parse(requestInit.body), {
+      tabId: "tab-123",
+      ttlSeconds: 120,
+      userId,
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
+    else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
+  }
+});
+
+test("Camofox rejects an unsigned or insecure live-viewer URL", async () => {
+  const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
+  const originalFetch = globalThis.fetch;
+  process.env.CAMOFOX_BASE_URL = "https://browser.example";
+  process.env.CAMOFOX_ACCESS_KEY = "test-access-key";
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ url: "http://attacker.example/view?t=forged" }), {
+      headers: { "content-type": "application/json" },
+    });
+
+  try {
+    await assert.rejects(
+      createCamofoxLiveViewerUrl("tab-123", "thinky_test", new AbortController().signal),
+      /invalid signed live viewer URL/,
+    );
   } finally {
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
