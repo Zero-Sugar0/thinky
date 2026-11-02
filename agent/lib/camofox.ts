@@ -4,7 +4,7 @@ import { z } from "zod";
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_JSON_RESPONSE_BYTES = 2 * 1024 * 1024;
-const MAX_SCREENSHOT_BYTES = 8 * 1024 * 1024;
+const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
 const LOCAL_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".test", ".invalid"];
 
 function hasControlCharacters(value: string): boolean {
@@ -191,7 +191,9 @@ export async function readCamofoxJson(response: Response, operation: string): Pr
   }
 }
 
-export async function readCamofoxScreenshot(response: Response): Promise<{ mimeType: string; bytes: number }> {
+export async function readCamofoxScreenshot(
+  response: Response,
+): Promise<{ mimeType: string; bytes: number; screenshotBase64: string }> {
   const mimeType = response.headers.get("content-type")?.split(";")[0]?.trim().toLowerCase();
   if (!mimeType || !["image/png", "image/jpeg", "image/webp"].includes(mimeType)) {
     throw new Error("Camofox returned an unsupported screenshot format.");
@@ -201,7 +203,11 @@ export async function readCamofoxScreenshot(response: Response): Promise<{ mimeT
   if (bytes.byteLength === 0) {
     throw new Error("Camofox returned an empty screenshot.");
   }
-  return { mimeType, bytes: bytes.byteLength };
+  return {
+    mimeType,
+    bytes: bytes.byteLength,
+    screenshotBase64: Buffer.from(bytes).toString("base64"),
+  };
 }
 
 export function parseCamofoxResponse<T>(

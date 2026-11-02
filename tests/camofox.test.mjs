@@ -5,6 +5,7 @@ import {
   camofoxRequest,
   getCamofoxUserId,
   CamofoxTabIdSchema,
+  readCamofoxScreenshot,
   validateCamofoxTargetUrl,
 } from "../agent/lib/camofox.ts";
 
@@ -43,6 +44,17 @@ test("Camofox tab IDs cannot alter endpoint paths", () => {
   assert.equal(CamofoxTabIdSchema.safeParse("tab-123:abc").success, true);
   assert.equal(CamofoxTabIdSchema.safeParse("../other-tab").success, false);
   assert.equal(CamofoxTabIdSchema.safeParse("tab/other").success, false);
+});
+
+test("Camofox screenshot bytes are returned as a model- and UI-usable base64 image", async () => {
+  const imageBytes = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const screenshot = await readCamofoxScreenshot(
+    new Response(imageBytes, { headers: { "content-type": "image/png" } }),
+  );
+
+  assert.equal(screenshot.mimeType, "image/png");
+  assert.equal(screenshot.bytes, imageBytes.byteLength);
+  assert.equal(Buffer.from(screenshot.screenshotBase64, "base64").toString("hex"), imageBytes.toString("hex"));
 });
 
 test("Camofox includes the same owner in URL and mutation payload", async () => {

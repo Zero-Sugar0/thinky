@@ -1,4 +1,4 @@
-import { defineTool } from "eve/tools";
+import { defineTool, toolOutput, toolOutputPart } from "eve/tools";
 import { z } from "zod";
 import {
   CamofoxTabIdSchema,
@@ -11,6 +11,7 @@ const ScreenshotSchema = z.object({
   ok: z.boolean(),
   mimeType: z.string(),
   bytes: z.number().int().positive(),
+  screenshotBase64: z.string().min(1).max(3_000_000),
 });
 
 export default defineTool({
@@ -30,5 +31,11 @@ export default defineTool({
       ok: true,
       ...(await readCamofoxScreenshot(response)),
     };
+  },
+  toModelOutput(output) {
+    return toolOutput.content([
+      toolOutputPart.text("Current browser screenshot:"),
+      toolOutputPart.file(output.screenshotBase64, { mediaType: output.mimeType }),
+    ]);
   },
 });

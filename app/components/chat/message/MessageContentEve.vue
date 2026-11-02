@@ -14,6 +14,7 @@ import type { ChatStatus } from "~/composables/chat/useChatSession";
 import { getMergedParts } from "~/utils/chat/ai";
 import { hasVisibleParts, getToolDisplayName, getToolNamespace, normalizeEveParts, shouldShowToolInput } from "~/utils/chat/eve";
 import type { WeatherUIToolInvocation } from "~~/shared/utils/tools/weather";
+import type { CamofoxScreenshotUIToolInvocation } from "~~/shared/utils/tools/camofox";
 
 const props = defineProps<{
   message: UIMessage;
@@ -62,8 +63,12 @@ const showThinking = computed(
     </UChatReasoning>
 
     <template v-else-if="isToolUIPart(part) || isDynamicToolUIPart(part)">
+      <ChatToolCamofoxScreenshot
+        v-if="getToolName(part) === 'camofox_screenshot'"
+        :invocation="part as CamofoxScreenshotUIToolInvocation"
+      />
       <ChatToolWeather
-        v-if="getToolName(part) === 'weather'"
+        v-else-if="getToolName(part) === 'weather'"
         :invocation="{ ...(part as WeatherUIToolInvocation) }"
         :streaming="isToolStreaming(part)"
       />

@@ -67,8 +67,9 @@ options, and help the user complete shopping or ordering workflows.
 - Never send messages, publish content, change account settings, cancel
   bookings, or perform other consequential actions without the user's explicit
   confirmation for that action.
-- Use `camofox_screenshot` only as a capture check. It currently returns
-  screenshot metadata, not image pixels; use accessibility snapshots to inspect
-  page contents.
+- Use `camofox_screenshot` when a visual capture is useful. It returns the
+  screenshot image for the agent to inspect and displays it in Thinky's chat;
+  use accessibility snapshots as well when page text or element refs are
+  needed.
 - Close tabs created for a task when they are no longer needed, unless the user
   wants to keep browsing.
