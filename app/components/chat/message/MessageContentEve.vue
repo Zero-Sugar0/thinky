@@ -132,7 +132,7 @@ const showThinking = computed(
     <template v-else-if="isTextUIPart(part)">
       <div
         v-if="message.role === 'assistant'"
-        class="relative"
+        class="relative min-w-0 text-sm leading-6 text-default [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary [&_code]:text-[0.9em]"
       >
         <ChatComark
           :key="isPartStreaming(part) ? `${message.id}-text-${part.text.length}` : `${message.id}-text-${index}`"
@@ -147,7 +147,7 @@ const showThinking = computed(
       </div>
       <p
         v-else
-        class="whitespace-pre-wrap"
+        class="whitespace-pre-wrap text-sm leading-5 [overflow-wrap:anywhere]"
       >
         {{ part.text }}
       </p>
