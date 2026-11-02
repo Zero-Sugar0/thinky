@@ -12,6 +12,7 @@ if (existsSync(envPath)) {
 
 export const BASE = process.env.CAMOFOX_BASE_URL?.trim();
 export const ACCESS_KEY = process.env.CAMOFOX_ACCESS_KEY?.trim();
+export const NOVNC_BASE = process.env.CAMOFOX_NOVNC_URL?.trim();
 
 if (!BASE) {
   throw new Error("Missing CAMOFOX_BASE_URL. Set it in the project .env file.");

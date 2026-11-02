@@ -156,6 +156,7 @@ Set these variables on the **Eve service**:
 |----------|-------------|
 | `CAMOFOX_BASE_URL` | HTTPS origin of the Camofox service (for example, `https://camofox-browser-production-a211.up.railway.app`) |
 | `CAMOFOX_ACCESS_KEY` | Shared Camofox access key; sent as `Authorization: Bearer <key>` |
+| `CAMOFOX_NOVNC_URL` | Separate public HTTPS origin for the Railway noVNC domain targeting port 6080 |
 
 The browser tools derive an opaque, stable owner ID from the authenticated
 Thinky principal. Do not configure a shared `CAMOFOX_USER_ID`. Every operation
@@ -189,6 +190,13 @@ without a key, `/tabs?userId=test` rejects a missing key with 401, and the same
 request succeeds with the configured key. To smoke-test browser actions, run
 `node scripts/test-camofox.mjs`; it opens a temporary tab, navigates to
 `https://example.com`, takes a snapshot, then closes the tab and session.
+
+To probe the noVNC viewer, set `CAMOFOX_NOVNC_URL` to the separate Railway
+public domain for port 6080, then run `node scripts/test-camofox-vnc.mjs`.
+The VNC status API requires the access key; the viewer is tested without
+sending that key because browsers cannot attach the service authorization
+header. noVNC may expose the shared browser display, so a reachable URL is not
+proof of user isolation and must not be shared until access is restricted.
 
 ## Telegram (optional)
 
