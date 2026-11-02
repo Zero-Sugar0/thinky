@@ -114,7 +114,7 @@ On Vercel, Eve handles provider configuration through the platform. For local de
 
 ## Vercel Connect (optional)
 
-Integrations use [Vercel Connect](https://vercel.com/docs/connect) — no extra env vars in this repo for Linear or GitHub OAuth, but you must:
+Remaining integrations use [Vercel Connect](https://vercel.com/docs/connect). GitHub and Linear are handled through Composio in **Settings → Apps**. For the other active Connect integrations, you must:
 
 1. Create Connect resources for the active Vercel Connect integrations in your Vercel team (for example Slack)
 2. Update connector UIDs in [`agent/channels/slack.ts`](../agent/channels/slack.ts) or the relevant active integration definition

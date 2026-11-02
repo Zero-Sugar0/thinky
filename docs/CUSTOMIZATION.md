@@ -100,11 +100,11 @@ Skills are markdown files in [`agent/skills/`](../agent/skills/). See [`daily-su
 
 ### GitHub
 
-GitHub actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. The former direct Vercel Connect extension is preserved as a commented-out reference under [`docs/disabled-agent-integrations/`](./disabled-agent-integrations/).
+GitHub actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. GitHub is not listed as a Vercel Connect service in Settings → Integrations.
 
 ### Linear
 
-Linear actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. The former direct Vercel Connect MCP definition is preserved as a commented-out reference under [`docs/disabled-agent-integrations/`](./disabled-agent-integrations/).
+Linear actions are provided through Composio. Search for the appropriate action with `composio_search`, then execute it with `composio_execute`. Linear is not listed as a Vercel Connect service in Settings → Integrations.
 
 ### Slack
 

@@ -1,7 +1,7 @@
 import type { ConnectorDef } from "#shared/types/connector";
-import { connectGithubScopesForPreset } from "@github-tools/sdk/connect";
-import { GITHUB_CONNECTOR, GITHUB_PRESET } from "#shared/connect";
-import { fetchLinearIssuesViaMcp } from "~~/server/utils/linear-mcp";
+// import { connectGithubScopesForPreset } from "@github-tools/sdk/connect";
+// import { GITHUB_CONNECTOR, GITHUB_PRESET } from "#shared/connect";
+// import { fetchLinearIssuesViaMcp } from "~~/server/utils/linear-mcp";
 import { listMcpTools } from "~~/server/utils/mcp-tools";
 
 const ZOMATO_MCP_URL = "https://mcp-server.zomato.com/mcp";
@@ -12,6 +12,7 @@ const CONTEXT7_MCP_URL = "https://mcp.context7.com/mcp/oauth";
 const ZOMATO_SCOPES = ["mcp:tools", "mcp:resources", "mcp:prompts"];
 
 export const connectors: ConnectorDef[] = [
+  /*
   {
     id: "github",
     name: "GitHub",
@@ -51,6 +52,8 @@ export const connectors: ConnectorDef[] = [
       },
     },
   },
+  */
+  /*
   {
     id: "linear",
     name: "Linear",
@@ -64,6 +67,7 @@ export const connectors: ConnectorDef[] = [
       run: token => fetchLinearIssuesViaMcp(token),
     },
   },
+  */
   {
     id: "zomato",
     name: "Zomato",
