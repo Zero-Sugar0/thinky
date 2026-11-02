@@ -6,6 +6,9 @@ import { listMcpTools } from "~~/server/utils/mcp-tools";
 
 const ZOMATO_MCP_URL = "https://mcp-server.zomato.com/mcp";
 const AGENTCARD_MCP_URL = "https://mcp.agentcard.sh/mcp";
+const AGENTPHONE_MCP_URL = "https://mcp.agentphone.ai/mcp";
+const OXARCHIVE_MCP_URL = "https://mcp.0xarchive.io/mcp";
+const CONTEXT7_MCP_URL = "https://mcp.context7.com/mcp/oauth";
 const ZOMATO_SCOPES = ["mcp:tools", "mcp:resources", "mcp:prompts"];
 
 export const connectors: ConnectorDef[] = [
@@ -85,6 +88,45 @@ export const connectors: ConnectorDef[] = [
     test: {
       label: "List available tools",
       run: token => listMcpTools(AGENTCARD_MCP_URL, token),
+    },
+  },
+  {
+    id: "agentphone",
+    name: "Agentphone",
+    description: "Agentphone tools for calls and phone-based workflows.",
+    connector: "agentphone/thinky",
+    connectionName: "agentphone",
+    icon: "i-lucide-phone-call",
+    scopes: [],
+    test: {
+      label: "List available tools",
+      run: token => listMcpTools(AGENTPHONE_MCP_URL, token),
+    },
+  },
+  {
+    id: "oxarchive",
+    name: "0xArchive",
+    description: "Search and work with your authenticated 0xArchive data.",
+    connector: "0xarchive/thinky",
+    connectionName: "oxarchive",
+    icon: "i-lucide-archive",
+    scopes: [],
+    test: {
+      label: "List available tools",
+      run: token => listMcpTools(OXARCHIVE_MCP_URL, token),
+    },
+  },
+  {
+    id: "context7-mcp",
+    name: "Context7",
+    description: "Current library documentation and implementation guidance.",
+    connector: "context7-mcp/thinky",
+    connectionName: "context7-mcp",
+    icon: "i-lucide-book-open",
+    scopes: [],
+    test: {
+      label: "List available tools",
+      run: token => listMcpTools(CONTEXT7_MCP_URL, token),
     },
   },
 ];
