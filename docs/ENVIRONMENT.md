@@ -154,15 +154,18 @@ Set these variables on the **Eve service**:
 
 | Variable | Description |
 |----------|-------------|
-| `CAMOFOX_BASE_URL` | HTTPS origin of the Camofox service |
-| `CAMOFOX_API_KEY` | Camofox service API key |
+| `CAMOFOX_BASE_URL` | HTTPS origin of the Camofox service (for example, `https://camofox-browser-production-a211.up.railway.app`) |
+| `CAMOFOX_ACCESS_KEY` | Shared Camofox access key; sent as `Authorization: Bearer <key>` |
 
 The browser tools derive an opaque, stable owner ID from the authenticated
 Thinky principal. Do not configure a shared `CAMOFOX_USER_ID`. Every operation
-sends this owner ID to Camofox, but the Camofox service must enforce ownership
-for every tab/session endpoint; client-side scoping alone cannot isolate a
-service that ignores `userId`. The tools only accept public HTTPS target URLs,
-bound request time and response size, and do not retry browser actions.
+sends this owner ID to Camofox and authenticates with the shared access key,
+but the Camofox service must enforce ownership for every tab/session endpoint;
+client-side scoping alone cannot isolate a service that ignores `userId`. The
+tools only accept public HTTPS target URLs, bound request time and response
+size, and do not retry browser actions. Camofox exempts `/health` and
+`/vnc/status` from access-key authentication; all other requests send the key
+only in the `Authorization: Bearer` header, never in the URL or logs.
 
 The URL check protects the initial destination only. Configure Camofox's
 network egress to block private, loopback, and link-local addresses as well,
@@ -179,6 +182,13 @@ To test screenshot capture against the configured service, run
 the screenshot content type and image signature, and cleans up its temporary
 tab and session. Pass an output path to keep a copy for visual inspection:
 `node scripts/test-camofox-screenshot.mjs /tmp/camofox-check.png`.
+
+To verify access-key enforcement, run
+`node scripts/test-camofox-access-key.mjs`. It checks that `/health` works
+without a key, `/tabs?userId=test` rejects a missing key with 401, and the same
+request succeeds with the configured key. To smoke-test browser actions, run
+`node scripts/test-camofox.mjs`; it opens a temporary tab, navigates to
+`https://example.com`, takes a snapshot, then closes the tab and session.
 
 ## Telegram (optional)
 

@@ -60,9 +60,9 @@ export function validateCamofoxTargetUrl(value: string): string {
 
 function getCamofoxConfig() {
   const baseUrlValue = process.env.CAMOFOX_BASE_URL?.trim();
-  const apiKey = process.env.CAMOFOX_API_KEY?.trim();
-  if (!baseUrlValue || !apiKey) {
-    throw new Error("CAMOFOX_BASE_URL and CAMOFOX_API_KEY must be configured for the Eve service.");
+  const accessKey = process.env.CAMOFOX_ACCESS_KEY?.trim();
+  if (!baseUrlValue || !accessKey) {
+    throw new Error("CAMOFOX_BASE_URL and CAMOFOX_ACCESS_KEY must be configured for the Eve service.");
   }
 
   let baseUrl: URL;
@@ -86,7 +86,7 @@ function getCamofoxConfig() {
     throw new Error("CAMOFOX_BASE_URL must be an HTTPS origin (local HTTP is allowed outside production).");
   }
 
-  return { baseUrl: baseUrl.origin, apiKey };
+  return { baseUrl: baseUrl.origin, accessKey };
 }
 
 export async function camofoxRequest(
@@ -97,7 +97,7 @@ export async function camofoxRequest(
   init: RequestInit = {},
   options: { retryUnavailable?: boolean } = {},
 ): Promise<Response> {
-  const { baseUrl, apiKey } = getCamofoxConfig();
+  const { baseUrl, accessKey } = getCamofoxConfig();
   const url = new URL(path, baseUrl);
   url.searchParams.set("userId", userId);
 
@@ -111,7 +111,7 @@ export async function camofoxRequest(
         ...init,
         cache: "no-store",
         credentials: "omit",
-        headers: requestHeaders(init.headers, apiKey, Boolean(init.body)),
+        headers: requestHeaders(init.headers, accessKey, Boolean(init.body)),
         redirect: "error",
         signal: requestSignal,
       });
@@ -140,10 +140,10 @@ export async function camofoxRequest(
   }
 }
 
-function requestHeaders(existing: HeadersInit | undefined, apiKey: string, hasBody: boolean): Headers {
+function requestHeaders(existing: HeadersInit | undefined, accessKey: string, hasBody: boolean): Headers {
   const headers = new Headers(existing);
   headers.set("Accept", "application/json");
-  headers.set("Authorization", `Bearer ${apiKey}`);
+  headers.set("Authorization", `Bearer ${accessKey}`);
   if (hasBody) {
     headers.set("Content-Type", "application/json");
   }

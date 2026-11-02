@@ -71,14 +71,14 @@ test("Camofox rejects screenshot data whose bytes do not match the content type"
 
 test("Camofox includes the same owner in URL and mutation payload", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
-  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
   const originalFetch = globalThis.fetch;
   const userId = getCamofoxUserId({ principalId: "user-1", principalType: "user" });
   let requestUrl;
   let requestInit;
 
   process.env.CAMOFOX_BASE_URL = "https://browser.example";
-  process.env.CAMOFOX_API_KEY = "test-api-key";
+  process.env.CAMOFOX_ACCESS_KEY = "test-api-key";
   globalThis.fetch = async (url, init) => {
     requestUrl = new URL(url);
     requestInit = init;
@@ -104,18 +104,18 @@ test("Camofox includes the same owner in URL and mutation payload", async () => 
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
     else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
-    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
-    else process.env.CAMOFOX_API_KEY = previousApiKey;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
   }
 });
 
 test("Camofox retries transient screenshot GET failures once", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
-  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
   const originalFetch = globalThis.fetch;
   let attempts = 0;
   process.env.CAMOFOX_BASE_URL = "https://browser.example";
-  process.env.CAMOFOX_API_KEY = "test-api-key";
+  process.env.CAMOFOX_ACCESS_KEY = "test-api-key";
   globalThis.fetch = async () => {
     attempts++;
     return attempts === 1
@@ -138,18 +138,18 @@ test("Camofox retries transient screenshot GET failures once", async () => {
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
     else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
-    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
-    else process.env.CAMOFOX_API_KEY = previousApiKey;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
   }
 });
 
 test("Camofox does not retry failed browser mutations", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
-  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
   const originalFetch = globalThis.fetch;
   let attempts = 0;
   process.env.CAMOFOX_BASE_URL = "https://browser.example";
-  process.env.CAMOFOX_API_KEY = "test-api-key";
+  process.env.CAMOFOX_ACCESS_KEY = "test-api-key";
   globalThis.fetch = async () => {
     attempts++;
     return new Response(null, { status: 503 });
@@ -172,18 +172,18 @@ test("Camofox does not retry failed browser mutations", async () => {
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
     else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
-    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
-    else process.env.CAMOFOX_API_KEY = previousApiKey;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
   }
 });
 
 test("Camofox propagates caller cancellation", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
-  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
   const originalFetch = globalThis.fetch;
   const controller = new AbortController();
   process.env.CAMOFOX_BASE_URL = "https://browser.example";
-  process.env.CAMOFOX_API_KEY = "test-api-key";
+  process.env.CAMOFOX_ACCESS_KEY = "test-api-key";
   globalThis.fetch = async (_url, init) =>
     new Promise((_, reject) => {
       init.signal.addEventListener("abort", () => reject(new DOMException("Aborted", "AbortError")), {
@@ -199,17 +199,17 @@ test("Camofox propagates caller cancellation", async () => {
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
     else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
-    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
-    else process.env.CAMOFOX_API_KEY = previousApiKey;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
   }
 });
 
 test("Camofox does not expose upstream error response bodies", async () => {
   const previousBaseUrl = process.env.CAMOFOX_BASE_URL;
-  const previousApiKey = process.env.CAMOFOX_API_KEY;
+  const previousAccessKey = process.env.CAMOFOX_ACCESS_KEY;
   const originalFetch = globalThis.fetch;
   process.env.CAMOFOX_BASE_URL = "https://browser.example";
-  process.env.CAMOFOX_API_KEY = "test-api-key";
+  process.env.CAMOFOX_ACCESS_KEY = "test-api-key";
   globalThis.fetch = async () => new Response("sensitive upstream details", { status: 500 });
 
   try {
@@ -230,7 +230,7 @@ test("Camofox does not expose upstream error response bodies", async () => {
     globalThis.fetch = originalFetch;
     if (previousBaseUrl === undefined) delete process.env.CAMOFOX_BASE_URL;
     else process.env.CAMOFOX_BASE_URL = previousBaseUrl;
-    if (previousApiKey === undefined) delete process.env.CAMOFOX_API_KEY;
-    else process.env.CAMOFOX_API_KEY = previousApiKey;
+    if (previousAccessKey === undefined) delete process.env.CAMOFOX_ACCESS_KEY;
+    else process.env.CAMOFOX_ACCESS_KEY = previousAccessKey;
   }
 });

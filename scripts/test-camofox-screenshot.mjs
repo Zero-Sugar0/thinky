@@ -8,7 +8,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
-import { API_KEY, BASE } from "./camofox-config.mjs";
+import { ACCESS_KEY, BASE } from "./camofox-config.mjs";
 
 const userId = `thinky-screenshot-test-${randomUUID()}`;
 const sessionKey = `screenshot-test-${randomUUID()}`;
@@ -28,7 +28,7 @@ async function request(path, { method = "GET", body, ownerId } = {}) {
     headers: {
       Accept: "application/json, image/png, image/jpeg, image/webp",
       ...(body ? { "Content-Type": "application/json" } : {}),
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${ACCESS_KEY}`,
     },
     redirect: "error",
     signal: AbortSignal.timeout(20_000),

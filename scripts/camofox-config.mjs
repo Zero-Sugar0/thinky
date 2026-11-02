@@ -11,12 +11,12 @@ if (existsSync(envPath)) {
 }
 
 export const BASE = process.env.CAMOFOX_BASE_URL?.trim();
-export const API_KEY = process.env.CAMOFOX_API_KEY?.trim();
+export const ACCESS_KEY = process.env.CAMOFOX_ACCESS_KEY?.trim();
 
 if (!BASE) {
   throw new Error("Missing CAMOFOX_BASE_URL. Set it in the project .env file.");
 }
 
-if (!API_KEY) {
-  throw new Error("Missing CAMOFOX_API_KEY. Set it in the project .env file.");
+if (!ACCESS_KEY) {
+  throw new Error("Missing CAMOFOX_ACCESS_KEY. Set it in the project .env file.");
 }

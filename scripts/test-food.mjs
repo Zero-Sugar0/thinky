@@ -4,7 +4,7 @@
  * Tests browsing a food delivery site without an agent.
  * Run: node test-food.mjs
  */
-import { API_KEY, BASE } from "./camofox-config.mjs";
+import { ACCESS_KEY, BASE } from "./camofox-config.mjs";
 
 const USER_ID = "food-test";
 const SESSION_KEY = "order-demo";
@@ -15,7 +15,7 @@ const TARGET_URL = "https://www.doordash.com"; // or https://www.ubereats.com
 async function camofox(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
-    ...(API_KEY ? { Authorization: `Bearer ${API_KEY}` } : {}),
+    Authorization: `Bearer ${ACCESS_KEY}`,
     ...options.headers,
   };
 

@@ -3,7 +3,7 @@
  * Run from anywhere with: node scripts/test-camofox-live-url.mjs
  */
 import { randomUUID } from "node:crypto";
-import { API_KEY, BASE } from "./camofox-config.mjs";
+import { ACCESS_KEY, BASE } from "./camofox-config.mjs";
 
 const USER_ID = `thinky-live-url-probe-${randomUUID()}`;
 const SESSION_KEY = `probe-${randomUUID()}`;
@@ -23,7 +23,7 @@ async function request(path, options = {}, userId) {
     headers: {
       Accept: "application/json",
       ...(fetchOptions.body ? { "Content-Type": "application/json" } : {}),
-      Authorization: `Bearer ${API_KEY}`,
+      Authorization: `Bearer ${ACCESS_KEY}`,
       ...fetchOptions.headers,
     },
     redirect: "error",
