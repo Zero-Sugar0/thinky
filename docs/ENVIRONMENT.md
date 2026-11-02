@@ -142,6 +142,12 @@ Configure a QStash schedule pointing to:
 
 Composio Platform API key (`ak_...`) from [https://dashboard.composio.dev](https://dashboard.composio.dev). Used by Thinky to search and execute 1700+ tools from connected apps and generate user connect links, and by the web interface in **Settings → Apps** to manage connected app accounts.
 
+On Vercel, set the same key from the same Composio project on both the `web`
+and `eve` services. The agent binds each execution session to the active
+connected-account ID for the requesting user; a different key or project on
+either service makes an account appear connected in Settings but unavailable
+to agent tool sessions.
+
 ## Telegram (optional)
 
 Create a bot with [@BotFather](https://t.me/botfather), then set these variables

@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
     const activeConnectionsMap = new Map<string, string>();
     for (const acc of connectedAccountsResponse.items) {
-      if (acc.status === "ACTIVE" && acc.toolkit?.slug) {
+      if (acc.status === "ACTIVE" && !acc.isDisabled && acc.toolkit?.slug) {
         activeConnectionsMap.set(acc.toolkit.slug.toLowerCase(), acc.id);
       }
     }

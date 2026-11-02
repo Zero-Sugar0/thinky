@@ -1,6 +1,10 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { createComposioSession, requireComposioUserId } from "../lib/composio-session.js";
+import {
+  createComposioSession,
+  listActiveComposioAccounts,
+  requireComposioUserId,
+} from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -12,7 +16,19 @@ export default defineTool({
   async execute({ useCase, toolkit }, ctx) {
     try {
       const userId = requireComposioUserId(ctx.session.auth.current?.principalId);
-      const session = await createComposioSession(userId, ctx.abortSignal);
+      const accounts = toolkit
+        ? await listActiveComposioAccounts(userId, ctx.abortSignal)
+        : [];
+      const account = toolkit
+        ? accounts.find(({ toolkit: connectedToolkit }) =>
+            connectedToolkit.slug.toLowerCase() === toolkit.toLowerCase(),
+          )
+        : undefined;
+      const session = await createComposioSession(
+        userId,
+        ctx.abortSignal,
+        account ? { [account.toolkit.slug]: account.id } : undefined,
+      );
       const searchParams = {
         query: useCase,
         ...(toolkit ? { toolkits: [toolkit] } : {}),

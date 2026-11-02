@@ -1,6 +1,10 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { createComposioSession, getAgentComposioClient, requireComposioUserId } from "../lib/composio-session.js";
+import {
+  createComposioSession,
+  getAgentComposioClient,
+  requireComposioUserId,
+} from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -14,7 +18,7 @@ export default defineTool({
         throw new Error("COMPOSIO_API_KEY is not configured in the environment.");
       }
 
-      const accounts = new Map<string, { slug: string; status: string }>();
+      const accounts = new Map<string, { id: string; slug: string; status: string }>();
       const seenAccountCursors = new Set<string>();
       let accountCursor: string | undefined;
 
@@ -27,11 +31,15 @@ export default defineTool({
         }, { signal: ctx.abortSignal });
 
         for (const account of page.items) {
-          if (account.status === "ACTIVE" && account.toolkit?.slug) {
-            accounts.set(account.toolkit.slug.toLowerCase(), {
-              slug: account.toolkit.slug,
-              status: account.status,
-            });
+          if (account.status === "ACTIVE" && !account.isDisabled && account.toolkit?.slug) {
+            const key = account.toolkit.slug.toLowerCase();
+            if (!accounts.has(key)) {
+              accounts.set(key, {
+                id: account.id,
+                slug: account.toolkit.slug,
+                status: account.status,
+              });
+            }
           }
         }
 
@@ -56,7 +64,13 @@ export default defineTool({
       }
 
       try {
-        const session = await createComposioSession(userId, ctx.abortSignal);
+        const session = await createComposioSession(
+          userId,
+          ctx.abortSignal,
+          Object.fromEntries(
+            [...accounts.values()].map(account => [account.slug, account.id]),
+          ),
+        );
         const toolkitSlugs = connectedAccounts.map(account => account.slug);
         const sessionToolkits = new Map<string, { name: string; isActive: boolean }>();
         const seenToolkitCursors = new Set<string>();
