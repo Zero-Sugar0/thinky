@@ -14,14 +14,20 @@ watch(
     const output = props.invocation.output;
     if (!output || !screenshotBase64) {
       screenshotUrl.value = undefined;
+      if (output) imageFailed.value = true;
       return;
     }
 
-    const binary = atob(screenshotBase64);
-    const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
-    const objectUrl = URL.createObjectURL(new Blob([bytes], { type: output.mimeType }));
-    screenshotUrl.value = objectUrl;
-    onCleanup(() => URL.revokeObjectURL(objectUrl));
+    try {
+      const binary = atob(screenshotBase64);
+      const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      const objectUrl = URL.createObjectURL(new Blob([bytes], { type: output.mimeType }));
+      screenshotUrl.value = objectUrl;
+      onCleanup(() => URL.revokeObjectURL(objectUrl));
+    } catch {
+      screenshotUrl.value = undefined;
+      imageFailed.value = true;
+    }
   },
   { immediate: true },
 );
@@ -57,8 +63,8 @@ const filename = computed(() => {
       class="p-4 text-sm text-error"
       role="alert"
     >
-      The screenshot data was received but this browser could not display it.
-      Try downloading the image to inspect the file.
+      The screenshot image data is missing or could not be decoded.
+      {{ screenshotUrl ? "Try downloading the image to inspect the file." : "Capture it again to retry." }}
     </div>
     <figcaption
       v-if="invocation.output"
@@ -66,6 +72,7 @@ const filename = computed(() => {
     >
       <span>Browser screenshot · {{ Math.ceil(invocation.output.bytes / 1024) }} KB</span>
       <a
+        v-if="screenshotUrl"
         :href="screenshotUrl"
         :download="filename"
         class="text-primary hover:underline"
