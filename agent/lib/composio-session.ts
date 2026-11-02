@@ -16,6 +16,13 @@ export function getAgentComposioClient(): Composio | null {
   return composioClient;
 }
 
+export function requireComposioUserId(userId: string | undefined): string {
+  if (!userId?.trim()) {
+    throw new Error("Cannot use Composio without an authenticated user identity.");
+  }
+  return userId;
+}
+
 export async function getOrCreateComposioSession(userId: string): Promise<ComposioSession> {
   const composio = getAgentComposioClient();
   if (!composio) {

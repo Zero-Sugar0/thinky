@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { getOrCreateComposioSession } from "../lib/composio-session.js";
+import { getOrCreateComposioSession, requireComposioUserId } from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -10,9 +10,8 @@ export default defineTool({
     arguments: z.record(z.string(), z.unknown()).describe("Arguments object required by the tool."),
   }),
   async execute({ toolSlug, arguments: toolArgs }, ctx) {
-    const userId = ctx.session.auth.current?.principalId || "default_user";
-
     try {
+      const userId = requireComposioUserId(ctx.session.auth.current?.principalId);
       const session = await getOrCreateComposioSession(userId);
       const executionResult = await session.execute(toolSlug, toolArgs);
 
@@ -21,6 +20,7 @@ export default defineTool({
         resultType: executionResult.resultType,
         data: executionResult.data,
         error: executionResult.error,
+        logId: executionResult.logId,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : `Failed to execute tool ${toolSlug}`;

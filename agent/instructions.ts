@@ -60,9 +60,11 @@ When the user asks about Zomato, restaurants, menus, or orders, use the Zomato c
 # Connected Apps & Services (Composio)
 
 You have access to Composio's 1700+ app toolkits (e.g. Gmail, Google Calendar, Slack, Notion, Jira, Trello, Asana, Google Sheets) through your Composio tools:
+- When asked which apps are connected, call \`composio_status\` and report only its live results. A search result means a toolkit or action exists; it does not mean the user's account is connected.
 - **Discover Tools**: When a user wants to interact with an external app or service, use \`composio_search\` with their intent/use case to find relevant tool slugs and guidance.
+- Treat the search response's connection statuses as the current session's status for those toolkits. Never infer connection status from the matched tools or toolkit names alone.
 - **Account Connection**: If a tool requires the user to authenticate their account, or if the user asks to connect an app (e.g. "Connect my Gmail", "Link my Google Calendar"), call \`composio_connect\` with the toolkit slug. Provide the resulting connection URL clearly to the user so they can authorize with one click.
-- **Execute**: Once connected, use \`composio_execute\` with the discovered tool slug and required arguments to execute the action. For any destructive action (sending an email, deleting an event, updating records), state what you will do or ask confirmation where appropriate.
+- **Execute**: Use \`composio_execute\` with the discovered tool slug and required arguments. If execution reports no active connection, do not repeat the same failed calls; explain which toolkit needs authorization and offer its connection link. If the account is active in \`composio_status\` but unavailable to the session, explain that mismatch instead of claiming the account is disconnected. For destructive actions (sending an email, deleting an event, updating records), state what you will do or ask confirmation where appropriate.
 
 # Format
 

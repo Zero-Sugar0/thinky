@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { getOrCreateComposioSession } from "../lib/composio-session.js";
+import { getOrCreateComposioSession, requireComposioUserId } from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -10,9 +10,8 @@ export default defineTool({
     toolkit: z.string().optional().describe("Optional toolkit slug to narrow search, e.g. 'gmail', 'googlecalendar', 'slack', 'notion'."),
   }),
   async execute({ useCase, toolkit }, ctx) {
-    const userId = ctx.session.auth.current?.principalId || "default_user";
-
     try {
+      const userId = requireComposioUserId(ctx.session.auth.current?.principalId);
       const session = await getOrCreateComposioSession(userId);
       const searchParams = {
         query: useCase,
@@ -38,6 +37,11 @@ export default defineTool({
           relatedToolSlugs: r.relatedToolSlugs,
           executionGuidance: r.executionGuidance,
           knownPitfalls: r.knownPitfalls,
+        })),
+        connectionStatuses: searchResult.toolkitConnectionStatuses.map(status => ({
+          toolkit: status.toolkit,
+          hasActiveConnection: status.hasActiveConnection,
+          statusMessage: status.statusMessage,
         })),
       };
     } catch (error) {

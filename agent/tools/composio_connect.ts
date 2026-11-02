@@ -1,6 +1,6 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
-import { getAgentComposioClient } from "../lib/composio-session.js";
+import { getAgentComposioClient, requireComposioUserId } from "../lib/composio-session.js";
 
 export default defineTool({
   description:
@@ -9,9 +9,8 @@ export default defineTool({
     toolkit: z.string().describe("The slug of the app/toolkit to connect, e.g. 'gmail', 'googlecalendar', 'slack', 'notion', 'github', 'jira'."),
   }),
   async execute({ toolkit }, ctx) {
-    const userId = ctx.session.auth.current?.principalId || "default_user";
-
     try {
+      const userId = requireComposioUserId(ctx.session.auth.current?.principalId);
       const composio = getAgentComposioClient();
       if (!composio) {
         throw new Error("COMPOSIO_API_KEY is not configured in the environment.");
