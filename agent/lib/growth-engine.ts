@@ -70,6 +70,9 @@ export interface GrowthCallOptions {
   maxCostUsd?: number;
   customerId?: string;
   idempotencyKey?: string;
+  awaitAsync?: boolean;
+  asyncTimeoutSeconds?: number;
+  extraHeaders?: Record<string, string>;
   signal?: AbortSignal;
 }
 
@@ -85,6 +88,7 @@ export interface GrowthCallResult {
   cached?: boolean;
   domainMatch?: boolean;
   replayed?: boolean;
+  asyncDescriptor?: unknown;
   error?: string;
 }
 
@@ -98,7 +102,6 @@ export function sanitizeMetaValue(val: string): string {
 
 /**
  * Search the Growth Engine tool catalog (SEO, Leads, Enrichment, Social, etc.).
- * Public endpoint, does not strictly require auth, but uses it if configured.
  */
 export async function searchGrowthCatalog(
   filters: GrowthSearchFilter,
@@ -205,7 +208,19 @@ export async function inspectGrowthEndpoint(
 }
 
 /**
- * Execute a tool via Growth Engine (Treg).
+ * Helper to parse async descriptor from X-Treg-Async header or body.
+ */
+interface AsyncDescriptor {
+  poll_url?: string;
+  poll_path?: string;
+  status_path?: string;
+  final_statuses?: string[];
+  ttl_note?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * Execute a tool via Growth Engine (Treg) with optional async task polling.
  */
 export async function callGrowthTool(
   options: GrowthCallOptions,
@@ -232,6 +247,7 @@ export async function callGrowthTool(
   const headers: Record<string, string> = {
     "X-Treg-Token": token,
     Accept: "application/json",
+    ...options.extraHeaders,
   };
 
   if (options.customerId) {
@@ -254,7 +270,7 @@ export async function callGrowthTool(
     bodyPayload = JSON.stringify(options.data);
   }
 
-  const response = await fetch(url.toString(), {
+  let response = await fetch(url.toString(), {
     method,
     headers,
     body: bodyPayload,
@@ -280,6 +296,61 @@ export async function callGrowthTool(
     responseBody = await response.text().catch(() => null);
   }
 
+  // Handle async task polling (e.g. video-gen, image-gen, or async provider returning 202)
+  const asyncHeader = response.headers.get("X-Treg-Async");
+  let asyncDescriptor: AsyncDescriptor | undefined;
+  if (asyncHeader) {
+    try {
+      asyncDescriptor = JSON.parse(asyncHeader) as AsyncDescriptor;
+    } catch {
+      // ignore JSON parse error in header
+    }
+  }
+
+  if (options.awaitAsync && (response.status === 202 || asyncDescriptor)) {
+    const pollPath = asyncDescriptor?.poll_url || asyncDescriptor?.poll_path;
+    const finalStatuses = asyncDescriptor?.final_statuses || ["succeeded", "completed", "failed", "success", "error"];
+    const timeoutSeconds = options.asyncTimeoutSeconds || 180;
+    const startTime = Date.now();
+
+    if (pollPath) {
+      let isDone = false;
+      while (!isDone && (Date.now() - startTime) < timeoutSeconds * 1000) {
+        if (options.signal?.aborted) {
+          throw new DOMException("Aborted", "AbortError");
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+
+        const pollUrl = pollPath.startsWith("http")
+          ? pollPath
+          : new URL(pollPath, TREG_BASE_URL).toString();
+
+        const pollRes = await fetch(pollUrl, {
+          method: "GET",
+          headers: {
+            "X-Treg-Token": token,
+            Accept: "application/json",
+          },
+          signal: options.signal,
+        });
+
+        if (pollRes.ok) {
+          const pollData = (await pollRes.json().catch(() => null)) as Record<string, unknown> | null;
+          const currentStatus = String(
+            pollData?.status || pollData?.state || (pollData?.output as Record<string, unknown>)?.status || "",
+          ).toLowerCase();
+
+          if (finalStatuses.includes(currentStatus) || pollRes.status === 200) {
+            response = pollRes;
+            responseBody = pollData;
+            isDone = true;
+          }
+        }
+      }
+    }
+  }
+
   if (!response.ok) {
     const isTregError = response.headers.get("X-Treg-Error") === "1";
     let errorMessage: string;
@@ -301,6 +372,7 @@ export async function callGrowthTool(
       cached,
       replayed,
       domainMatch,
+      asyncDescriptor,
       data: responseBody,
       error: `[${isTregError ? "GrowthEngine" : "Provider"} ${response.status}] ${errorMessage}`,
     };
@@ -317,6 +389,107 @@ export async function callGrowthTool(
     cached,
     replayed,
     domainMatch,
+    asyncDescriptor,
     data: responseBody,
+  };
+}
+
+/**
+ * Submit feedback or report missing capabilities / catalog requests to Treg.
+ */
+export async function submitGrowthFeedback(params: {
+  category: "quality" | "pricing" | "friction" | "other";
+  message: string;
+  endpointId?: string;
+  callIds?: string[];
+  signal?: AbortSignal;
+}): Promise<{ success: boolean; feedbackId?: string; error?: string }> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("TREG_TOKEN environment variable is missing.");
+  }
+
+  const url = new URL("/feedback", TREG_BASE_URL);
+  const response = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      "X-Treg-Token": token,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      category: params.category,
+      message: params.message,
+      endpoint_id: params.endpointId,
+      call_ids: params.callIds,
+    }),
+    signal: params.signal,
+  });
+
+  const body = (await response.json().catch(() => null)) as {
+    feedback_id?: string;
+    error?: string;
+    message?: string;
+  } | null;
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: body?.message || body?.error || `Feedback submission failed (${response.status})`,
+    };
+  }
+
+  return {
+    success: true,
+    feedbackId: body?.feedback_id,
+  };
+}
+
+/**
+ * Get account balance and recent activity.
+ */
+export async function getGrowthBalance(signal?: AbortSignal): Promise<{
+  success: boolean;
+  balanceUsd?: number;
+  balanceMicro?: number;
+  data?: unknown;
+  error?: string;
+}> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("TREG_TOKEN environment variable is missing.");
+  }
+
+  const url = new URL("/balance", TREG_BASE_URL);
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "X-Treg-Token": token,
+      Accept: "application/json",
+    },
+    signal,
+  });
+
+  const body = (await response.json().catch(() => null)) as {
+    balance_micro?: number;
+    balance_usd?: number;
+    [key: string]: unknown;
+  } | null;
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: `Failed to fetch balance (${response.status})`,
+    };
+  }
+
+  const balanceMicro = body?.balance_micro;
+  const balanceUsd = body?.balance_usd ?? (balanceMicro !== undefined ? balanceMicro / 1_000_000 : undefined);
+
+  return {
+    success: true,
+    balanceMicro,
+    balanceUsd,
+    data: body,
   };
 }

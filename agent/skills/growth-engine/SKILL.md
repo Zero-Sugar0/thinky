@@ -1,6 +1,6 @@
 ---
 name: growth-engine
-description: Use Growth Engine tools (growth_search, growth_inspect, growth_call) to access 4,100+ endpoints across 123+ providers for B2B leads, prospect discovery, email and phone enrichment, SEO, SERP rankings, backlinks, company signals, social profiles, and web data.
+description: Use Growth Engine tools to access 4,100+ endpoints across 123+ providers for B2B leads, prospect discovery, email and phone enrichment, SEO, SERP rankings, backlinks, company signals, social profiles, and web data.
 ---
 
 # Growth Engine Skill
@@ -9,61 +9,45 @@ Growth Engine connects your agent to over 4,100 API endpoints across 123+ provid
 
 ## Available Tools
 
-1. **`growth_search`**: Search the tool catalog by the job you want done.
-   - Example queries:
-     - `"find leads by job title and company"`
-     - `"google serp organic search"`
-     - `"verify email address deliverability"`
-     - `"find backlinks for domain"`
-     - `"enrich company by domain"`
-     - `"tiktok profile and trends"`
-2. **`growth_inspect`**: Inspect an endpoint by its tool ID.
-   - Returns input parameters, pricing model, required vs. optional fields, and ready-to-use call templates.
-3. **`growth_call`**: Execute any tool endpoint.
-   - Accepts `toolId`, `method`, `query`, `data` (JSON body), optional `maxCostUsd` ceiling, and `idempotencyKey`.
-   - Returns execution data, HTTP status, provider info, and exact cost in USD (`costUsd`).
+### 1. Dynamic Exploration Hub (Any Capability)
+- **`growth_search`**: Search the tool catalog by the job you want done.
+  - Examples: `"find leads by job title"`, `"google serp organic"`, `"verify email"`, `"backlinks for domain"`, `"tiktok profile"`.
+- **`growth_inspect`**: Inspect an endpoint's schemas, parameters, pricing model, and ready-to-call examples.
+- **`growth_call`**: Execute any tool endpoint across providers or routed capabilities (`treg.<job>`). Supports `awaitAsync` for asynchronous generation tasks, cost ceilings (`maxCostUsd`), and `idempotencyKey`.
+- **`growth_request`**: Submit a feature request or feedback when a data capability is missing from the catalog.
+- **`growth_balance`**: Check available credits and recent billing status.
+
+### 2. Direct 1-Shot Action Tools (Instant Execution)
+- **`growth_find_leads`**: Find B2B prospects by job titles, industry, company domains, seniority, or geography.
+- **`growth_find_email`**: Find a verified business email by name and domain or LinkedIn URL.
+- **`growth_verify_email`**: Verify deliverability and mailbox existence before conducting outreach.
+- **`growth_enrich_company`**: Enrich company details (employee count, tech stack, funding, industry).
+- **`growth_serp`**: Fetch live Google SERP organic rankings for any query and country.
 
 ---
 
-## The Workflow: Search, Inspect, Call
+## The Workflow
 
-### Step 1: Search by the job, not the vendor
-Do not assume who provides what data. Search by the job:
-```json
-{
-  "query": "find email from name and company domain"
-}
-```
+### 1. For Standard Lookups
+Use the direct 1-shot tools:
+- Need leads? Use `growth_find_leads`.
+- Need a work email? Use `growth_find_email`.
+- Need to check an address? Use `growth_verify_email`.
+- Need company intel? Use `growth_enrich_company`.
+- Need search rankings? Use `growth_serp`.
 
-### Step 2: Inspect if inputs or prices are unfamiliar
-Call `growth_inspect` with the endpoint ID:
-```json
-{
-  "toolId": "treg.people.email.find"
-}
-```
-This shows what fields are accepted (e.g. `{ "first_name": "...", "last_name": "...", "domain": "..." }`) and whether it is a routed capability.
-
-### Step 3: Call the tool
-Call `growth_call` with the appropriate parameters:
-```json
-{
-  "toolId": "treg.people.email.find",
-  "method": "POST",
-  "data": {
-    "first_name": "Satya",
-    "last_name": "Nadella",
-    "domain": "microsoft.com"
-  }
-}
-```
+### 2. For Custom or Advanced Capabilities
+Use the dynamic hub:
+1. Search with `growth_search`: e.g. `{ "query": "reddit subreddit posts" }`
+2. Inspect if needed with `growth_inspect`: e.g. `{ "toolId": "scrapecreators.reddit.subreddit.posts" }`
+3. Execute with `growth_call`: e.g. `{ "toolId": "...", "query": { "subreddit": "saas" } }`
 
 ---
 
 ## Best Practices & Operating Rules
 
 ### 1. Prefer Routed Capabilities (`treg.<job>`)
-For standard tasks, prefer the routed capability over individual vendor endpoints:
+For standard tasks, prefer routed capabilities:
 - **People & Leads**: `treg.people.search`, `treg.people.email.find`, `treg.people.email.verify`, `treg.people.phone.find`
 - **Companies**: `treg.companies.search`, `treg.companies.enrich`, `treg.companies.similar`
 - **SEO & Search**: `treg.google.serp.organic`, `treg.google.serp.maps`, `treg.web.search`
@@ -73,7 +57,7 @@ Why? Routed capabilities try the team's key first, pick the cheapest and most re
 
 ### 2. Verify Contacts Before Recommending Outreach
 - An email found by a provider is an algorithmic match, not guaranteed deliverability.
-- If finding contacts, always run verification (`treg.people.email.verify`) or inspect `domainMatch` to confirm the mailbox actually matches the target company domain.
+- If finding contacts, always run verification (`growth_verify_email` or `verifyEmail: true`) or inspect `domainMatch` to confirm the mailbox actually matches the target company domain.
 
 ### 3. Cost & Budget Awareness
 - Always report the cost returned in `costUsd` to maintain transparency.
