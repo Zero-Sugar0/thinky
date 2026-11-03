@@ -48,31 +48,26 @@ export default defineEventHandler(async (event) => {
 
     let types: unknown[] = [];
     if (toolkit) {
-      try {
-        const active = await composio.triggers.listActive({ connectedAccountIds, showDisabled: true, limit: 50 });
-        activeTriggers = active?.items ?? [];
-      } catch (e) {
-        console.warn("[composio/triggers] failed to list active triggers", e);
-      }
-    }
-
-    let types: unknown[] = [];
-    if (typeof toolkit === "string" && toolkit.trim().length > 0) {
       const toolkitSlug = toolkit.trim();
       let cursor: string | undefined;
       const seenCursors = new Set<string>();
       do {
-        const response = await composio.triggers.listTypes({
-          toolkits: [toolkit],
-          limit: 50,
-          cursor,
-        });
-        types = types.concat(response.items ?? []);
-        const nextCursor = response.nextCursor ?? undefined;
-        if (nextCursor && seenCursors.has(nextCursor)) break;
-        if (nextCursor) seenCursors.add(nextCursor);
-        cursor = nextCursor;
-      } while (cursor && types.length < 1000);
+        try {
+          const response = await composio.triggers.listTypes({
+            toolkits: [toolkitSlug],
+            limit: 50,
+            cursor,
+          });
+          types = types.concat(response.items ?? []);
+          const nextCursor = response.nextCursor ?? undefined;
+          if (nextCursor && seenCursors.has(nextCursor)) break;
+          if (nextCursor) seenCursors.add(nextCursor);
+          cursor = nextCursor;
+        } catch (error) {
+          console.warn("[composio/triggers] failed to fetch trigger types for", toolkitSlug, error);
+          break;
+        }
+      } while (cursor && types.length < 500);
     }
 
     let selectedTypeDetail: unknown = null;
@@ -82,15 +77,6 @@ export default defineEventHandler(async (event) => {
       } catch {
         selectedTypeDetail = null;
       }
-        try {
-          const response = await composio.triggers.listTypes({ toolkits: [toolkitSlug], limit: 50, cursor });
-          types = types.concat(response?.items ?? []);
-          cursor = response?.nextCursor ?? undefined;
-        } catch (e) {
-          console.warn("[composio/triggers] failed to fetch trigger types for", toolkitSlug, e);
-          break;
-        }
-      } while (cursor && types.length < 500);
     }
 
     return {
