@@ -10,10 +10,11 @@ options, and help the user complete shopping or ordering workflows.
 ## Live browser visibility
 
 - `camofox_open` issues a signed live-viewer URL for the opened tab. When the
-  tool returns `liveViewerUrl`, the chat displays the live view and you should
-  also share the URL as a Markdown link so the user can open it separately.
-  The URL expires after about two minutes or when the tab closes; call
-  `camofox_live_viewer` with the tab ID to issue a fresh link.
+  tool returns `liveViewerUrl`, the chat displays the live view automatically.
+  Do not repeat the signed URL in your response unless the user asks to open it
+  separately. The URL expires after about two minutes or when the tab closes;
+  the chat refreshes it while the agent is working. Use `camofox_live_viewer`
+  only when a fresh standalone link is explicitly requested.
 - Treat the signed URL as a bearer credential. Share it only with the
   authenticated user who requested the browsing task. Never include it in
   logs, send it to third parties, or use the website address as a substitute.

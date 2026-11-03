@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { createCamofoxUserId } from "../shared/utils/camofox-identity.ts";
 import {
   camofoxPostBody,
   camofoxRequest,
@@ -18,6 +19,7 @@ test("Camofox identities are stable, opaque, and distinct per authenticated user
   assert.notEqual(first, second);
   assert.match(first, /^thinky_[a-f0-9]{64}$/);
   assert.ok(!first.includes("user-1"));
+  assert.equal(first, createCamofoxUserId("user-1", process.env.BETTER_AUTH_URL));
 });
 
 test("Camofox refuses absent and non-user identities", () => {

@@ -67,8 +67,9 @@ const showThinking = computed(
 
     <template v-else-if="isToolUIPart(part) || isDynamicToolUIPart(part)">
       <ChatToolCamofoxLiveView
-        v-if="getToolName(part) === 'camofox_open' || getToolName(part) === 'camofox_live_viewer'"
+        v-if="getToolName(part) === 'camofox_open'"
         :invocation="part as CamofoxOpenUIToolInvocation"
+        :active="Boolean(isLast && isBusy)"
       />
       <ChatToolCamofoxScreenshot
         v-if="getToolName(part) === 'camofox_screenshot'"

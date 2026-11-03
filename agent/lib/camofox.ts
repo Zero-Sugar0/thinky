@@ -1,3 +1,4 @@
+//think/agent/lib/camofox.ts
 import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 import { z } from "zod";

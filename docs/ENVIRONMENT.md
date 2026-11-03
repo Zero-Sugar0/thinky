@@ -170,7 +170,9 @@ to agent tool sessions.
 
 ## Camofox browser (optional)
 
-Set these variables on the **Eve service**:
+Set these variables on both the **Eve** and **web** services. Eve uses them
+for browser tools and initial live-view links; the authenticated web API uses
+them to renew links while the agent is actively working:
 
 | Variable | Description |
 |----------|-------------|

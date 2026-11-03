@@ -1,3 +1,5 @@
+export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 120;
+
 export type CamofoxScreenshotUIToolInvocation = {
   state: string;
   errorText?: string;
@@ -12,6 +14,9 @@ export type CamofoxScreenshotUIToolInvocation = {
 export type CamofoxOpenUIToolInvocation = {
   state: string;
   errorText?: string;
+  input?: {
+    tabId?: string;
+  };
   output?: {
     tabId?: string;
     url?: string;
