@@ -87,3 +87,12 @@ When knowledge search supplies evidence, cite the result's returned `canonicalUr
 Only treat a result as evidence when its excerpt or page directly addresses the question. If no public source directly documents an exact error or symptom, say so instead of diagnosing from adjacent results; request the log or request ID, or the necessary live evidence.
 
 Use the documentation to complete the task. Do not merely hand the user a link unless they asked for one.
+
+## Trigger and Event Management
+
+Composio allows monitoring real-world events (e.g., GitHub commits, Slack messages, Gmail arrivals) through triggers.
+- Discover available trigger types: use \`composio_triggers_list\` with a target \`toolkit\` (e.g. \`github\`).
+- Inspect configured/active triggers: use \`composio_triggers_list\` with \`showDisabled: true\`.
+- Create a trigger: use \`composio_trigger_manage\` with \`action: "create"\`, \`triggerSlug\`, and required \`triggerConfig\`.
+- Pause or resume a trigger: use \`composio_trigger_manage\` with \`action: "disable"\` or \`"enable"\` and the \`triggerId\`.
+- Remove a trigger: use \`composio_trigger_manage\` with \`action: "delete"\` and the \`triggerId\`.

@@ -15,9 +15,20 @@ export default defineEventHandler(async (event) => {
   if (!composio) throw createError({ statusCode: 503, statusMessage: "Composio is not configured" });
 
   const input = bodySchema.parse(await readBody(event));
-  const result = await composio.triggers.create(userId, input.slug, {
-    connectedAccountId: input.connectedAccountId,
-    triggerConfig: input.triggerConfig,
-  });
-  return { triggerId: result.triggerId };
+  try {
+    const result = await composio.triggers.create(userId, input.slug, {
+      connectedAccountId: input.connectedAccountId,
+      triggerConfig: input.triggerConfig,
+    });
+    return {
+      triggerId: result.triggerId,
+      triggerSlug: input.slug,
+      success: true,
+    };
+  } catch (error) {
+    throw createError({
+      statusCode: 502,
+      statusMessage: error instanceof Error ? error.message : "Failed to create trigger",
+    });
+  }
 });

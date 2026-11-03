@@ -6,17 +6,34 @@ export default defineEventHandler(async (event) => {
   if (!composio) throw createError({ statusCode: 503, statusMessage: "Composio is not configured" });
 
   try {
-    const parsed = await composio.triggers.parse(toWebRequest(event), {
+    const webRequest = toWebRequest(event);
+    const parsed = await composio.triggers.parse(webRequest, {
       verifySecret: process.env.COMPOSIO_WEBHOOK_SECRET,
     });
-    const payload = parsed.payload as { triggerSlug?: string; triggerId?: string; userId?: string; payload?: unknown };
+
+    const version = parsed.version;
+    const normalizedPayload = parsed.payload;
+    const rawPayload = parsed.rawPayload;
+
     console.info("[composio] trigger received", {
-      triggerSlug: payload.triggerSlug,
-      triggerId: payload.triggerId,
-      userId: payload.userId,
+      version,
+      triggerSlug: normalizedPayload.triggerSlug,
+      triggerId: normalizedPayload.id,
+      userId: normalizedPayload.userId,
+      toolkitSlug: normalizedPayload.toolkitSlug,
+      timestamp: (rawPayload as { timestamp?: string })?.timestamp,
     });
-    return { received: true };
+
+    // Handle trigger event dispatch or processing here
+    return {
+      received: true,
+      triggerSlug: normalizedPayload.triggerSlug,
+      triggerId: normalizedPayload.id,
+    };
   } catch (error) {
-    throw createError({ statusCode: 401, statusMessage: error instanceof Error ? error.message : "Invalid Composio webhook" });
+    throw createError({
+      statusCode: 401,
+      statusMessage: error instanceof Error ? error.message : "Invalid Composio webhook",
+    });
   }
 });
