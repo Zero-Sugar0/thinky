@@ -5,6 +5,8 @@ import {
   searchGrowthCatalog,
   inspectGrowthEndpoint,
   callGrowthTool,
+  submitGrowthFeedback,
+  getGrowthBalance,
 } from "../agent/lib/growth-engine.ts";
 
 test("sanitizeMetaValue cleans customer tag values according to treg specs", () => {
@@ -148,6 +150,103 @@ test("callGrowthTool passes customer meta, ceiling headers, and extracts costMic
       last_name: "Nadella",
       domain: "microsoft.com",
     });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("callGrowthTool handles async task polling with awaitAsync", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let callCount = 0;
+
+  globalThis.fetch = async () => {
+    callCount++;
+    if (callCount === 1) {
+      return new Response(JSON.stringify({ status: "processing", task_id: "t_1" }), {
+        status: 202,
+        headers: {
+          "content-type": "application/json",
+          "x-treg-async": JSON.stringify({ poll_url: "https://treg.to/tasks/t_1", final_statuses: ["completed"] }),
+        },
+      });
+    }
+
+    return new Response(JSON.stringify({ status: "completed", video_url: "https://cdn.example.com/video.mp4" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const result = await callGrowthTool({
+      toolId: "minimax.video-gen.h3.generate",
+      data: { prompt: "sunset over ocean" },
+      awaitAsync: true,
+      asyncTimeoutSeconds: 10,
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(result.httpStatus, 200);
+    assert.deepEqual(result.data, { status: "completed", video_url: "https://cdn.example.com/video.mp4" });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("submitGrowthFeedback posts category and message to /feedback", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let capturedBody;
+
+  globalThis.fetch = async (_url, init) => {
+    capturedBody = JSON.parse(init?.body || "{}");
+    return new Response(JSON.stringify({ feedback_id: "fb_123", status: "received" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const res = await submitGrowthFeedback({
+      category: "other",
+      message: "Need Crunchbase API in catalog",
+    });
+
+    assert.equal(res.success, true);
+    assert.equal(res.feedbackId, "fb_123");
+    assert.equal(capturedBody.category, "other");
+    assert.equal(capturedBody.message, "Need Crunchbase API in catalog");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("getGrowthBalance fetches credit balance", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => {
+    return new Response(JSON.stringify({ balance_micro: 5000000, balance_usd: 5.0 }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const res = await getGrowthBalance();
+    assert.equal(res.success, true);
+    assert.equal(res.balanceUsd, 5.0);
+    assert.equal(res.balanceMicro, 5000000);
   } finally {
     globalThis.fetch = originalFetch;
     if (prevToken === undefined) delete process.env.TREG_TOKEN;

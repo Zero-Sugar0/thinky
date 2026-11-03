@@ -32,6 +32,17 @@ export default defineTool({
       .string()
       .optional()
       .describe("Optional unique idempotency key to prevent paying twice on retries (cached for 24h)."),
+    awaitAsync: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe("If true, automatically polls asynchronous generation tasks (video-gen, image-gen, 202 status) until completion."),
+    asyncTimeoutSeconds: z
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .describe("Maximum seconds to wait for asynchronous polling (default 180s)."),
   }),
   outputSchema: z.object({
     success: z.boolean(),
@@ -47,7 +58,7 @@ export default defineTool({
     data: z.unknown().optional(),
     error: z.string().optional(),
   }),
-  async execute({ toolId, method, query, data, maxCostUsd, idempotencyKey }, ctx) {
+  async execute({ toolId, method, query, data, maxCostUsd, idempotencyKey, awaitAsync, asyncTimeoutSeconds }, ctx) {
     try {
       const customerId = ctx.session?.auth?.current?.principalId;
 
@@ -58,6 +69,8 @@ export default defineTool({
         data,
         maxCostUsd,
         idempotencyKey,
+        awaitAsync,
+        asyncTimeoutSeconds,
         customerId,
         signal: ctx.abortSignal,
       });
