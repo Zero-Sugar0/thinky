@@ -212,6 +212,12 @@ without a key, `/tabs?userId=test` rejects a missing key with 401, and the same
 request succeeds with the configured key. To smoke-test browser actions, run
 `node scripts/test-camofox.mjs`; it opens a temporary tab, navigates to
 `https://example.com`, takes a snapshot, then closes the tab and session.
+To test a single search macro, add its name, for example
+`node scripts/test-camofox.mjs --macro @google_search`. To test every supported
+macro, run `node scripts/test-camofox.mjs --macros`. Macro tests use a fresh
+temporary tab per macro and verify that navigation reaches a different URL
+with a readable snapshot. The request timeout defaults to 30 seconds; adjust
+it with `--timeout-ms 60000` if needed.
 
 To probe the noVNC viewer, set `CAMOFOX_NOVNC_URL` to the separate Railway
 public domain for port 6080, then run `node scripts/test-camofox-vnc.mjs`.
