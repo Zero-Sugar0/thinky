@@ -26,8 +26,12 @@ export default defineEventHandler(async (event) => {
 
     let types: unknown[] = [];
     if (typeof toolkit === "string" && toolkit.length > 0) {
-      const response = await composio.triggers.listTypes({ toolkits: [toolkit], limit: 50 });
-      types = response.items;
+      let cursor: string | undefined;
+      do {
+        const response = await composio.triggers.listTypes({ toolkits: [toolkit], limit: 50, cursor });
+        types = types.concat(response.items ?? []);
+        cursor = response.nextCursor ?? undefined;
+      } while (cursor && types.length < 2000);
     }
 
     return {
