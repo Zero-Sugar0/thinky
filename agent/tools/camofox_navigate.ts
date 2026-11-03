@@ -1,3 +1,4 @@
+//agent/tools/camofox_navigate.ts
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import {
@@ -11,22 +12,40 @@ import {
   validateCamofoxTargetUrl,
 } from "../lib/camofox.js";
 
+const MACRO_NAMES = [
+  "@google_search",
+  "@youtube_search",
+  "@amazon_search",
+  "@reddit_search",
+  "@reddit_subreddit",
+  "@wikipedia_search",
+  "@twitter_search",
+  "@yelp_search",
+  "@spotify_search",
+  "@netflix_search",
+  "@linkedin_search",
+  "@instagram_search",
+  "@tiktok_search",
+  "@twitch_search",
+] as const;
+
 const NavigateSchema = z
   .object({
     tabId: CamofoxTabIdSchema,
     url: z.string().url().optional(),
-    macro: z.string().regex(/^@[a-z][a-z0-9_]{0,63}$/).optional(),
+    macro: z.enum(MACRO_NAMES).optional(),
     query: z.string().trim().min(1).max(500).optional(),
   })
   .refine((value) => {
     const usingUrl = value.url !== undefined;
     const usingMacro = value.macro !== undefined && value.query !== undefined;
-    return usingUrl !== usingMacro;
+    const macroAndQueryPaired = (value.macro === undefined) === (value.query === undefined);
+    return usingUrl !== usingMacro && macroAndQueryPaired;
   });
 
 export default defineTool({
   description:
-    "Navigate one of the current user's browser tabs to a public HTTPS URL or search macro. Do not use this to bypass site access controls or protections.",
+    "Navigate one of the current user's browser tabs to a public HTTPS URL, or run a search macro with a query. Macros: @google_search, @youtube_search, @amazon_search, @reddit_search (JSON), @reddit_subreddit (pass the subreddit name as query, JSON), @wikipedia_search, @twitter_search, @yelp_search, @spotify_search, @netflix_search, @linkedin_search, @instagram_search, @tiktok_search, @twitch_search. Macros only load the search page; call camofox_snapshot afterwards to read results. Do not use this to bypass site access controls or protections.",
   inputSchema: NavigateSchema,
   outputSchema: CamofoxActionSchema,
   async execute({ tabId, url, macro, query }, ctx) {

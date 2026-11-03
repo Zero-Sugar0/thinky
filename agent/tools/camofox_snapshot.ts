@@ -1,3 +1,4 @@
+//agent/tools/camofox_snapshot.ts
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import {

@@ -1,3 +1,4 @@
+//agent/tools/camofox_close.ts
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import {
