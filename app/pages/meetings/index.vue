@@ -86,13 +86,13 @@ function getStatusBadgeColor(st: string) {
     </template>
 
     <template #body>
-      <div class="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
-        <div class="flex items-center justify-between">
+      <div class="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl mx-auto pt-[calc(var(--ui-header-height,3.5rem)+1rem)] sm:pt-6">
+        <div class="flex items-center justify-between gap-2">
           <div>
-            <h1 class="text-2xl font-bold text-highlighted">
+            <h1 class="text-lg sm:text-xl font-semibold text-highlighted">
               Meeting Notetaker
             </h1>
-            <p class="text-sm text-muted">
+            <p class="text-xs sm:text-sm text-muted">
               AI meeting bot calls, recordings, and speaker-attributed transcripts.
             </p>
           </div>
