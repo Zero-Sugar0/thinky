@@ -19,12 +19,6 @@ import xml from "@shikijs/langs/xml";
 import toml from "@shikijs/langs/toml";
 import graphql from "@shikijs/langs/graphql";
 import SourceLink from "./SourceLink.vue";
-import TableRenderer from "./TableRenderer.vue";
-import ProseThead from "../prose/Thead.vue";
-import ProseTbody from "../prose/Tbody.vue";
-import ProseTr from "../prose/Tr.vue";
-import ProseTh from "../prose/Th.vue";
-import ProseTd from "../prose/Td.vue";
 
 export default defineMarkdownComponent({
   name: "ChatComark",
@@ -56,12 +50,6 @@ export default defineMarkdownComponent({
   components: {
     math: Math,
     "source-link": SourceLink,
-    table: TableRenderer,
-    thead: ProseThead,
-    tbody: ProseTbody,
-    tr: ProseTr,
-    th: ProseTh,
-    td: ProseTd,
   },
   class: "*:first:mt-0 *:last:mb-0",
 });

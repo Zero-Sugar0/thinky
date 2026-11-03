@@ -25,28 +25,5 @@ export default defineAppConfig({
         size: "sm",
       },
     },
-    chatReasoning: {
-      slots: {
-        trigger: "group flex w-full items-center gap-1.5 text-muted text-xs disabled:cursor-default disabled:hover:text-muted hover:text-default rounded-sm outline-primary/25 focus-visible:outline-3 min-w-0 transition-colors py-0.5",
-        leading: "relative size-3.5 shrink-0",
-        leadingIcon: "size-3.5 shrink-0",
-        chevronIcon: "size-3.5 shrink-0",
-        trailingIcon: "size-3.5 shrink-0",
-        label: "truncate font-normal",
-        body: "max-h-[220px] pt-1.5 overflow-y-auto text-xs text-dimmed whitespace-pre-wrap focus:outline-none",
-      },
-    },
-    chatTool: {
-      slots: {
-        trigger: "group flex w-full items-center gap-1.5 text-muted text-xs disabled:cursor-default disabled:hover:text-muted hover:text-default min-w-0 transition-colors py-0.5",
-        leading: "relative size-3.5 shrink-0",
-        leadingIcon: "size-3.5 shrink-0",
-        chevronIcon: "size-3.5 shrink-0",
-        trailingIcon: "size-3.5 shrink-0",
-        label: "truncate font-normal",
-        suffix: "text-dimmed ms-1 text-[11px]",
-        body: "text-xs text-dimmed whitespace-pre-wrap",
-      },
-    },
   },
 });
