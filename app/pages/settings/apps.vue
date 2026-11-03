@@ -17,6 +17,13 @@ const failedLogos = ref<Record<string, boolean>>({});
 const connectingSlug = ref<string | null>(null);
 const disconnectingId = ref<string | null>(null);
 const appToDisconnect = ref<ComposioAppSummary | null>(null);
+const triggerToolkit = ref<ComposioAppSummary | undefined>();
+const triggerSlug = ref("");
+const triggerConfig = ref("{}");
+const triggerTypes = ref<Array<{ slug?: string; name?: string; description?: string }>>([]);
+const activeTriggers = ref<Array<{ id?: string; triggerId?: string; triggerName?: string; triggerSlug?: string; disabledAt?: string | null }>>([]);
+const triggerPending = ref(false);
+const triggerLoading = ref(false);
 
 // Pagination
 const currentPage = ref(1);
@@ -120,6 +127,57 @@ async function connectApp(app: ComposioAppSummary) {
   } finally {
     connectingSlug.value = null;
   }
+}
+
+async function loadTriggers(toolkit?: string) {
+  triggerLoading.value = true;
+  try {
+    const response = await $fetch<{ triggers: typeof activeTriggers.value; types: typeof triggerTypes.value }>("/api/composio/triggers", {
+      query: toolkit ? { toolkit } : undefined,
+    });
+    activeTriggers.value = response.triggers ?? [];
+    if (toolkit) triggerTypes.value = response.types ?? [];
+  } catch (err) {
+    toast.add({ title: "Could not load triggers", description: err instanceof Error ? err.message : "Try again later", color: "error" });
+  } finally {
+    triggerLoading.value = false;
+  }
+}
+
+async function createTrigger() {
+  if (!triggerToolkit.value || !triggerSlug.value) return;
+  let config: Record<string, unknown>;
+  try {
+    config = JSON.parse(triggerConfig.value || "{}");
+  } catch {
+    toast.add({ title: "Invalid trigger configuration", description: "Use a valid JSON object.", color: "error" });
+    return;
+  }
+  triggerPending.value = true;
+  try {
+    await $fetch("/api/composio/triggers", { method: "POST", body: { slug: triggerSlug.value, triggerConfig: config, connectedAccountId: triggerToolkit.value.connectedAccountId } });
+    toast.add({ title: "Trigger enabled", description: "Thinky will receive matching events.", color: "success" });
+    triggerSlug.value = "";
+    await loadTriggers();
+  } catch (err) {
+    toast.add({ title: "Could not enable trigger", description: err instanceof Error ? err.message : "Try again later", color: "error" });
+  } finally {
+    triggerPending.value = false;
+  }
+}
+
+async function toggleTrigger(trigger: typeof activeTriggers.value[number]) {
+  const id = trigger.id ?? trigger.triggerId;
+  if (!id) return;
+  await $fetch(`/api/composio/triggers/${id}`, { method: "PATCH", body: { enabled: Boolean(trigger.disabledAt) } });
+  await loadTriggers();
+}
+
+async function removeTrigger(trigger: typeof activeTriggers.value[number]) {
+  const id = trigger.id ?? trigger.triggerId;
+  if (!id) return;
+  await $fetch(`/api/composio/triggers/${id}`, { method: "DELETE" });
+  await loadTriggers();
 }
 
 async function confirmDisconnect() {
@@ -382,6 +440,83 @@ onMounted(async () => {
                   </div>
                 </template>
               </template>
+            </SettingsSection>
+
+            <SettingsSection
+              title="Events & Triggers"
+              description="Choose which events connected apps can send to Thinky."
+            >
+              <template #actions>
+                <UButton
+                  color="neutral"
+                  variant="ghost"
+                  size="xs"
+                  icon="i-lucide-refresh-cw"
+                  :loading="triggerLoading"
+                  aria-label="Refresh triggers"
+                  @click="loadTriggers()"
+                />
+              </template>
+
+              <div class="space-y-3 px-3 py-3 sm:px-4">
+                <div class="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <USelectMenu
+                    v-model="triggerToolkit"
+                    :items="apps.filter(app => app.isConnected)"
+                    label-key="name"
+                    placeholder="Choose a connected app"
+                    size="sm"
+                    @update:model-value="(app) => { triggerToolkit = app; loadTriggers(app?.slug); }"
+                  />
+                  <UButton
+                    color="primary"
+                    variant="soft"
+                    size="sm"
+                    icon="i-lucide-plus"
+                    :disabled="!triggerToolkit"
+                    @click="triggerSlug = triggerTypes[0]?.slug ?? ''"
+                  >
+                    Add event
+                  </UButton>
+                </div>
+
+                <div v-if="triggerToolkit" class="space-y-2 rounded-lg border border-default bg-elevated/40 p-3">
+                  <USelectMenu
+                    v-model="triggerSlug"
+                    :items="triggerTypes.map(type => ({ label: type.name || type.slug || '', value: type.slug || '' }))"
+                    value-key="value"
+                    placeholder="Select an event type"
+                    size="sm"
+                  />
+                  <UTextarea
+                    v-model="triggerConfig"
+                    :rows="3"
+                    size="sm"
+                    class="font-mono text-xs"
+                    placeholder='Trigger configuration JSON, e.g. {"owner":"acme","repo":"thinky"}'
+                  />
+                  <UButton color="primary" size="sm" :loading="triggerPending" :disabled="!triggerSlug" @click="createTrigger">
+                    Enable event
+                  </UButton>
+                </div>
+
+                <div v-if="activeTriggers.length" class="divide-y divide-default rounded-lg border border-default">
+                  <div v-for="trigger in activeTriggers" :key="trigger.id || trigger.triggerId" class="flex items-center gap-3 px-3 py-2.5">
+                    <div class="min-w-0 flex-1">
+                      <p class="truncate text-xs font-medium text-highlighted">{{ trigger.triggerName || trigger.triggerSlug || 'Event trigger' }}</p>
+                      <p class="truncate text-[11px] text-muted">{{ trigger.id || trigger.triggerId }}</p>
+                    </div>
+                    <UBadge :color="trigger.disabledAt ? 'neutral' : 'success'" variant="subtle" size="sm">
+                      {{ trigger.disabledAt ? 'Paused' : 'Live' }}
+                    </UBadge>
+                    <UButton color="neutral" variant="ghost" size="xs" :icon="trigger.disabledAt ? 'i-lucide-play' : 'i-lucide-pause'" :aria-label="trigger.disabledAt ? 'Enable trigger' : 'Pause trigger'" @click="toggleTrigger(trigger)" />
+                    <UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2" aria-label="Delete trigger" @click="removeTrigger(trigger)" />
+                  </div>
+                </div>
+                <p v-else class="rounded-lg border border-dashed border-default px-3 py-4 text-center text-xs text-muted">
+                  No event triggers are enabled yet.
+                </p>
+              </div>
             </SettingsSection>
           </div>
         </div>
