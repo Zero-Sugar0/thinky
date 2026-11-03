@@ -15,8 +15,9 @@ const triggers = ref<TriggerRecord[]>([]);
 const loading = ref(false);
 const saving = ref(false);
 
-const connectedApps = computed(() => (data.value?.apps ?? []).filter(app => app.isConnected));
-const unconnectedApps = computed(() => (data.value?.apps ?? []).filter(app => !app.isConnected));
+const allApps = computed(() => data.value?.apps ?? []);
+const connectedApps = computed(() => allApps.value.filter(app => app.isConnected));
+const unconnectedApps = computed(() => allApps.value.filter(app => !app.isConnected));
 
 async function loadApp(app?: ComposioAppSummary) {
   selectedApp.value = app;
@@ -71,15 +72,15 @@ async function deleteTrigger(trigger: TriggerRecord) {
         <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">Connected apps</p>
         <UButton size="xs" color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="pending" aria-label="Refresh apps" @click="() => refresh()" />
       </div>
-      <div class="space-y-1 rounded-xl border border-default bg-elevated/20 p-1.5">
-        <button v-for="app in connectedApps" :key="app.slug" type="button" class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors" :class="selectedApp?.slug === app.slug ? 'bg-primary/10 text-highlighted' : 'text-toned hover:bg-muted/10'" @click="loadApp(app)">
+      <div class="max-h-[28rem] space-y-1 overflow-y-auto rounded-xl border border-default bg-elevated/20 p-1.5">
+        <button v-for="app in allApps" :key="app.slug" type="button" class="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-50" :class="selectedApp?.slug === app.slug ? 'bg-primary/10 text-highlighted' : 'text-toned hover:bg-muted/10'" :disabled="!app.isConnected" @click="loadApp(app)">
           <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-default bg-default"><img v-if="app.logo" :src="app.logo" :alt="app.name" class="size-5 object-contain"><UIcon v-else :name="app.icon || 'i-lucide-box'" class="size-4" /></span>
           <span class="min-w-0 flex-1 truncate text-xs font-medium">{{ app.name }}</span>
-          <UIcon name="i-lucide-chevron-right" class="size-3.5 text-muted" />
+          <UBadge v-if="app.isConnected" color="success" variant="subtle" size="xs">Ready</UBadge><UBadge v-else color="neutral" variant="subtle" size="xs">Connect</UBadge>
         </button>
-        <p v-if="!connectedApps.length" class="px-2.5 py-5 text-center text-xs text-muted">Connect an app first to enable its events.</p>
+        <p v-if="error" class="px-2.5 py-5 text-center text-xs text-error">Unable to load the app catalog. Refresh to try again.</p><p v-else-if="!allApps.length" class="px-2.5 py-5 text-center text-xs text-muted">No apps are available yet.</p>
       </div>
-      <p v-if="unconnectedApps.length" class="px-1 text-[11px] leading-5 text-muted">{{ unconnectedApps.length }} available apps are not connected yet. Connect them from the Apps tab before enabling events.</p>
+      <p v-if="unconnectedApps.length" class="px-1 text-[11px] leading-5 text-muted">{{ unconnectedApps.length }} apps are shown but locked until connected. Connect them from the Apps tab before enabling events.</p>
     </aside>
 
     <section class="min-w-0">
