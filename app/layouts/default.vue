@@ -88,6 +88,11 @@ defineShortcuts({
               onSelect: () => startNewChat(),
             },
             {
+              label: 'Meetings',
+              icon: 'i-lucide-video',
+              to: '/meetings',
+            },
+            {
               label: 'Search',
               icon: 'i-lucide-search',
               kbds: ['meta', 'k'],

@@ -1,4 +1,9 @@
-import { createAsyncTranscript, verifyRequestFromRecall } from "~~/agent/lib/recall";
+import { eq } from "drizzle-orm";
+import {
+  createAsyncTranscript,
+  downloadAndFormatTranscript,
+  verifyRequestFromRecall,
+} from "~~/agent/lib/recall";
 
 /**
  * Recall.ai Webhook Handler
@@ -46,10 +51,25 @@ export default defineEventHandler(async (event) => {
   if (payload) {
     const backgroundTask = async () => {
       try {
+        const { db, schema } = await import("@nuxthub/db");
+
         if (eventType === "recording.done") {
           const data = payload?.data as Record<string, unknown> | undefined;
           const recording = data?.recording as Record<string, unknown> | undefined;
+          const bot = data?.bot as Record<string, unknown> | undefined;
           const recordingId = recording?.id as string | undefined;
+          const botId = bot?.id as string | undefined;
+
+          if (botId) {
+            await db
+              .update(schema.meetings)
+              .set({
+                status: "recording_done",
+                recordingId,
+              })
+              .where(eq(schema.meetings.botId, botId))
+              .catch((err: unknown) => console.error("[recall-webhook] DB update failed:", err));
+          }
 
           if (recordingId) {
             console.info(`[recall-webhook] Requesting post-meeting transcript for recording: ${recordingId}`);
@@ -58,9 +78,54 @@ export default defineEventHandler(async (event) => {
         } else if (eventType === "transcript.done") {
           const data = payload?.data as Record<string, unknown> | undefined;
           const transcript = data?.transcript as Record<string, unknown> | undefined;
-          console.info(`[recall-webhook] Transcript ready: ${transcript?.id}`);
+          const bot = data?.bot as Record<string, unknown> | undefined;
+          const botId = bot?.id as string | undefined;
+          const transcriptId = transcript?.id as string | undefined;
+
+          console.info(`[recall-webhook] Transcript ready: ${transcriptId} for bot: ${botId}`);
+
+          if (botId) {
+            const dataObj = data?.data as Record<string, unknown> | undefined;
+            const downloadUrl = (dataObj?.download_url || transcript?.download_url) as string | undefined;
+
+            if (downloadUrl) {
+              const formatted = await downloadAndFormatTranscript(downloadUrl).catch(() => null);
+              if (formatted) {
+                await db
+                  .update(schema.meetings)
+                  .set({
+                    status: "done",
+                    transcriptId,
+                    transcriptText: formatted.fullText,
+                    transcriptData: formatted.readable,
+                  })
+                  .where(eq(schema.meetings.botId, botId))
+                  .catch((err: unknown) => console.error("[recall-webhook] DB transcript update failed:", err));
+              }
+            } else {
+              await db
+                .update(schema.meetings)
+                .set({
+                  status: "done",
+                  transcriptId,
+                })
+                .where(eq(schema.meetings.botId, botId))
+                .catch((err: unknown) => console.error("[recall-webhook] DB status update failed:", err));
+            }
+          }
         } else if (eventType.startsWith("bot.")) {
-          console.info(`[recall-webhook] Bot status update: ${eventType}`);
+          const data = payload?.data as Record<string, unknown> | undefined;
+          const bot = data?.bot as Record<string, unknown> | undefined;
+          const botId = (bot?.id || data?.bot_id) as string | undefined;
+          const status = eventType.replace("bot.", "");
+
+          if (botId) {
+            await db
+              .update(schema.meetings)
+              .set({ status })
+              .where(eq(schema.meetings.botId, botId))
+              .catch(() => null);
+          }
         }
       } catch (bgError) {
         console.error("[recall-webhook] Background processing error:", bgError);
