@@ -132,7 +132,7 @@ const showThinking = computed(
     <template v-else-if="isTextUIPart(part)">
       <div
         v-if="message.role === 'assistant'"
-        class="relative min-w-0 text-sm leading-6 text-default [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary [&_code]:text-[0.9em]"
+        class="chat-prose relative min-w-0 text-xs sm:text-[13px] leading-5 sm:leading-[1.45rem] text-default [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary [&_code]:text-[0.85em]"
       >
         <ChatComark
           :key="isPartStreaming(part) ? `${message.id}-text-${part.text.length}` : `${message.id}-text-${index}`"
@@ -145,12 +145,18 @@ const showThinking = computed(
           aria-hidden="true"
         />
       </div>
-      <p
+      <div
         v-else
-        class="ml-auto max-w-full whitespace-pre-wrap text-right text-sm leading-5 [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+        class="ml-auto flex w-full justify-end"
       >
-        {{ part.text }}
-      </p>
+        <div
+          class="inline-block max-w-[85%] rounded-2xl rounded-tr-sm border border-default bg-elevated/70 px-3.5 py-2 text-xs sm:text-[13px] leading-5 text-highlighted shadow-xs [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+        >
+          <p class="whitespace-pre-wrap">
+            {{ part.text }}
+          </p>
+        </div>
+      </div>
     </template>
   </template>
 </template>

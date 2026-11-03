@@ -17,10 +17,15 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const accounts = await composio.connectedAccounts.list({ userIds: [userId] });
-    const connectedAccountIds = accounts.items
-      .filter((account) => account.status === "ACTIVE" && !account.isDisabled)
-      .map((account) => account.id);
+    let connectedAccountIds: string[] = [];
+    try {
+      const accounts = await composio.connectedAccounts.list({ userIds: [userId] });
+      connectedAccountIds = (accounts?.items ?? [])
+        .filter((account) => account.status === "ACTIVE" && !account.isDisabled)
+        .map((account) => account.id);
+    } catch (e) {
+      console.warn("[composio/triggers] failed to list connected accounts", e);
+    }
 
     let activeTriggers: unknown[] = [];
     if (connectedAccountIds.length > 0) {
@@ -43,6 +48,17 @@ export default defineEventHandler(async (event) => {
 
     let types: unknown[] = [];
     if (toolkit) {
+      try {
+        const active = await composio.triggers.listActive({ connectedAccountIds, showDisabled: true, limit: 50 });
+        activeTriggers = active?.items ?? [];
+      } catch (e) {
+        console.warn("[composio/triggers] failed to list active triggers", e);
+      }
+    }
+
+    let types: unknown[] = [];
+    if (typeof toolkit === "string" && toolkit.trim().length > 0) {
+      const toolkitSlug = toolkit.trim();
       let cursor: string | undefined;
       const seenCursors = new Set<string>();
       do {
@@ -66,6 +82,15 @@ export default defineEventHandler(async (event) => {
       } catch {
         selectedTypeDetail = null;
       }
+        try {
+          const response = await composio.triggers.listTypes({ toolkits: [toolkitSlug], limit: 50, cursor });
+          types = types.concat(response?.items ?? []);
+          cursor = response?.nextCursor ?? undefined;
+        } catch (e) {
+          console.warn("[composio/triggers] failed to fetch trigger types for", toolkitSlug, e);
+          break;
+        }
+      } while (cursor && types.length < 500);
     }
 
     return {
