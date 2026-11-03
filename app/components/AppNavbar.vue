@@ -14,10 +14,6 @@ import { startNewChat } from "~/composables/chat/navigation";
     <template #right>
       <slot />
 
-      <UserMenu />
-
-      <UColorModeButton />
-
       <UButton
         color="neutral"
         variant="ghost"

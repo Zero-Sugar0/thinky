@@ -5,6 +5,7 @@ const items = [
   { label: "Profile", to: "/settings/profile", icon: "i-lucide-user-round" },
   { label: "Integrations", to: "/settings/integrations", icon: "i-lucide-plug" },
   { label: "Apps", to: "/settings/apps", icon: "i-lucide-layout-grid" },
+  { label: "Events", to: "/settings/events", icon: "i-lucide-zap" },
 ];
 
 function isActive(path: string) {

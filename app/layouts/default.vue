@@ -125,7 +125,14 @@ defineShortcuts({
         />
       </template>
 
-      <template #footer />
+      <template #footer>
+        <div class="space-y-1 px-2 pb-1">
+          <div class="flex items-center gap-1 rounded-lg border border-default/70 bg-elevated/30 p-1">
+            <UserMenu class="min-w-0 flex-1" />
+            <UColorModeButton size="sm" />
+          </div>
+        </div>
+      </template>
     </UDashboardSidebar>
 
     <UDashboardSearch
@@ -134,7 +141,7 @@ defineShortcuts({
       :groups="searchGroups"
     />
 
-    <div class="m-2 flex flex-1 min-w-0 overflow-hidden rounded-xl bg-muted shadow-sm ring ring-default lg:ml-0">
+    <div class="flex min-w-0 flex-1 overflow-hidden bg-default">
       <slot />
     </div>
   </UDashboardGroup>
