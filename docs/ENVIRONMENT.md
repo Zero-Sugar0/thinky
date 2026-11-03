@@ -136,6 +136,26 @@ Configure a QStash schedule pointing to:
 | `QSTASH_CURRENT_SIGNING_KEY` | Current signing key from Upstash QStash console |
 | `QSTASH_NEXT_SIGNING_KEY` | Next signing key from Upstash QStash console (for key rotation) |
 | `CRON_SECRET` | Optional fallback bearer token for cron jobs |
+## Growth Engine (Treg) (optional)
+
+### `TREG_TOKEN` (optional)
+
+API token for [Treg](https://treg.to) (`treg org agent-new <name>`).
+Gives the agent access to 4,100+ tools across 123+ providers for B2B leads, people and company enrichment, Google SERP rankings, backlinks, and web scraping. Also enables the `growth` and `seo` subagents.
+
+On Vercel, set `TREG_TOKEN` on the `eve` service (or both services). Customer attribution is automatically tagged with `X-Treg-Meta: customer=<principalId>`.
+
+## Recall.ai Meeting Bots & Transcripts (optional)
+
+Enables sending automated meeting bots to Zoom, Google Meet, Microsoft Teams, and Webex calls to record, transcribe, and summarize meetings.
+
+| Variable | Description |
+|----------|-------------|
+| `RECALL_REGION` | Chosen isolated Recall region: `us-west-2` (default), `us-east-1`, `eu-central-1`, or `ap-northeast-1` |
+| `RECALL_API_KEY` | Region-specific Recall API key from dashboard |
+| `RECALL_WORKSPACE_VERIFICATION_SECRET` | Secret used to verify incoming HMAC SHA-256 signatures from Recall webhooks |
+| `PUBLIC_API_BASE_URL` | Stable public backend URL (e.g. `https://your-domain.vercel.app` or static ngrok URL in dev). Recall rejects `localhost` or private IPs with 403. |
+
 ## Composio (optional)
 
 ### `COMPOSIO_API_KEY` (optional)
