@@ -3,7 +3,7 @@ import { requireSessionUserId } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {
   const userId = await requireSessionUserId(event);
-  const limit = 1000;
+  const limit = 50;
 
   if (!isComposioConfigured()) {
     return {
