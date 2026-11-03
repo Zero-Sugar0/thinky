@@ -131,14 +131,14 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
         v-else
         class="flex flex-1"
       >
-        <UContainer class="flex w-full flex-1 flex-col gap-3 px-2 sm:gap-5 sm:px-4">
+        <UContainer class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 px-2 sm:gap-4 sm:px-3">
           <UChatMessages
             should-auto-scroll
             :messages="messages"
             :status="status"
-            :spacing-offset="128"
-            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'relative flex w-full min-w-0 items-start text-sm leading-6' } }"
-            :user="{ side: 'right', variant: 'soft', ui: { container: 'max-w-[88%] text-sm leading-5' } }"
+            :spacing-offset="96"
+            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'relative flex w-full min-w-0 max-w-2xl items-start text-[0.9375rem] leading-6' } }"
+            :user="{ side: 'right', variant: 'soft', ui: { container: 'max-w-[84%] text-[0.9375rem] leading-5' } }"
             class="pt-(--ui-header-height) pb-3 sm:pb-5"
           >
             <template #indicator>
