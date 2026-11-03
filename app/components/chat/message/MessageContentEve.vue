@@ -147,7 +147,7 @@ const showThinking = computed(
       </div>
       <p
         v-else
-        class="whitespace-pre-wrap text-sm leading-5 [overflow-wrap:anywhere]"
+        class="ml-auto max-w-full whitespace-pre-wrap text-right text-sm leading-5 [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
       >
         {{ part.text }}
       </p>
