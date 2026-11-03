@@ -9,7 +9,7 @@
           <p class="mt-1 max-w-xl text-xs leading-5 text-muted sm:text-sm">Connect an app, choose the events Thinky should listen for, and configure how they arrive.</p>
         </header>
         <SettingsNav class="mb-7 sm:mb-9" />
-        <EventsPanel />
+        <SettingsEventsPanel />
       </div>
     </template>
   </UDashboardPanel>
