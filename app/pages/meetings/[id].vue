@@ -64,17 +64,18 @@ const meeting = computed(() => data.value?.meeting);
     <template #body>
       <div
         v-if="meeting"
-        class="p-4 sm:p-6 space-y-6 max-w-4xl mx-auto"
+        class="p-3 sm:p-6 space-y-4 sm:space-y-6 max-w-4xl mx-auto pt-[calc(var(--ui-header-height,3.5rem)+1rem)] sm:pt-6"
       >
         <!-- Header Info Card -->
-        <div class="rounded-xl border border-default/70 bg-elevated/40 p-5 space-y-3">
+        <div class="rounded-xl border border-default/70 bg-elevated/40 p-4 sm:p-5 space-y-2.5">
           <div class="flex flex-wrap items-center justify-between gap-2">
-            <h1 class="text-xl font-bold text-highlighted">
+            <h1 class="text-base sm:text-lg font-semibold text-highlighted">
               {{ meeting.title || "Untitled Meeting" }}
             </h1>
             <UBadge
               color="primary"
               variant="subtle"
+              size="xs"
             >
               {{ meeting.status }}
             </UBadge>
@@ -113,12 +114,12 @@ const meeting = computed(() => data.value?.meeting);
         </div>
 
         <!-- Transcript Section -->
-        <div class="space-y-4">
+        <div class="space-y-3 sm:space-y-4">
           <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-highlighted flex items-center gap-2">
+            <h2 class="text-sm sm:text-base font-semibold text-highlighted flex items-center gap-1.5">
               <UIcon
                 name="i-lucide-file-text"
-                class="size-5 text-primary"
+                class="size-4 sm:size-5 text-primary"
               />
               Diarized Speaker Transcript
             </h2>

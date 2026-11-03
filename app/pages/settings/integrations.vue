@@ -26,12 +26,12 @@ const servicesDescription = computed(() => {
     </template>
 
     <template #body>
-      <div class="mx-auto w-full max-w-2xl px-6 py-8">
-        <header class="mb-8">
-          <h1 class="mb-1 text-lg font-medium text-highlighted">
+      <div class="mx-auto w-full max-w-2xl px-4 pb-8 pt-[calc(var(--ui-header-height,3.5rem)+1.5rem)] sm:px-6 sm:pb-12">
+        <header class="mb-6 sm:mb-8">
+          <h1 class="mb-1 text-base font-medium text-highlighted sm:text-lg">
             Settings
           </h1>
-          <p class="max-w-lg text-sm text-muted">
+          <p class="max-w-lg text-xs text-muted sm:text-sm">
             Manage your identity, memory, and integrations.
           </p>
         </header>

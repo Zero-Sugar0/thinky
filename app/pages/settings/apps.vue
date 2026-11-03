@@ -192,7 +192,7 @@ onMounted(async () => {
       </template>
 
       <template #body>
-        <div class="mx-auto w-full max-w-5xl px-3 pb-8 pt-[calc(var(--ui-header-height)+1rem)] sm:px-6 sm:pb-12 sm:pt-[calc(var(--ui-header-height)+2rem)]">
+        <div class="mx-auto w-full max-w-5xl px-3 pb-8 pt-[calc(var(--ui-header-height,3.5rem)+1.5rem)] sm:px-6 sm:pb-12 sm:pt-[calc(var(--ui-header-height,3.5rem)+2rem)]">
           <header class="mb-6 sm:mb-8">
             <h1 class="mb-1 text-base font-medium text-highlighted sm:text-lg">
               Settings
