@@ -6,10 +6,9 @@
     aria-hidden="true"
     class="inline-block aspect-square shrink-0"
   >
-    <path d="M18 18v25c0 7 4 11 11 11h12" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M18 30h25c5 0 8-3 8-8v-4" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
-    <path d="M31 18v20" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
-    <circle cx="49" cy="13" r="4" fill="currentColor" />
-    <circle cx="18" cy="18" r="4" fill="#E87958" />
+    <rect x="8" y="8" width="48" height="48" rx="16" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-width="4" />
+    <path d="M22 23h20M32 23v19" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
+    <path d="M24 42h16" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
+    <circle cx="45" cy="19" r="5" fill="#E87958" />
   </svg>
 </template>

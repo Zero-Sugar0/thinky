@@ -61,7 +61,8 @@ async function copyMessage() {
 </script>
 
 <template>
-  <ChatActivityIndicator v-if="showThinking" />
+  <div class="chat-message-content space-y-1">
+    <ChatActivityIndicator v-if="showThinking" />
 
   <template
     v-for="(part, index) in displayParts"
@@ -110,6 +111,7 @@ async function copyMessage() {
         :streaming="isToolStreaming(part)"
         chevron="leading"
         :default-open="part.state === 'approval-requested' || part.state === 'approval-responded'"
+        class="chat-tool-step"
       >
         <AgentInputRequest
           v-if="isDynamicToolUIPart(part)"
@@ -184,4 +186,5 @@ async function copyMessage() {
       </div>
     </template>
   </template>
+  </div>
 </template>
