@@ -1,5 +1,5 @@
 <template>
-  <UDashboardPanel id="events" class="min-h-0" :ui="{ body: 'p-0 sm:p-0' }">
+  <UDashboardPanel id="events" class="min-h-0 overflow-x-hidden" :ui="{ body: 'p-0 sm:p-0' }">
     <template #header><AppNavbar /></template>
     <template #body>
       <div class="mx-auto w-full max-w-6xl px-3 pb-8 pt-[calc(var(--ui-header-height,3.5rem)+1.5rem)] sm:px-6 sm:pb-12 sm:pt-[calc(var(--ui-header-height,3.5rem)+2rem)]">

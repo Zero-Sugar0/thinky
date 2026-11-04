@@ -222,7 +222,7 @@ async function connectCurrentApp() {
 </script>
 
 <template>
-  <div class="grid gap-6 lg:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.45fr)]">
+  <div class="grid min-w-0 gap-6 overflow-x-hidden lg:grid-cols-[minmax(15rem,0.8fr)_minmax(0,1.45fr)]">
     <!-- Left App Browser Sidebar -->
     <aside class="space-y-3">
       <div class="flex items-center justify-between px-1">
@@ -445,7 +445,7 @@ async function connectCurrentApp() {
               <label class="mb-1 block text-[11px] font-medium text-muted">Select Event Type</label>
               <USelectMenu
                 v-model="selectedType"
-                :items="triggerTypes.map(t => ({ label: `${t.name || t.slug} (${t.slug})`, value: t.slug || '' }))"
+                :items="triggerTypes.map(t => ({ label: t.name || t.slug || 'Unnamed event', value: t.slug || '' }))"
                 value-key="value"
                 searchable
                 placeholder="Search available events (e.g. commit, push, issue, email)..."
@@ -477,7 +477,7 @@ async function connectCurrentApp() {
               <UTextarea
                 v-model="triggerConfig"
                 :rows="3"
-                class="font-mono text-xs"
+                class="w-full max-w-full font-mono text-xs [&_textarea]:min-w-0 [&_textarea]:max-w-full [&_textarea]:whitespace-pre-wrap [&_textarea]:break-words"
                 placeholder='Optional JSON configuration, e.g. {"owner":"octocat","repo":"hello-world"}'
               />
             </div>
@@ -540,7 +540,7 @@ async function connectCurrentApp() {
                     {{ trigger.disabledAt ? 'Paused' : 'Active' }}
                   </UBadge>
                 </div>
-                <p class="mt-0.5 truncate font-mono text-[10px] text-muted">
+                <p class="mt-0.5 break-all font-mono text-[10px] text-muted">
                   ID: {{ trigger.id || trigger.triggerId }}
                 </p>
               </div>
