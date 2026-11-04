@@ -9,7 +9,9 @@
 :root {
   --ui-primary: black;
   --ui-container: var(--container-3xl);
-  --ui-radius: 0.15rem;
+  --ui-radius: 0.65rem;
+  --thinky-accent: #e87958;
+  --thinky-accent-soft: color-mix(in oklab, #e87958 14%, transparent);
   overscroll-behavior-y: none;
 }
 
@@ -56,8 +58,18 @@
 }
 
 @layer base {
+  html {
+    background: var(--ui-bg);
+  }
+
   body {
     @apply antialiased;
+    background: var(--ui-bg);
+    color: var(--ui-text);
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--thinky-accent) 28%, transparent);
   }
 }
 

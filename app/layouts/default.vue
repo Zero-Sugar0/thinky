@@ -50,8 +50,8 @@ defineShortcuts({
       :min-size="12"
       collapsible
       resizable
-      :menu="{ inset: true }"
-      class="border-r-0 py-4 dark:[--ui-bg-elevated:var(--ui-color-neutral-900)]"
+      :menu="{ inset: false }"
+      class="border-r border-default/70 bg-default py-3 shadow-none dark:[--ui-bg-elevated:var(--ui-color-neutral-900)]"
     >
       <template #header="{ collapsed }">
         <NuxtLink

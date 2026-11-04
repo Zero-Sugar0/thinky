@@ -6,8 +6,6 @@ definePageMeta({
   prerender: true,
 });
 
-const site = useSite();
-
 const route = useRoute();
 const mode = ref<"sign-in" | "sign-up">("sign-in");
 const email = ref("");
@@ -191,19 +189,6 @@ async function handleSubmit() {
       </div>
 
       <footer class="flex flex-wrap items-center gap-x-4 gap-y-3 pt-6">
-        <NuxtLink
-          :to="site.deployUrl"
-          target="_blank"
-          rel="noopener"
-        >
-          <img
-            src="https://vercel.com/button"
-            alt="Deploy with Vercel"
-            width="133"
-            height="32"
-          >
-        </NuxtLink>
-
         <p class="text-xs text-dimmed">
           Built with
           <NuxtLink

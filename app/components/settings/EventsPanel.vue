@@ -36,14 +36,13 @@ const selectedTypeDetail = ref<TriggerType | null>(null);
 const loading = ref(false);
 const saving = ref(false);
 const connectingSlug = ref<string | null>(null);
-const appFilter = ref<"all" | "connected">("all");
 const appSearchQuery = ref("");
 
 const allApps = computed(() => data.value?.apps ?? []);
 const connectedApps = computed(() => allApps.value.filter(app => app.isConnected));
 
 const displayedApps = computed(() => {
-  const base = appFilter.value === "connected" ? connectedApps.value : allApps.value;
+  const base = connectedApps.value;
   if (!appSearchQuery.value.trim()) return base;
   const q = appSearchQuery.value.trim().toLowerCase();
   return base.filter(app =>
@@ -249,32 +248,14 @@ async function connectCurrentApp() {
         />
       </div>
 
-      <!-- App Filter Tabs & Search -->
+      <!-- Only connected apps can receive live events -->
       <div class="space-y-2">
-        <div class="flex rounded-lg border border-default bg-elevated/40 p-0.5 text-xs">
-          <button
-            type="button"
-            class="flex-1 rounded-md py-1 text-center font-medium transition-all"
-            :class="appFilter === 'all' ? 'bg-default text-highlighted shadow-xs' : 'text-muted hover:text-toned'"
-            @click="appFilter = 'all'"
-          >
-            All Apps ({{ allApps.length }})
-          </button>
-          <button
-            type="button"
-            class="flex-1 rounded-md py-1 text-center font-medium transition-all"
-            :class="appFilter === 'connected' ? 'bg-default text-highlighted shadow-xs' : 'text-muted hover:text-toned'"
-            @click="appFilter = 'connected'"
-          >
-            Connected ({{ connectedApps.length }})
-          </button>
-        </div>
-
+        <p class="text-[11px] leading-4 text-muted">Connected apps with event support</p>
         <UInput
           v-model="appSearchQuery"
           icon="i-lucide-search"
           size="xs"
-          placeholder="Filter apps..."
+          placeholder="Filter connected apps..."
           class="w-full text-xs"
         />
       </div>
@@ -296,11 +277,11 @@ async function connectCurrentApp() {
           v-else-if="!displayedApps.length"
           class="px-2.5 py-8 text-center text-xs text-muted"
         >
-          <p v-if="appFilter === 'connected'">
-            No connected apps yet. Switch to "All Apps" to connect an app.
+          <p v-if="!connectedApps.length">
+            No connected apps with events are available yet. Connect an app from the Apps tab first.
           </p>
           <p v-else>
-            No apps found matching "{{ appSearchQuery }}".
+            No connected event apps match "{{ appSearchQuery }}".
           </p>
         </div>
 
