@@ -294,6 +294,7 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
       google_meet: "web_4_core",
       microsoft_teams: "web_4_core",
     },
+    recording_config: recordingConfig,
     output_media: {
       camera: {
         kind: "webpage",
@@ -302,7 +303,6 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
         },
       },
     },
-    recording_config: recordingConfig,
     chat: {
       on_bot_join: {
         send_to: "everyone",

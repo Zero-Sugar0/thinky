@@ -47,6 +47,21 @@ const showThinking = computed(
 
 const reaction = ref<"like" | "dislike" | null>(null);
 const copied = ref(false);
+const responseStartedAt = ref<number | null>(null);
+const responseDurationMs = ref<number | null>(null);
+
+watch(isBusy, (busy) => {
+  if (busy && responseStartedAt.value === null) responseStartedAt.value = Date.now();
+  if (!busy && responseStartedAt.value !== null) {
+    responseDurationMs.value = Math.max(0, Date.now() - responseStartedAt.value);
+  }
+}, { immediate: true });
+
+const responseDuration = computed(() => {
+  if (responseDurationMs.value === null) return "";
+  const seconds = responseDurationMs.value / 1000;
+  return seconds < 1 ? `${Math.round(responseDurationMs.value)}ms` : `${seconds.toFixed(1)}s`;
+});
 
 async function copyMessage() {
   const text = props.message.parts
@@ -163,12 +178,11 @@ async function copyMessage() {
           class="ml-0.5 inline-block h-[1.1em] w-0.5 translate-y-px animate-pulse rounded-full bg-highlighted"
           aria-hidden="true"
         />
-        <div v-if="!isPartStreaming(part)" class="mt-1.5 flex items-center gap-0.5 text-dimmed">
-          <UButton icon="i-lucide-copy" :aria-label="copied ? 'Copied' : 'Copy response'" :title="copied ? 'Copied' : 'Copy response'" color="neutral" variant="ghost" size="xs" @click="copyMessage" />
-          <UButton icon="i-lucide-volume-2" aria-label="Read response aloud" title="Read response aloud" color="neutral" variant="ghost" size="xs" />
-          <UButton icon="i-lucide-thumbs-up" aria-label="Like response" title="Like response" color="neutral" variant="ghost" size="xs" :class="reaction === 'like' ? 'text-primary' : ''" @click="reaction = reaction === 'like' ? null : 'like'" />
-          <UButton icon="i-lucide-thumbs-down" aria-label="Dislike response" title="Dislike response" color="neutral" variant="ghost" size="xs" :class="reaction === 'dislike' ? 'text-primary' : ''" @click="reaction = reaction === 'dislike' ? null : 'dislike'" />
-          <span class="ml-1 text-[10px]">{{ copied ? 'Copied' : 'Just now' }}</span>
+        <div v-if="!isPartStreaming(part) && isLast && !isBusy" class="mt-1.5 flex items-center gap-0.5 text-dimmed">
+          <UButton icon="i-lucide-copy" :aria-label="copied ? 'Copied' : 'Copy response'" :title="copied ? 'Copied' : 'Copy response'" color="neutral" variant="ghost" size="xs" class="!h-6 !w-6 !p-0" @click="copyMessage" />
+          <UButton icon="i-lucide-thumbs-up" aria-label="Like response" title="Like response" color="neutral" variant="ghost" size="xs" class="!h-6 !w-6 !p-0" :class="reaction === 'like' ? 'text-primary' : ''" @click="reaction = reaction === 'like' ? null : 'like'" />
+          <UButton icon="i-lucide-thumbs-down" aria-label="Dislike response" title="Dislike response" color="neutral" variant="ghost" size="xs" class="!h-6 !w-6 !p-0" :class="reaction === 'dislike' ? 'text-primary' : ''" @click="reaction = reaction === 'dislike' ? null : 'dislike'" />
+          <span class="ml-1 text-[10px]">{{ copied ? 'Copied' : responseDuration }}</span>
         </div>
       </div>
       <div
