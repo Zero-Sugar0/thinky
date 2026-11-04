@@ -15,6 +15,13 @@
       "when": 1793582978908,
       "tag": "0001_typical_network",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793790000000,
+      "tag": "0002_meetings",
+      "breakpoints": true
     }
   ]
 }
