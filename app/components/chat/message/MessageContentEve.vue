@@ -73,6 +73,7 @@ async function copyMessage() {
       :text="part.text"
       :streaming="isPartStreaming(part)"
       chevron="leading"
+      class="chat-tool-step"
     >
       <ChatComark
         :value="part.text"
@@ -101,6 +102,7 @@ async function copyMessage() {
         :suffix="getSearchQuery(part)"
         :streaming="isToolStreaming(part)"
         chevron="leading"
+        class="chat-tool-step"
       >
         <ChatToolSources :sources="getSources(part)" />
       </UChatTool>
