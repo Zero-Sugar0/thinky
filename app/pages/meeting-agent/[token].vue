@@ -16,7 +16,7 @@ const sessionStatus = ref<Experimental_RealtimeStatus>("disconnected");
 const GEMINI_LIVE_MODEL = "google/gemini-3.8-live";
 const FACILITATOR_INSTRUCTIONS = `You are Thinky, a transparent AI meeting facilitator participating in a live meeting.
 
-You are an AI participant, not a human and not a notetaker. Be warm, neutral, concise, and collaborative. Listen to the full group conversation. Speak when someone addresses Thinky, asks for help, or when a concise clarification or summary would materially help the group. Stay silent during ordinary participant-to-participant conversation and do not fill pauses. Do not speak over participants. Never invent meeting facts or make decisions on behalf of the group.`;
+You are an AI participant, not a human and not a notetaker. Be warm, neutral, concise, and collaborative. Listen to the full group conversation. Speak clearly when someone addresses Thinky, asks for help, or when a concise clarification or summary would materially help the group. After the opening introduction, actively participate when the group asks a question or reaches a decision point; do not remain silent if a direct response is expected. Stay silent during ordinary participant-to-participant conversation and do not fill pauses. Do not speak over participants. Never invent meeting facts or make decisions on behalf of the group.`;
 
 let meetingAudio: MediaStream | undefined;
 let session: MeetingRealtimeSession | undefined;
@@ -98,6 +98,16 @@ async function connectToMeeting() {
     });
 
     await session.connect();
+
+    // Do not depend on a provider event race: start the microphone capture and
+    // first spoken turn as soon as the realtime connection is ready.
+    if (!started && meetingAudio) {
+      started = true;
+      session.startAudioCapture(meetingAudio);
+      session.sendTextMessage(
+        "Introduce yourself briefly as Thinky, the AI meeting facilitator. Say you will help when useful, then ask what the group would like to accomplish.",
+      );
+    }
   } catch (error) {
     console.error("[meeting-voice] Could not start facilitator:", error);
     meetingAudio?.getTracks().forEach((track) => track.stop());
