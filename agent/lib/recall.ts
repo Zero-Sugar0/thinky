@@ -242,7 +242,7 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
   const baseUrl = getRecallBaseUrl();
   const publicBaseUrl = getPublicApiBaseUrl();
 
-  const botName = options.botName || "Thinky AI Facilitator";
+  const botName = options.botName || "Thinky";
   const joinAt = options.joinAt || new Date().toISOString();
   // Validate meeting URL: CloudFront 403 prevention (no localhost or private IP in request body)
   if (options.meetingUrl.includes("localhost") || options.meetingUrl.includes("127.0.0.1")) {
@@ -420,6 +420,33 @@ export async function createAsyncTranscript(recordingId: string): Promise<void> 
     const errorText = await response.text().catch(() => "");
     throw new Error(`Failed to create async transcript (${response.status}): ${errorText || response.statusText}`);
   }
+}
+
+export async function getTranscriptDownloadUrl(transcriptId: string): Promise<string> {
+  const apiKey = getRecallApiKey();
+  const baseUrl = getRecallBaseUrl();
+  const response = await fetch_with_retry({
+    url: `${baseUrl}/transcript/${encodeURIComponent(transcriptId)}/`,
+    options: {
+      method: "GET",
+      headers: {
+        Authorization: apiKey,
+        Accept: "application/json",
+      },
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    throw new Error(`Failed to retrieve transcript '${transcriptId}' (${response.status}): ${errorText || response.statusText}`);
+  }
+
+  const artifact = (await response.json()) as { data?: { download_url?: unknown } };
+  const downloadUrl = artifact.data?.download_url;
+  if (typeof downloadUrl !== "string" || !downloadUrl) {
+    throw new Error(`Recall transcript '${transcriptId}' did not include a download URL.`);
+  }
+  return downloadUrl;
 }
 
 export interface RawTranscriptWord {

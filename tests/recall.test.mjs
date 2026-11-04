@@ -9,6 +9,7 @@ import {
   convert_to_readable_transcript,
   createMeetingBot,
   createAsyncTranscript,
+  getTranscriptDownloadUrl,
   createMeetingVoiceToken,
   verifyMeetingVoiceToken,
 } from "../agent/lib/recall.ts";
@@ -200,7 +201,7 @@ test("createMeetingBot dispatches valid payload and receives bot instance", asyn
 
     assert.equal(bot.id, "bot_123");
     assert.equal(bot.meeting_url, "https://meet.google.com/abc-defg-hij");
-    assert.equal(sentBody.bot_name, "Thinky AI Facilitator");
+    assert.equal(sentBody.bot_name, "Thinky");
     assert.deepEqual(sentBody.variant, {
       zoom: "web_4_core",
       google_meet: "web_4_core",
@@ -265,6 +266,38 @@ test("createAsyncTranscript requests a private Deepgram transcript", async () =>
       diarization: {
         use_separate_streams_when_available: true,
       },
+    });
+
+    test("getTranscriptDownloadUrl retrieves the artifact URL from Recall", async () => {
+      const previousEnv = {
+        RECALL_API_KEY: process.env.RECALL_API_KEY,
+        RECALL_REGION: process.env.RECALL_REGION,
+      };
+      process.env.RECALL_API_KEY = "test_recall_key";
+      process.env.RECALL_REGION = "us-west-2";
+      const originalFetch = globalThis.fetch;
+      let requestedUrl;
+
+      globalThis.fetch = async (url, init) => {
+        requestedUrl = String(url);
+        assert.equal(init?.method, "GET");
+        assert.equal(new Headers(init?.headers).get("Authorization"), "test_recall_key");
+        return new Response(
+          JSON.stringify({ data: { download_url: "https://downloads.recall.ai/transcript.json" } }),
+          { status: 200, headers: { "content-type": "application/json" } },
+        );
+      };
+
+      try {
+        assert.equal(await getTranscriptDownloadUrl("transcript_123"), "https://downloads.recall.ai/transcript.json");
+        assert.equal(requestedUrl, "https://us-west-2.recall.ai/api/v1/transcript/transcript_123/");
+      } finally {
+        globalThis.fetch = originalFetch;
+        for (const [key, value] of Object.entries(previousEnv)) {
+          if (value === undefined) delete process.env[key];
+          else process.env[key] = value;
+        }
+      }
     });
   } finally {
     globalThis.fetch = originalFetch;

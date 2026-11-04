@@ -78,7 +78,12 @@ async function connectToMeeting() {
       },
       onEvent(event) {
         updateStatus(event);
-        if (event.type === "session-updated" && !started && meetingAudio && session) {
+        if (
+          (event.type === "session-created" || event.type === "session-updated")
+          && !started
+          && meetingAudio
+          && session
+        ) {
           started = true;
           session.startAudioCapture(meetingAudio);
           session.sendTextMessage(

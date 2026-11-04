@@ -25,6 +25,19 @@ const meetingId = route.params.id as string;
 
 const { data, refresh, status } = await useFetch<{ meeting: MeetingDetail }>(`/api/meetings/${meetingId}`);
 const meeting = computed(() => data.value?.meeting);
+let refreshTimer: ReturnType<typeof setInterval> | undefined;
+
+onMounted(() => {
+  refreshTimer = setInterval(() => {
+    if (meeting.value && !["done", "fatal"].includes(meeting.value.status)) {
+      void refresh();
+    }
+  }, 10_000);
+});
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer);
+});
 </script>
 
 <template>

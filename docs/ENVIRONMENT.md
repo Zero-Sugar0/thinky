@@ -147,7 +147,7 @@ On Vercel, set `TREG_TOKEN` on the `eve` service (or both services). Customer at
 
 ## Recall.ai Meeting Facilitator & Transcripts (optional)
 
-Enables Thinky's AI facilitator to join Zoom, Google Meet, Microsoft Teams, and Webex calls, speak with participants, and save a transcript. Recall Output Media hosts the facilitator webpage and streams meeting audio into it; Gemini Live provides a single realtime speech-to-speech model through Vercel AI Gateway. Recall uses Deepgram for real-time transcript events and post-meeting transcript artifacts.
+Enables Thinky to join Zoom, Google Meet, Microsoft Teams, and Webex calls, speak with participants, and save a transcript. Recall Output Media hosts the facilitator webpage and streams meeting audio into it; Gemini Live provides a single realtime speech-to-speech model through Vercel AI Gateway. Recall uses Deepgram for real-time transcript events and post-meeting transcript artifacts.
 
 | Variable | Description |
 |----------|-------------|

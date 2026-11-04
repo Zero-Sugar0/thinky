@@ -4,7 +4,7 @@ import { createMeetingBot } from "../lib/recall.js";
 
 export default defineTool({
   description:
-    "Join a Zoom, Google Meet, Microsoft Teams, or Webex meeting as Thinky's transparent AI facilitator. The bot speaks with participants, helps guide the discussion, and records the meeting for a transcript.",
+    "Join a Zoom, Google Meet, Microsoft Teams, or Webex meeting as Thinky. The bot speaks with participants, helps guide the discussion, and records the meeting for a transcript.",
   inputSchema: z.object({
     meetingUrl: z
       .string()
@@ -15,8 +15,8 @@ export default defineTool({
     botName: z
       .string()
       .optional()
-      .default("Thinky AI Facilitator")
-      .describe("The display name of the bot visible to meeting attendees (default: 'Thinky AI Facilitator')."),
+      .default("Thinky")
+      .describe("The display name of the bot visible to meeting attendees (default: 'Thinky')."),
     joinAt: z
       .string()
       .optional()

@@ -2,8 +2,40 @@ import { eq } from "drizzle-orm";
 import {
   createAsyncTranscript,
   downloadAndFormatTranscript,
+  getTranscriptDownloadUrl,
   verifyRequestFromRecall,
 } from "~~/agent/lib/recall";
+
+const TRANSIENT_DATABASE_CODES = new Set(["CONNECT_TIMEOUT", "ECONNRESET", "ETIMEDOUT", "EPIPE"]);
+
+function isTransientDatabaseError(error: unknown): boolean {
+  let current = error;
+  while (current && typeof current === "object") {
+    const cause = current as { cause?: unknown; code?: unknown };
+    if (typeof cause.code === "string" && TRANSIENT_DATABASE_CODES.has(cause.code)) return true;
+    current = cause.cause;
+  }
+  return false;
+}
+
+async function updateMeetingWithRetry(
+  operation: string,
+  update: () => Promise<unknown>,
+): Promise<boolean> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await update();
+      return true;
+    } catch (error) {
+      if (attempt === 3 || !isTransientDatabaseError(error)) {
+        console.error(`[recall-webhook] ${operation} failed after ${attempt} attempt(s):`, error);
+        return false;
+      }
+      await new Promise((resolve) => setTimeout(resolve, attempt * 500));
+    }
+  }
+  return false;
+}
 
 /**
  * Recall.ai Webhook Handler
@@ -65,14 +97,15 @@ export default defineEventHandler(async (event) => {
           const botId = bot?.id as string | undefined;
 
           if (botId) {
-            await db
-              .update(schema.meetings)
-              .set({
-                status: "recording_done",
-                recordingId,
-              })
-              .where(eq(schema.meetings.botId, botId))
-              .catch((err: unknown) => console.error("[recall-webhook] DB update failed:", err));
+            await updateMeetingWithRetry("Recording status update", () =>
+              db
+                .update(schema.meetings)
+                .set({
+                  status: "recording_done",
+                  recordingId,
+                })
+                .where(eq(schema.meetings.botId, botId)),
+            );
           }
 
           if (recordingId) {
@@ -86,36 +119,33 @@ export default defineEventHandler(async (event) => {
           const botId = bot?.id as string | undefined;
           const transcriptId = transcript?.id as string | undefined;
 
-          console.info(`[recall-webhook] Transcript ready: ${transcriptId} for bot: ${botId}`);
+          if (!botId || !transcriptId) {
+            throw new Error("Recall transcript.done event is missing the bot or transcript ID.");
+          }
 
-          if (botId) {
-            const dataObj = data?.data as Record<string, unknown> | undefined;
-            const downloadUrl = (dataObj?.download_url || transcript?.download_url) as string | undefined;
-
-            if (downloadUrl) {
-              const formatted = await downloadAndFormatTranscript(downloadUrl).catch(() => null);
-              if (formatted) {
-                await db
-                  .update(schema.meetings)
-                  .set({
-                    status: "done",
-                    transcriptId,
-                    transcriptText: formatted.fullText,
-                    transcriptData: formatted.readable,
-                  })
-                  .where(eq(schema.meetings.botId, botId))
-                  .catch((err: unknown) => console.error("[recall-webhook] DB transcript update failed:", err));
-              }
-            } else {
-              await db
-                .update(schema.meetings)
-                .set({
-                  status: "done",
-                  transcriptId,
-                })
-                .where(eq(schema.meetings.botId, botId))
-                .catch((err: unknown) => console.error("[recall-webhook] DB status update failed:", err));
-            }
+          console.info(`[recall-webhook] Retrieving transcript ${transcriptId} for bot: ${botId}`);
+          const dataObj = data?.data as Record<string, unknown> | undefined;
+          const eventDownloadUrl = dataObj?.download_url || transcript?.download_url;
+          const downloadUrl =
+            typeof eventDownloadUrl === "string" && eventDownloadUrl
+              ? eventDownloadUrl
+              : await getTranscriptDownloadUrl(transcriptId);
+          const formatted = await downloadAndFormatTranscript(downloadUrl);
+          const saved = await updateMeetingWithRetry("Transcript database update", () =>
+            db
+              .update(schema.meetings)
+              .set({
+                status: "done",
+                transcriptId,
+                transcriptText: formatted.fullText,
+                transcriptData: formatted.readable,
+              })
+              .where(eq(schema.meetings.botId, botId)),
+          );
+          if (saved) {
+            console.info(
+              `[recall-webhook] Saved transcript ${transcriptId} for bot ${botId} (${formatted.readable.length} entries)`,
+            );
           }
         } else if (eventType.startsWith("bot.")) {
           const data = payload?.data as Record<string, unknown> | undefined;
@@ -124,11 +154,9 @@ export default defineEventHandler(async (event) => {
           const status = eventType.replace("bot.", "");
 
           if (botId) {
-            await db
-              .update(schema.meetings)
-              .set({ status })
-              .where(eq(schema.meetings.botId, botId))
-              .catch(() => null);
+            await updateMeetingWithRetry("Bot status update", () =>
+              db.update(schema.meetings).set({ status }).where(eq(schema.meetings.botId, botId)),
+            );
           }
         }
       } catch (bgError) {

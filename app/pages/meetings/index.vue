@@ -17,11 +17,12 @@ const { data, status, refresh } = await useFetch<{ meetings: Meeting[] }>("/api/
 const isModalOpen = ref(false);
 const submitting = ref(false);
 const formError = ref<string | null>(null);
+let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 const newMeeting = reactive({
   meetingUrl: "",
   title: "",
-  botName: "Thinky AI Facilitator",
+  botName: "Thinky",
   joinMessage: "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes.",
 });
 
@@ -46,6 +47,18 @@ async function handleCreateMeeting() {
     submitting.value = false;
   }
 }
+
+onMounted(() => {
+  refreshTimer = setInterval(() => {
+    if (data.value?.meetings.some((meeting) => !["done", "fatal"].includes(meeting.status))) {
+      void refresh();
+    }
+  }, 10_000);
+});
+
+onBeforeUnmount(() => {
+  if (refreshTimer) clearInterval(refreshTimer);
+});
 
 function getStatusBadgeColor(st: string) {
   switch (st) {
@@ -110,7 +123,7 @@ function getStatusBadgeColor(st: string) {
         <UModal
           v-model:open="isModalOpen"
           title="Send Bot to Meeting"
-          description="Send Thinky's AI facilitator to a Google Meet, Zoom, Teams, or Webex call."
+          description="Send Thinky to a Google Meet, Zoom, Teams, or Webex call."
         >
           <template #body>
             <form
@@ -145,7 +158,7 @@ function getStatusBadgeColor(st: string) {
                 <label class="block text-sm font-medium mb-1">Bot Name</label>
                 <UInput
                   v-model="newMeeting.botName"
-                  placeholder="Thinky AI Facilitator"
+                  placeholder="Thinky"
                 />
               </div>
 

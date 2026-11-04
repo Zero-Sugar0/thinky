@@ -1,6 +1,6 @@
 ---
 name: meetings
-description: Join Zoom, Google Meet, Microsoft Teams, and Webex calls as a transparent speaking AI facilitator, monitor meeting progress, retrieve transcripts, and summarize decisions and action items using Recall.ai.
+description: Join Zoom, Google Meet, Microsoft Teams, and Webex calls as a transparent speaking agent, monitor meeting progress, retrieve transcripts, and summarize decisions and action items using Recall.ai.
 ---
 
 # Meeting Assistant Skill
@@ -9,7 +9,7 @@ Equips the agent with a speaking AI meeting facilitator powered by Gemini Live t
 
 ## Tools
 
-- **`meeting_join`**: Joins a video call immediately or at a scheduled time (`joinAt`) as Thinky's AI facilitator. The bot announces that it is an AI, speaks with participants, and helps guide the discussion.
+- **`meeting_join`**: Joins a video call immediately or at a scheduled time (`joinAt`) as Thinky. The bot announces that it is an AI, speaks with participants, and helps guide the discussion.
 - **`meeting_status`**: Queries the bot's current state (`in_waiting_room`, `in_call_recording`, `done`).
 - **`meeting_transcript`**: Downloads and formats the speaker-grouped readable transcript after a meeting has ended.
 - **`meeting_leave`**: Commands the bot to exit an active meeting call.
@@ -27,7 +27,7 @@ the complete saved transcript after the call.
    ```json
    {
      "meetingUrl": "https://meet.google.com/abc-defg-hij",
-     "botName": "Thinky AI Facilitator",
+     "botName": "Thinky",
      "joinMessage": "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes."
    }
    ```
