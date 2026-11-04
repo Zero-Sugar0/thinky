@@ -189,9 +189,10 @@ async function checkPage(page, index) {
     dismiss.ok && Array.isArray(dismissBody?.dismissed) && Array.isArray(dismissBody?.failed),
     `HTTP ${dismiss.status}`,
   );
+  const reasons = (dismissBody?.failed ?? []).map((f) => `${f.name || f.ref}: ${f.reason}`).join('; ');
   info(
     `${label}: overlays`,
-    `${dismissBody?.dismissed?.length ?? 0} closed, ${dismissBody?.failed?.length ?? 0} could not be closed`,
+    `${dismissBody?.dismissed?.length ?? 0} closed, ${dismissBody?.failed?.length ?? 0} not closed${reasons ? ` [${reasons}]` : ''}`,
   );
   return true;
 }
@@ -212,23 +213,23 @@ async function run() {
     });
     const navBody = await json(nav);
     const landed = typeof navBody?.url === 'string' ? navBody.url : '';
-    let host = '';
-    try {
-      host = new URL(landed).hostname;
-    } catch {
-      host = '';
-    }
+    const host = URL.canParse(landed) ? new URL(landed).hostname : '';
     check(
       `macro ${testCase.macro} lands on ${testCase.host}`,
       nav.ok && (host === testCase.host || host.endsWith(`.${testCase.host}`)),
       nav.ok ? `landed on ${host || 'unknown host'}` : `HTTP ${nav.status}`,
     );
 
-    // Informational: what the page-state check says about the landing page.
+    // A search macro only works if it shows results, not a sign-in page.
     if (nav.ok) {
       const after = await call(`${tabPath('/state')}?${userQuery}`);
       const afterBody = await json(after);
-      info(`page state after ${testCase.macro}`, afterBody?.state?.kind ?? `HTTP ${after.status}`);
+      const kind = afterBody?.state?.kind;
+      check(
+        `macro ${testCase.macro} shows results, not a login wall`,
+        after.ok && kind !== 'login_wall' && kind !== 'captcha' && kind !== 'block',
+        kind ?? `HTTP ${after.status}`,
+      );
     }
   }
 

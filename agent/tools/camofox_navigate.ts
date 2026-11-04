@@ -27,6 +27,18 @@ const MACRO_NAMES = [
   "@instagram_search",
   "@tiktok_search",
   "@twitch_search",
+  "@bestbuy_search",
+  "@indeed_search",
+  "@pubmed_search",
+  "@zillow_search",
+  "@npm_search",
+  "@dockerhub_search",
+  "@nhs_search",
+  "@legislation_search",
+  "@dailymed_search",
+  "@huggingface_search",
+  "@jsr_search",
+  "@bing_news_search",
 ] as const;
 
 const NavigateSchema = z
@@ -45,7 +57,7 @@ const NavigateSchema = z
 
 export default defineTool({
   description:
-    "Navigate one of the current user's browser tabs to a public HTTPS URL, or run a search macro with a query. Macros: @google_search, @youtube_search, @amazon_search, @reddit_search (JSON), @reddit_subreddit (pass the subreddit name as query, JSON), @wikipedia_search, @twitter_search, @yelp_search, @spotify_search, @netflix_search, @linkedin_search, @instagram_search, @tiktok_search, @twitch_search. Macros only load the search page; call camofox_snapshot afterwards to read results. Do not use this to bypass site access controls or protections.",
+    "Navigate one of the current user's browser tabs to a public HTTPS URL, or run a search macro with a query. Macros: @google_search, @youtube_search, @amazon_search, @reddit_search (JSON), @reddit_subreddit (pass the subreddit name as query, JSON), @wikipedia_search, @twitter_search, @yelp_search, @spotify_search, @netflix_search, @linkedin_search, @instagram_search, @tiktok_search, @twitch_search, @bestbuy_search, @indeed_search, @pubmed_search, @zillow_search, @npm_search, @dockerhub_search, @nhs_search, @legislation_search, @dailymed_search, @huggingface_search, @jsr_search, @bing_news_search. Macros only load the search page; call camofox_snapshot afterwards to read results. Do not use this to bypass site access controls or protections.",
   inputSchema: NavigateSchema,
   outputSchema: CamofoxActionSchema,
   async execute({ tabId, url, macro, query }, ctx) {
