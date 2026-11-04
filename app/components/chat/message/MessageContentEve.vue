@@ -61,7 +61,8 @@ async function copyMessage() {
 </script>
 
 <template>
-  <ChatActivityIndicator v-if="showThinking" />
+  <div class="chat-message-content space-y-1">
+    <ChatActivityIndicator v-if="showThinking" />
 
   <template
     v-for="(part, index) in displayParts"
@@ -72,6 +73,7 @@ async function copyMessage() {
       :text="part.text"
       :streaming="isPartStreaming(part)"
       chevron="leading"
+      class="chat-tool-step"
     >
       <ChatComark
         :value="part.text"
@@ -100,6 +102,7 @@ async function copyMessage() {
         :suffix="getSearchQuery(part)"
         :streaming="isToolStreaming(part)"
         chevron="leading"
+        class="chat-tool-step"
       >
         <ChatToolSources :sources="getSources(part)" />
       </UChatTool>
@@ -110,6 +113,7 @@ async function copyMessage() {
         :streaming="isToolStreaming(part)"
         chevron="leading"
         :default-open="part.state === 'approval-requested' || part.state === 'approval-responded'"
+        class="chat-tool-step"
       >
         <AgentInputRequest
           v-if="isDynamicToolUIPart(part)"
@@ -184,4 +188,5 @@ async function copyMessage() {
       </div>
     </template>
   </template>
+  </div>
 </template>
