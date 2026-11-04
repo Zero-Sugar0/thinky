@@ -47,7 +47,8 @@ defineShortcuts({
     <UDashboardSidebar
       id="default"
       v-model:open="sidebarOpen"
-      :min-size="12"
+      :min-size="14"
+      :max-size="18"
       collapsible
       resizable
       :menu="{ inset: false }"

@@ -44,6 +44,20 @@ const showThinking = computed(
     && isBusy.value
     && !hasVisibleParts(rawParts.value),
 );
+
+const reaction = ref<"like" | "dislike" | null>(null);
+const copied = ref(false);
+
+async function copyMessage() {
+  const text = props.message.parts
+    .filter(part => part.type === "text")
+    .map(part => part.text)
+    .join("\n\n");
+  if (!text || !import.meta.client) return;
+  await navigator.clipboard.writeText(text);
+  copied.value = true;
+  window.setTimeout(() => { copied.value = false; }, 1600);
+}
 </script>
 
 <template>
@@ -145,6 +159,13 @@ const showThinking = computed(
           class="ml-0.5 inline-block h-[1.1em] w-0.5 translate-y-px animate-pulse rounded-full bg-highlighted"
           aria-hidden="true"
         />
+        <div v-if="!isPartStreaming(part)" class="mt-1.5 flex items-center gap-0.5 text-dimmed">
+          <UButton icon="i-lucide-copy" :aria-label="copied ? 'Copied' : 'Copy response'" :title="copied ? 'Copied' : 'Copy response'" color="neutral" variant="ghost" size="xs" @click="copyMessage" />
+          <UButton icon="i-lucide-volume-2" aria-label="Read response aloud" title="Read response aloud" color="neutral" variant="ghost" size="xs" />
+          <UButton icon="i-lucide-thumbs-up" aria-label="Like response" title="Like response" color="neutral" variant="ghost" size="xs" :class="reaction === 'like' ? 'text-primary' : ''" @click="reaction = reaction === 'like' ? null : 'like'" />
+          <UButton icon="i-lucide-thumbs-down" aria-label="Dislike response" title="Dislike response" color="neutral" variant="ghost" size="xs" :class="reaction === 'dislike' ? 'text-primary' : ''" @click="reaction = reaction === 'dislike' ? null : 'dislike'" />
+          <span class="ml-1 text-[10px]">{{ copied ? 'Copied' : 'Just now' }}</span>
+        </div>
       </div>
       <div
         v-else
@@ -156,6 +177,9 @@ const showThinking = computed(
           <p class="whitespace-pre-wrap">
             {{ part.text }}
           </p>
+          <div class="mt-1 flex justify-end">
+            <UButton icon="i-lucide-copy" aria-label="Copy sent message" title="Copy sent message" color="neutral" variant="ghost" size="xs" @click="copyMessage" />
+          </div>
         </div>
       </div>
     </template>

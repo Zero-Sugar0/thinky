@@ -10,6 +10,7 @@ const route = useRoute();
 const mode = ref<"sign-in" | "sign-up">("sign-in");
 const email = ref("");
 const password = ref("");
+const showPassword = ref(false);
 const name = ref("");
 const error = ref("");
 const loading = ref(false);
@@ -107,12 +108,24 @@ async function handleSubmit() {
               <UInput
                 v-model="password"
                 class="w-full"
-                type="password"
+                :type="showPassword ? 'text' : 'password'"
                 autocomplete="current-password"
                 required
                 minlength="8"
                 placeholder="••••••••"
-              />
+              >
+                <template #trailing>
+                  <UButton
+                    :icon="showPassword ? 'i-lucide-eye-off' : 'i-lucide-eye'"
+                    :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                    :title="showPassword ? 'Hide password' : 'Show password'"
+                    color="neutral"
+                    variant="ghost"
+                    size="xs"
+                    @click="showPassword = !showPassword"
+                  />
+                </template>
+              </UInput>
             </UFormField>
 
             <p
