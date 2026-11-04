@@ -8,7 +8,25 @@ import {
   verifyRequestFromRecall,
   convert_to_readable_transcript,
   createMeetingBot,
+  createAsyncTranscript,
+  createMeetingVoiceToken,
+  verifyMeetingVoiceToken,
 } from "../agent/lib/recall.ts";
+
+test("meeting voice tokens validate signatures and scheduled time claims", () => {
+  const previousSecret = process.env.BETTER_AUTH_SECRET;
+  process.env.BETTER_AUTH_SECRET = "test-meeting-signing-secret";
+
+  try {
+    const token = createMeetingVoiceToken(new Date(Date.now() + 60_000).toISOString());
+    assert.equal(verifyMeetingVoiceToken(token), true);
+    assert.equal(verifyMeetingVoiceToken(`${token}tampered`), false);
+    assert.equal(verifyMeetingVoiceToken("not-a-token"), false);
+  } finally {
+    if (previousSecret === undefined) delete process.env.BETTER_AUTH_SECRET;
+    else process.env.BETTER_AUTH_SECRET = previousSecret;
+  }
+});
 
 test("getRecallRegion accepts valid regions and throws on invalid", () => {
   const prev = process.env.RECALL_REGION;
@@ -148,8 +166,16 @@ test("createMeetingBot rejects localhost and private IPs to avoid CloudFront 403
 });
 
 test("createMeetingBot dispatches valid payload and receives bot instance", async () => {
+  const previousEnv = {
+    RECALL_API_KEY: process.env.RECALL_API_KEY,
+    RECALL_REGION: process.env.RECALL_REGION,
+    PUBLIC_API_BASE_URL: process.env.PUBLIC_API_BASE_URL,
+    BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+  };
   process.env.RECALL_API_KEY = "test_key";
   process.env.RECALL_REGION = "us-west-2";
+  process.env.PUBLIC_API_BASE_URL = "https://thinky.example";
+  process.env.BETTER_AUTH_SECRET = "test-meeting-signing-secret";
   const originalFetch = globalThis.fetch;
   let sentBody;
 
@@ -169,15 +195,82 @@ test("createMeetingBot dispatches valid payload and receives bot instance", asyn
   try {
     const bot = await createMeetingBot({
       meetingUrl: "https://meet.google.com/abc-defg-hij",
-      botName: "Thinky Assistant",
-      joinMessage: "Hello from Thinky",
+      enableRealtimeTranscript: true,
     });
 
     assert.equal(bot.id, "bot_123");
     assert.equal(bot.meeting_url, "https://meet.google.com/abc-defg-hij");
-    assert.equal(sentBody.bot_name, "Thinky Assistant");
-    assert.equal(sentBody.chat.on_bot_join.message, "Hello from Thinky");
+    assert.equal(sentBody.bot_name, "Thinky AI Facilitator");
+    assert.deepEqual(sentBody.variant, {
+      zoom: "web_4_core",
+      google_meet: "web_4_core",
+      microsoft_teams: "web_4_core",
+    });
+    assert.match(sentBody.output_media.camera.config.url, /^https:\/\/thinky\.example\/meeting-agent\//);
+    assert.equal(sentBody.recording_config.include_bot_in_recording.audio, true);
+    assert.deepEqual(sentBody.recording_config.transcript, {
+      provider: {
+        deepgram_streaming: {
+          model: "nova-3",
+          language: "multi",
+          mip_opt_out: true,
+        },
+      },
+      diarization: {
+        use_separate_streams_when_available: true,
+      },
+    });
+    assert.deepEqual(sentBody.recording_config.realtime_endpoints, [
+      {
+        url: "https://thinky.example/api/webhooks/recall",
+        type: "webhook",
+        events: ["transcript.data"],
+      },
+    ]);
+    assert.match(sentBody.chat.on_bot_join.message, /AI meeting facilitator/);
   } finally {
     globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(previousEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  }
+});
+
+test("createAsyncTranscript requests a private Deepgram transcript", async () => {
+  const previousEnv = {
+    RECALL_API_KEY: process.env.RECALL_API_KEY,
+    RECALL_REGION: process.env.RECALL_REGION,
+  };
+  process.env.RECALL_API_KEY = "test_recall_key";
+  process.env.RECALL_REGION = "us-west-2";
+  const originalFetch = globalThis.fetch;
+  let sentBody;
+
+  globalThis.fetch = async (_url, init) => {
+    sentBody = JSON.parse(init?.body);
+    return new Response(null, { status: 200 });
+  };
+
+  try {
+    await createAsyncTranscript("recording_123");
+    assert.deepEqual(sentBody, {
+      provider: {
+        deepgram_async: {
+          model: "nova-3",
+          language: "multi",
+          mip_opt_out: true,
+        },
+      },
+      diarization: {
+        use_separate_streams_when_available: true,
+      },
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(previousEnv)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
   }
 });

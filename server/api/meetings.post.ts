@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const userId = await requireSessionUserId(event);
   const body = await readValidatedBody(event, (b) => CreateMeetingSchema.parse(b));
 
-  const botName = body.botName || "Thinky Assistant";
+  const botName = body.botName || "Thinky AI Facilitator";
   const bot = await createMeetingBot({
     meetingUrl: body.meetingUrl,
     botName,

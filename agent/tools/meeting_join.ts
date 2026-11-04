@@ -4,7 +4,7 @@ import { createMeetingBot } from "../lib/recall.js";
 
 export default defineTool({
   description:
-    "Send an AI meeting bot to a Zoom, Google Meet, Microsoft Teams, or Webex meeting to record and transcribe it immediately or at a scheduled time.",
+    "Join a Zoom, Google Meet, Microsoft Teams, or Webex meeting as Thinky's transparent AI facilitator. The bot speaks with participants, helps guide the discussion, and records the meeting for a transcript.",
   inputSchema: z.object({
     meetingUrl: z
       .string()
@@ -15,8 +15,8 @@ export default defineTool({
     botName: z
       .string()
       .optional()
-      .default("Thinky Assistant")
-      .describe("The display name of the bot visible to meeting attendees (default: 'Thinky Assistant')."),
+      .default("Thinky AI Facilitator")
+      .describe("The display name of the bot visible to meeting attendees (default: 'Thinky AI Facilitator')."),
     joinAt: z
       .string()
       .optional()
@@ -30,8 +30,8 @@ export default defineTool({
     enableRealtimeTranscript: z
       .boolean()
       .optional()
-      .default(false)
-      .describe("If true, streams real-time transcript utterances during the call."),
+      .default(true)
+      .describe("Enable Deepgram real-time transcript events delivered to Thinky's Recall webhook."),
   }),
   outputSchema: z.object({
     success: z.boolean(),

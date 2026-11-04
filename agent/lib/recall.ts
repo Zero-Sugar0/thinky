@@ -44,6 +44,70 @@ export function getPublicApiBaseUrl(): string | undefined {
   );
 }
 
+function getMeetingVoiceSigningSecret(): string {
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret) {
+    throw new Error("BETTER_AUTH_SECRET environment variable is missing.");
+  }
+  return secret;
+}
+
+export function createMeetingVoiceToken(joinAt: string): string {
+  const scheduledAt = Date.parse(joinAt);
+  if (!Number.isFinite(scheduledAt)) {
+    throw new Error("Meeting join time must be a valid ISO 8601 timestamp.");
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const joinAtSeconds = Math.floor(scheduledAt / 1000);
+  const payload = {
+    purpose: "meeting-voice",
+    notBefore: Math.max(now - 60, joinAtSeconds - 15 * 60),
+    expiresAt: joinAtSeconds + 8 * 60 * 60,
+    nonce: crypto.randomBytes(16).toString("base64url"),
+  };
+  if (payload.expiresAt <= now) {
+    throw new Error("Meeting join time is too far in the past to start a voice session.");
+  }
+
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = crypto.createHmac("sha256", getMeetingVoiceSigningSecret()).update(encodedPayload).digest("base64url");
+  return `${encodedPayload}.${signature}`;
+}
+
+export function verifyMeetingVoiceToken(token: string): boolean {
+  const [encodedPayload, signature, extra] = token.split(".");
+  if (!encodedPayload || !signature || extra !== undefined) return false;
+
+  const expected = crypto.createHmac("sha256", getMeetingVoiceSigningSecret()).update(encodedPayload).digest();
+  let actual: Buffer;
+  try {
+    actual = Buffer.from(signature, "base64url");
+  } catch {
+    return false;
+  }
+  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return false;
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
+  } catch {
+    return false;
+  }
+  if (typeof payload !== "object" || payload === null) return false;
+
+  const claims = payload as Record<string, unknown>;
+  const now = Math.floor(Date.now() / 1000);
+  return (
+    claims.purpose === "meeting-voice" &&
+    typeof claims.notBefore === "number" &&
+    typeof claims.expiresAt === "number" &&
+    typeof claims.nonce === "string" &&
+    claims.notBefore <= now &&
+    claims.expiresAt > now
+  );
+}
+
 /**
  * Required fetch with retry mechanism handling:
  * - 429: Rate limit exceeded (respects Retry-After + jitter)
@@ -178,50 +242,77 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
   const baseUrl = getRecallBaseUrl();
   const publicBaseUrl = getPublicApiBaseUrl();
 
-  const botName = options.botName || "Thinky Assistant";
+  const botName = options.botName || "Thinky AI Facilitator";
   const joinAt = options.joinAt || new Date().toISOString();
-
   // Validate meeting URL: CloudFront 403 prevention (no localhost or private IP in request body)
   if (options.meetingUrl.includes("localhost") || options.meetingUrl.includes("127.0.0.1")) {
     throw new Error("Recall.ai does not permit 'localhost' or IP addresses in meeting URLs.");
+  }
+
+  if (!publicBaseUrl) {
+    throw new Error("PUBLIC_API_BASE_URL is required for the meeting voice facilitator.");
+  }
+  const publicUrl = new URL(publicBaseUrl);
+  if (publicUrl.protocol !== "https:" || publicUrl.hostname === "localhost" || publicUrl.hostname.endsWith(".localhost")) {
+    throw new Error("PUBLIC_API_BASE_URL must be a publicly reachable HTTPS URL for the meeting voice facilitator.");
+  }
+
+  const voiceToken = createMeetingVoiceToken(joinAt);
+  const recordingConfig: Record<string, unknown> = {
+    include_bot_in_recording: {
+      audio: true,
+    },
+  };
+  if (options.enableRealtimeTranscript) {
+    recordingConfig.transcript = {
+      provider: {
+        deepgram_streaming: {
+          model: "nova-3",
+          language: "multi",
+          mip_opt_out: true,
+        },
+      },
+      diarization: {
+        use_separate_streams_when_available: true,
+      },
+    };
+    recordingConfig.realtime_endpoints = [
+      {
+        url: `${publicUrl.origin}/api/webhooks/recall`,
+        type: "webhook",
+        events: ["transcript.data"],
+      },
+    ];
   }
 
   const payload: Record<string, unknown> = {
     meeting_url: options.meetingUrl,
     join_at: joinAt,
     bot_name: botName,
+    variant: {
+      zoom: "web_4_core",
+      google_meet: "web_4_core",
+      microsoft_teams: "web_4_core",
+    },
+    output_media: {
+      camera: {
+        kind: "webpage",
+        config: {
+          url: `${publicUrl.origin}/meeting-agent/${voiceToken}`,
+        },
+      },
+    },
+    recording_config: recordingConfig,
     chat: {
       on_bot_join: {
         send_to: "everyone",
-        message: options.joinMessage || "Thinky assistant has joined to record and transcribe this meeting.",
+        message:
+          options.joinMessage ||
+          "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes.",
         pin: true,
       },
     },
   };
-
-  // If real-time transcription is requested and we have a stable public URL
-  if (options.enableRealtimeTranscript && publicBaseUrl && !publicBaseUrl.includes("localhost")) {
-    payload.recording_config = {
-      transcript: {
-        provider: {
-          recallai_streaming: {
-            language_code: "en",
-            mode: "prioritize_low_latency",
-          },
-        },
-        diarization: {
-          use_separate_streams_when_available: true,
-        },
-      },
-      realtime_endpoints: [
-        {
-          type: "webhook",
-          url: `${publicBaseUrl}/api/webhooks/recall-realtime`,
-          events: ["transcript.data"],
-        },
-      ],
-    };
-  }
 
   const response = await fetch_with_retry({
     url: `${baseUrl}/bot/`,
@@ -312,8 +403,10 @@ export async function createAsyncTranscript(recordingId: string): Promise<void> 
       },
       body: JSON.stringify({
         provider: {
-          recallai_async: {
-            language_code: "auto",
+          deepgram_async: {
+            model: "nova-3",
+            language: "multi",
+            mip_opt_out: true,
           },
         },
         diarization: {

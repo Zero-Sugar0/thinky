@@ -15,24 +15,28 @@ import {
  */
 export default defineEventHandler(async (event) => {
   const secret = process.env.RECALL_WORKSPACE_VERIFICATION_SECRET || process.env.RECALL_SVIX_WEBHOOK_SECRET;
+  if (!secret) {
+    throw createError({
+      statusCode: 503,
+      statusMessage: "Recall webhook verification is not configured",
+    });
+  }
 
   const rawBody = await readRawBody(event);
   const headers = getHeaders(event) as Record<string, string>;
 
-  if (secret) {
-    try {
-      verifyRequestFromRecall({
-        secret,
-        headers,
-        payload: rawBody || null,
-      });
-    } catch (err) {
-      console.error("[recall-webhook] Verification failed:", err);
-      throw createError({
-        statusCode: 401,
-        statusMessage: "Recall signature verification failed",
-      });
-    }
+  try {
+    verifyRequestFromRecall({
+      secret,
+      headers,
+      payload: rawBody || null,
+    });
+  } catch (err) {
+    console.error("[recall-webhook] Verification failed:", err);
+    throw createError({
+      statusCode: 401,
+      statusMessage: "Recall signature verification failed",
+    });
   }
 
   let payload: Record<string, unknown> | null = null;

@@ -21,8 +21,8 @@ const formError = ref<string | null>(null);
 const newMeeting = reactive({
   meetingUrl: "",
   title: "",
-  botName: "Thinky Assistant",
-  joinMessage: "Thinky Assistant has joined to take notes.",
+  botName: "Thinky AI Facilitator",
+  joinMessage: "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes.",
 });
 
 async function handleCreateMeeting() {
@@ -90,10 +90,10 @@ function getStatusBadgeColor(st: string) {
         <div class="flex items-center justify-between gap-2">
           <div>
             <h1 class="text-lg sm:text-xl font-semibold text-highlighted">
-              Meeting Notetaker
+              AI Meeting Facilitator
             </h1>
             <p class="text-xs sm:text-sm text-muted">
-              AI meeting bot calls, recordings, and speaker-attributed transcripts.
+              A transparent AI participant that speaks with your meeting and saves a transcript.
             </p>
           </div>
           <UButton
@@ -110,7 +110,7 @@ function getStatusBadgeColor(st: string) {
         <UModal
           v-model:open="isModalOpen"
           title="Send Bot to Meeting"
-          description="Send Thinky's bot to a Google Meet, Zoom, Teams, or Webex call."
+          description="Send Thinky's AI facilitator to a Google Meet, Zoom, Teams, or Webex call."
         >
           <template #body>
             <form
@@ -145,7 +145,7 @@ function getStatusBadgeColor(st: string) {
                 <label class="block text-sm font-medium mb-1">Bot Name</label>
                 <UInput
                   v-model="newMeeting.botName"
-                  placeholder="Thinky Assistant"
+                  placeholder="Thinky AI Facilitator"
                 />
               </div>
 
@@ -153,7 +153,7 @@ function getStatusBadgeColor(st: string) {
                 <label class="block text-sm font-medium mb-1">In-Call Join Announcement</label>
                 <UInput
                   v-model="newMeeting.joinMessage"
-                  placeholder="Thinky Assistant has joined to take notes."
+                  placeholder="Thinky is an AI meeting facilitator."
                 />
               </div>
 

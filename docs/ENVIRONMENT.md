@@ -145,16 +145,31 @@ Gives the agent access to 4,100+ tools across 123+ providers for B2B leads, peop
 
 On Vercel, set `TREG_TOKEN` on the `eve` service (or both services). Customer attribution is automatically tagged with `X-Treg-Meta: customer=<principalId>`.
 
-## Recall.ai Meeting Bots & Transcripts (optional)
+## Recall.ai Meeting Facilitator & Transcripts (optional)
 
-Enables sending automated meeting bots to Zoom, Google Meet, Microsoft Teams, and Webex calls to record, transcribe, and summarize meetings.
+Enables Thinky's AI facilitator to join Zoom, Google Meet, Microsoft Teams, and Webex calls, speak with participants, and save a transcript. Recall Output Media hosts the facilitator webpage and streams meeting audio into it; Gemini Live provides a single realtime speech-to-speech model through Vercel AI Gateway. Recall uses Deepgram for real-time transcript events and post-meeting transcript artifacts.
 
 | Variable | Description |
 |----------|-------------|
 | `RECALL_REGION` | Chosen isolated Recall region: `us-west-2` (default), `us-east-1`, `eu-central-1`, or `ap-northeast-1` |
 | `RECALL_API_KEY` | Region-specific Recall API key from dashboard |
 | `RECALL_WORKSPACE_VERIFICATION_SECRET` | Secret used to verify incoming HMAC SHA-256 signatures from Recall webhooks |
-| `PUBLIC_API_BASE_URL` | Stable public backend URL (e.g. `https://your-domain.vercel.app` or static ngrok URL in dev). Recall rejects `localhost` or private IPs with 403. |
+| `PUBLIC_API_BASE_URL` | Stable public HTTPS app URL (e.g. `https://your-domain.vercel.app` or a public tunnel in dev). Recall cannot load `localhost` or private IPs. |
+| `AI_GATEWAY_API_KEY` | Optional on Vercel (OIDC is used automatically); required for local or other deployments unless Gateway is authenticated another way |
+
+Set `RECALL_API_KEY`, `PUBLIC_API_BASE_URL`, and the same
+`BETTER_AUTH_SECRET` on both the **web** and **eve** services: meetings can be
+created from either service, and Recall loads the public web app to start voice
+sessions. Configure the Deepgram transcription key in the selected Recall
+region; Recall regions are isolated. Meeting creation configures Deepgram
+streaming and sends `transcript.data` events to
+`<PUBLIC_API_BASE_URL>/api/webhooks/recall`. The same endpoint receives
+Recall lifecycle and post-meeting transcript events and verifies each request
+with `RECALL_WORKSPACE_VERIFICATION_SECRET`. The web service needs Vercel AI
+Gateway authentication to mint the short-lived realtime session token. The
+facilitator announces that it is an AI participant in both the meeting chat and
+its spoken introduction. Recall bots use its documented `web_4_core` variant
+on Zoom, Google Meet, and Microsoft Teams for Output Media workloads.
 
 ## Composio (optional)
 
