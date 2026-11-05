@@ -5,7 +5,7 @@ import { z } from "zod";
 
 const REQUEST_TIMEOUT_MS = 20_000;
 const RETRY_DELAY_MS = 300;
-export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 120;
+export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 600;
 const MAX_JSON_RESPONSE_BYTES = 2 * 1024 * 1024;
 const MAX_SCREENSHOT_BYTES = 2 * 1024 * 1024;
 const LOCAL_HOST_SUFFIXES = [".localhost", ".local", ".internal", ".test", ".invalid"];

@@ -24,12 +24,13 @@ const viewerUrl = computed(() => {
   }
 });
 
-const expiresIn = computed(() => {
-  if (refreshedExpiresIn.value) return refreshedExpiresIn.value;
-  const output = props.invocation.output;
-  if (!output) return 120;
-  return output.liveViewerExpiresInSeconds ?? output.expiresInSeconds ?? 120;
-});
+// Kept for signed-link refresh bookkeeping; expiry is intentionally not shown in the card.
+// const expiresIn = computed(() => {
+//   if (refreshedExpiresIn.value) return refreshedExpiresIn.value;
+//   const output = props.invocation.output;
+//   if (!output) return 600;
+//   return output.liveViewerExpiresInSeconds ?? output.expiresInSeconds ?? 600;
+// });
 
 const tabId = computed(
   () => props.invocation.output?.tabId ?? props.invocation.input?.tabId,
@@ -95,12 +96,12 @@ watch(
 
 <template>
   <section
-    class="my-3 w-full max-w-3xl overflow-hidden rounded-xl border border-default bg-elevated"
+    class="my-3 w-full max-w-3xl overflow-hidden bg-transparent"
     aria-label="Live browser view"
   >
     <div
       v-if="viewerUrl && (!active || refreshedUrl)"
-      class="aspect-[4/3] bg-black sm:aspect-video"
+      class="h-[calc(100dvh-9rem)] min-h-[240px] w-full bg-transparent sm:h-[360px]"
     >
       <iframe
         :key="viewerUrl"
@@ -136,26 +137,6 @@ watch(
         Opening the browser and preparing its live view...
       </template>
     </div>
-    <footer
-      v-if="invocation.output"
-      class="flex flex-col gap-1 border-t border-default px-3 py-2 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:gap-3"
-    >
-      <span class="break-words">
-        {{ active ? "Live view auto-refreshes while the agent is working" : `Live view link expires in ${expiresIn} seconds` }}
-        <span
-          v-if="refreshFailed"
-          class="text-error"
-        > · could not refresh</span>
-      </span>
-      <a
-        v-if="viewerUrl && (!active || refreshedUrl)"
-        :href="viewerUrl"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex min-h-11 items-center self-start rounded-md text-primary hover:underline sm:min-h-0 sm:self-auto"
-      >
-        Open in new tab
-      </a>
-    </footer>
+    <!-- Signed-link expiry and refresh handling stay in code, but the viewer owns its toolbar and the card stays chrome-free. -->
   </section>
 </template>
