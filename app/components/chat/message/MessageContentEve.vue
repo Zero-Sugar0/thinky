@@ -182,7 +182,6 @@ const showThinking = computed(
             {{ isExpanded(`${message.id}-${index}`) ? 'Show less' : 'Show full message' }}
           </button>
         </div>
-      </div>
     </template>
   </template>
   </div>
