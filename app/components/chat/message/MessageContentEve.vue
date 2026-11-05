@@ -36,6 +36,18 @@ const displayParts = computed(() => getMergedParts(normalizeEveParts(rawParts.va
 const isBusy = computed(
   () => props.status === "submitted" || props.status === "streaming",
 );
+const expandedMessageParts = ref(new Set<string>());
+
+function isExpanded(key: string) {
+  return expandedMessageParts.value.has(key);
+}
+
+function toggleExpanded(key: string) {
+  const next = new Set(expandedMessageParts.value);
+  if (next.has(key)) next.delete(key);
+  else next.add(key);
+  expandedMessageParts.value = next;
+}
 
 const showThinking = computed(
   () =>
@@ -151,16 +163,24 @@ const showThinking = computed(
           aria-hidden="true"
         />
       </div>
-      <div
-        v-else
-        class="ml-auto flex w-full justify-end"
-      >
         <div
-          class="inline-block max-w-[85%] rounded-2xl rounded-tr-sm bg-elevated/70 px-3.5 py-2 text-xs sm:text-[13px] leading-5 text-highlighted [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+          v-else
+          class="inline-block max-w-[min(92%,42rem)] rounded-[1.25rem] rounded-tr-md bg-elevated/80 px-4 py-2.5 text-xs leading-5 text-highlighted shadow-sm ring-1 ring-inset ring-white/5 sm:text-[13px] [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
         >
-          <p class="whitespace-pre-wrap">
+          <p
+            class="whitespace-pre-wrap"
+            :class="!isExpanded(`${message.id}-${index}`) && part.text.split('\\n').length > 7 ? 'line-clamp-7' : ''"
+          >
             {{ part.text }}
           </p>
+          <button
+            v-if="part.text.split('\\n').length > 7"
+            type="button"
+            class="mt-1 block w-full text-center text-xs font-medium text-muted transition-colors hover:text-highlighted"
+            @click="toggleExpanded(`${message.id}-${index}`)"
+          >
+            {{ isExpanded(`${message.id}-${index}`) ? 'Show less' : 'Show full message' }}
+          </button>
         </div>
       </div>
     </template>

@@ -41,8 +41,21 @@ const appSearchQuery = ref("");
 const allApps = computed(() => data.value?.apps ?? []);
 const connectedApps = computed(() => allApps.value.filter(app => app.isConnected));
 
+function formatTriggerName(trigger?: TriggerType | TriggerRecord) {
+  const raw = trigger && "name" in trigger
+    ? trigger.name
+    : trigger && "triggerName" in trigger
+      ? trigger.triggerName || trigger.triggerSlug
+      : trigger && "slug" in trigger ? trigger.slug : undefined;
+  return (raw || "Event trigger")
+    .replace(/_TRIGGER$/i, "")
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, (letter: string) => letter.toUpperCase());
+}
+
 const displayedApps = computed(() => {
-  const base = connectedApps.value;
+  const base = allApps.value;
   if (!appSearchQuery.value.trim()) return base;
   const q = appSearchQuery.value.trim().toLowerCase();
   return base.filter(app =>
@@ -250,7 +263,7 @@ async function connectCurrentApp() {
 
       <!-- Only connected apps can receive live events -->
       <div class="space-y-2">
-        <p class="text-[11px] leading-4 text-muted">Connected apps with event support</p>
+        <p class="text-[11px] leading-4 text-muted">{{ allApps.length }} apps · available triggers</p>
         <UInput
           v-model="appSearchQuery"
           icon="i-lucide-search"
@@ -317,7 +330,7 @@ async function connectCurrentApp() {
               />
             </div>
             <p class="truncate text-[10px] text-muted">
-              {{ app.isConnected ? 'Connected' : 'Not connected' }}
+              {{ app.isConnected ? 'Connected' : 'Connect first' }}
             </p>
           </div>
 
@@ -453,13 +466,32 @@ async function connectCurrentApp() {
               />
             </div>
 
+            <div v-if="triggerTypes.length" class="space-y-2 pt-1">
+              <div class="flex items-center justify-between px-1">
+                <p class="text-[11px] font-semibold text-highlighted">{{ selectedApp.slug }} trigger types</p>
+                <span class="font-mono text-[10px] text-muted">{{ triggerTypes.length }} available events</span>
+              </div>
+              <div
+                v-for="type in triggerTypes"
+                :key="type.slug"
+                class="flex w-full min-w-0 items-start gap-3 rounded-lg border border-default bg-default/20 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
+              >
+                <UIcon name="i-lucide-webhook" class="mt-0.5 size-4 shrink-0 text-muted" />
+                <span class="min-w-0 flex-1">
+                  <span class="block truncate text-xs font-medium text-highlighted">{{ formatTriggerName(type) }}</span>
+                  <span class="mt-1 block break-all font-mono text-[10px] text-muted">{{ type.slug }}</span>
+                </span>
+                <UButton type="button" size="xs" color="neutral" variant="soft" @click.stop="selectedType = type.slug || ''">Configure</UButton>
+              </div>
+            </div>
+
             <!-- Description of selected type -->
             <div
               v-if="selectedTypeDetail"
               class="rounded-lg border border-default bg-muted/20 p-2.5 text-xs"
             >
               <p class="font-medium text-highlighted">
-                {{ selectedTypeDetail.name || selectedTypeDetail.slug }}
+                {{ formatTriggerName(selectedTypeDetail) }}
               </p>
               <p
                 v-if="selectedTypeDetail.description"
@@ -530,7 +562,7 @@ async function connectCurrentApp() {
               <div class="min-w-0 flex-1">
                 <div class="flex items-center gap-2">
                   <p class="truncate text-xs font-medium text-highlighted">
-                    {{ trigger.triggerName || trigger.triggerSlug || 'Event Trigger' }}
+                    {{ formatTriggerName(trigger) }}
                   </p>
                   <UBadge
                     :color="trigger.disabledAt ? 'neutral' : 'success'"
@@ -541,7 +573,7 @@ async function connectCurrentApp() {
                   </UBadge>
                 </div>
                 <p class="mt-0.5 break-all font-mono text-[10px] text-muted">
-                  ID: {{ trigger.id || trigger.triggerId }}
+                  {{ trigger.triggerSlug || trigger.id || trigger.triggerId }}
                 </p>
               </div>
 
