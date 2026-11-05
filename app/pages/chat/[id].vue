@@ -137,9 +137,9 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             :messages="messages"
             :status="status"
             :spacing-offset="96"
-            :assistant="{ side: 'left', name: 'Thinky', variant: 'naked', ui: { container: 'mr-auto flex w-full min-w-0 max-w-2xl items-start text-xs sm:text-[13px] leading-5 sm:leading-6' } }"
+            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'mr-auto flex w-full min-w-0 max-w-2xl items-start text-xs sm:text-[13px] leading-5 sm:leading-6' } }"
             :user="{ side: 'right', variant: 'naked', ui: { container: 'ml-auto flex justify-end w-full' } }"
-            class="pt-(--ui-header-height) pb-3 sm:pb-5"
+            class="pt-(--ui-header-height) pb-4 sm:pb-6"
           >
             <template #indicator>
               <ChatActivityIndicator />
@@ -181,7 +181,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             v-model="input"
             :error="chatError"
             variant="subtle"
-            class="sticky bottom-0 z-10 [view-transition-name:chat-prompt] rounded-b-none"
+            class="sticky bottom-1 z-10 [view-transition-name:chat-prompt] rounded-b-none"
             :ui="{ base: 'px-1.5' }"
             @submit="handleSubmit"
           >
