@@ -1,4 +1,4 @@
-export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 120;
+export const CAMOFOX_LIVE_VIEWER_TTL_SECONDS = 600;
 
 export type CamofoxScreenshotUIToolInvocation = {
   state: string;
