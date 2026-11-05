@@ -20,7 +20,7 @@ Chat with your agent in the browser. Threads resume across sessions and tool cal
 
 ### Slack — Same Agent, Different Surface
 
-DMs and @mentions on Slack. Link your Slack account to your web profile so memory and context follow you across channels.
+DMs and @mentions on Slack. Link your Slack account to your web profile so memory and context follow you across telegram and other channels.
 
 ### Telegram — Private Chats and Groups
 
