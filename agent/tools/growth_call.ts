@@ -43,6 +43,18 @@ export default defineTool({
       .positive()
       .optional()
       .describe("Maximum seconds to wait for asynchronous polling (default 180s)."),
+    stopOnFirstMiss: z
+      .boolean()
+      .optional()
+      .describe("For routed tools: if true, stops waterfall at first provider miss rather than falling forward, saving money."),
+    strictFilters: z
+      .boolean()
+      .optional()
+      .describe("For routed tools: if true, rejects with unbilled 422 error if a provider cannot satisfy all requested filters."),
+    noCache: z
+      .boolean()
+      .optional()
+      .describe("If true, bypasses the 10% cached response and forces a live request upstream."),
   }),
   outputSchema: z.object({
     success: z.boolean(),
@@ -55,10 +67,27 @@ export default defineTool({
     cached: z.boolean().optional(),
     replayed: z.boolean().optional(),
     domainMatch: z.boolean().optional(),
+    advice: z.string().optional(),
+    ignoredFilters: z.array(z.string()).optional(),
     data: z.unknown().optional(),
     error: z.string().optional(),
   }),
-  async execute({ toolId, method, query, data, maxCostUsd, idempotencyKey, awaitAsync, asyncTimeoutSeconds }, ctx) {
+  async execute(
+    {
+      toolId,
+      method,
+      query,
+      data,
+      maxCostUsd,
+      idempotencyKey,
+      awaitAsync,
+      asyncTimeoutSeconds,
+      stopOnFirstMiss,
+      strictFilters,
+      noCache,
+    },
+    ctx,
+  ) {
     try {
       const customerId = ctx.session?.auth?.current?.principalId;
 
@@ -71,6 +100,9 @@ export default defineTool({
         idempotencyKey,
         awaitAsync,
         asyncTimeoutSeconds,
+        stopOnFirstMiss,
+        strictFilters,
+        noCache,
         customerId,
         signal: ctx.abortSignal,
       });
@@ -86,6 +118,8 @@ export default defineTool({
         cached: result.cached,
         replayed: result.replayed,
         domainMatch: result.domainMatch,
+        advice: result.advice,
+        ignoredFilters: result.ignoredFilters,
         data: result.data,
         error: result.error,
       };
