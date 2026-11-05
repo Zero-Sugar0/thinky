@@ -6,6 +6,8 @@ import {
   inspectGrowthEndpoint,
   callGrowthTool,
   submitGrowthFeedback,
+  submitGrowthReview,
+  getGrowthCallResult,
   getGrowthBalance,
 } from "../agent/lib/growth-engine.ts";
 
@@ -150,6 +152,179 @@ test("callGrowthTool passes customer meta, ceiling headers, and extracts costMic
       last_name: "Nadella",
       domain: "microsoft.com",
     });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("callGrowthTool passes waterfall, strictFilters, noCache headers and parses advice and ignoredFilters", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let capturedHeaders;
+
+  globalThis.fetch = async (_url, init) => {
+    capturedHeaders = new Headers(init?.headers);
+    return new Response(
+      JSON.stringify({
+        output: { phone: "+14155552671" },
+        _treg: {
+          advice: "Verify phone line before dialling",
+          ignored_filters: ["min_followers"],
+        },
+      }),
+      {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+          "x-treg-cost-micro": "20000",
+          "x-treg-call-id": "call_phone_123",
+          "x-treg-served-by": "dataprovider",
+          "x-treg-ignored-filters": "min_followers, geo_country",
+        },
+      },
+    );
+  };
+
+  try {
+    const result = await callGrowthTool({
+      toolId: "treg.people.phone.find",
+      stopOnFirstMiss: true,
+      strictFilters: true,
+      noCache: true,
+    });
+
+    assert.equal(result.success, true);
+    assert.equal(capturedHeaders.get("x-treg-route-waterfall"), "0");
+    assert.equal(capturedHeaders.get("x-treg-route-strict-filters"), "1");
+    assert.equal(capturedHeaders.get("cache-control"), "no-cache");
+    assert.equal(result.advice, "Verify phone line before dialling");
+    assert.deepEqual(result.ignoredFilters, ["min_followers", "geo_country"]);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("submitGrowthReview submits call review to /calls/:callId/review", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let capturedUrl;
+  let capturedBody;
+
+  globalThis.fetch = async (url, init) => {
+    capturedUrl = new URL(url.toString());
+    capturedBody = JSON.parse(init?.body || "{}");
+    return new Response(JSON.stringify({ review_id: "rev_456" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const res = await submitGrowthReview({
+      callId: "call_abc_123",
+      usefulness: "useful",
+      reason: "Accurate phone number returned",
+    });
+
+    assert.equal(res.success, true);
+    assert.equal(res.reviewId, "rev_456");
+    assert.ok(capturedUrl?.pathname.includes("/calls/call_abc_123/review"));
+    assert.equal(capturedBody.usefulness, "useful");
+    assert.equal(capturedBody.reason, "Accurate phone number returned");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("getGrowthCallResult fetches stored call result without re-calling", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let capturedUrl;
+
+  globalThis.fetch = async (url) => {
+    capturedUrl = new URL(url.toString());
+    return new Response(JSON.stringify({ recovered: "data_payload" }), {
+      status: 200,
+      headers: {
+        "content-type": "application/json",
+        "x-treg-cost-micro": "10000",
+      },
+    });
+  };
+
+  try {
+    const res = await getGrowthCallResult("call_previous_xyz");
+    assert.equal(res.success, true);
+    assert.equal(res.callId, "call_previous_xyz");
+    assert.deepEqual(res.data, { recovered: "data_payload" });
+    assert.equal(res.costUsd, 0.01);
+    assert.ok(capturedUrl?.pathname.includes("/calls/call_previous_xyz/result"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("callGrowthTool executes custom routed endpoint calls", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async (url) => {
+    const urlStr = url.toString();
+    if (urlStr.includes("treg.web.extract")) {
+      return new Response(
+        JSON.stringify({
+          output: {
+            title: "Sample Page",
+            markdown: "# Sample Content",
+            description: "Sample description",
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json", "x-treg-cost-micro": "5000" } },
+      );
+    }
+    if (urlStr.includes("treg.companies.similar")) {
+      return new Response(
+        JSON.stringify({
+          output: {
+            companies: [
+              { domain: "rival.io", name: "Rival Corp", score: 0.92, summary: "Competitor" },
+            ],
+          },
+        }),
+        { status: 200, headers: { "content-type": "application/json", "x-treg-cost-micro": "8000" } },
+      );
+    }
+    return new Response(JSON.stringify({ ok: true }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+
+  try {
+    const extractRes = await callGrowthTool({
+      toolId: "treg.web.extract",
+      data: { url: "https://example.com" },
+      stopOnFirstMiss: true,
+      strictFilters: true,
+    });
+    assert.equal(extractRes.success, true);
+    assert.equal(extractRes.costUsd, 0.005);
+
+    const similarRes = await callGrowthTool({
+      toolId: "treg.companies.similar",
+      data: { domain: "example.com" },
+    });
+    assert.equal(similarRes.success, true);
+    assert.equal(similarRes.costUsd, 0.008);
   } finally {
     globalThis.fetch = originalFetch;
     if (prevToken === undefined) delete process.env.TREG_TOKEN;

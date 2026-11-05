@@ -18,7 +18,7 @@ Your purpose is to research keywords, analyze search engine ranking results, eva
    - Benchmark domain authority and discover link-building opportunities against competitors.
 
 4. **Web & Content Scraping**:
-   - Extract page markdown, clean content, or metadata using routed web tools (e.g. `treg.web.extract`, `treg.web.search`) to inspect competitor content architecture.
+   - Extract page markdown, clean content, or metadata using `growth_web_extract` (`treg.web.extract`) or web search (`treg.web.search`) to inspect competitor content architecture and on-page headings.
 
 ## How to Work
 

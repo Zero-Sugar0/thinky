@@ -72,6 +72,9 @@ export interface GrowthCallOptions {
   idempotencyKey?: string;
   awaitAsync?: boolean;
   asyncTimeoutSeconds?: number;
+  stopOnFirstMiss?: boolean;
+  strictFilters?: boolean;
+  noCache?: boolean;
   extraHeaders?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -88,6 +91,8 @@ export interface GrowthCallResult {
   cached?: boolean;
   domainMatch?: boolean;
   replayed?: boolean;
+  advice?: string;
+  ignoredFilters?: string[];
   asyncDescriptor?: unknown;
   error?: string;
 }
@@ -262,6 +267,18 @@ export async function callGrowthTool(
     headers["Idempotency-Key"] = options.idempotencyKey;
   }
 
+  if (options.stopOnFirstMiss) {
+    headers["X-Treg-Route-Waterfall"] = "0";
+  }
+
+  if (options.strictFilters) {
+    headers["X-Treg-Route-Strict-Filters"] = "1";
+  }
+
+  if (options.noCache) {
+    headers["Cache-Control"] = "no-cache";
+  }
+
   const method = (options.method || (options.data ? "POST" : "GET")).toUpperCase();
   let bodyPayload: string | undefined;
 
@@ -288,12 +305,32 @@ export async function callGrowthTool(
     : undefined;
   const replayed = response.headers.get("X-Treg-Idempotent-Replay") === "true";
 
+  let ignoredFilters: string[] | undefined;
+  const ignoredHeader = response.headers.get("X-Treg-Ignored-Filters");
+  if (ignoredHeader) {
+    ignoredFilters = ignoredHeader.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+
   let responseBody: unknown;
   const contentType = response.headers.get("content-type") || "";
   if (contentType.includes("application/json")) {
     responseBody = await response.json().catch(() => null);
   } else {
     responseBody = await response.text().catch(() => null);
+  }
+
+  let advice: string | undefined;
+  if (responseBody && typeof responseBody === "object") {
+    const bodyObj = responseBody as Record<string, unknown>;
+    const tregBlock = (bodyObj._treg as Record<string, unknown>) || undefined;
+    if (tregBlock) {
+      if (typeof tregBlock.advice === "string") {
+        advice = tregBlock.advice;
+      }
+      if (!ignoredFilters && Array.isArray(tregBlock.ignored_filters)) {
+        ignoredFilters = tregBlock.ignored_filters.map(String);
+      }
+    }
   }
 
   // Handle async task polling (e.g. video-gen, image-gen, or async provider returning 202)
@@ -372,6 +409,8 @@ export async function callGrowthTool(
       cached,
       replayed,
       domainMatch,
+      advice,
+      ignoredFilters,
       asyncDescriptor,
       data: responseBody,
       error: `[${isTregError ? "GrowthEngine" : "Provider"} ${response.status}] ${errorMessage}`,
@@ -389,6 +428,8 @@ export async function callGrowthTool(
     cached,
     replayed,
     domainMatch,
+    advice,
+    ignoredFilters,
     asyncDescriptor,
     data: responseBody,
   };
@@ -442,6 +483,122 @@ export async function submitGrowthFeedback(params: {
   return {
     success: true,
     feedbackId: body?.feedback_id,
+  };
+}
+
+/**
+ * Submit a review/rating for a specific call by its Call ID.
+ * Usefulness: 'useful' | 'partly' | 'not_useful' | 'not_sure'.
+ */
+export async function submitGrowthReview(params: {
+  callId: string;
+  usefulness: "useful" | "partly" | "not_useful" | "not_sure";
+  reason?: string;
+  signal?: AbortSignal;
+}): Promise<{ success: boolean; reviewId?: string; error?: string }> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("TREG_TOKEN environment variable is missing.");
+  }
+
+  const cleanCallId = encodeURIComponent(params.callId.trim());
+  const url = new URL(`/calls/${cleanCallId}/review`, TREG_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: "POST",
+    headers: {
+      "X-Treg-Token": token,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      usefulness: params.usefulness,
+      reason: params.reason,
+    }),
+    signal: params.signal,
+  });
+
+  const body = (await response.json().catch(() => null)) as {
+    review_id?: string;
+    error?: string;
+    message?: string;
+  } | null;
+
+  if (!response.ok) {
+    return {
+      success: false,
+      error: body?.message || body?.error || `Call review submission failed (${response.status})`,
+    };
+  }
+
+  return {
+    success: true,
+    reviewId: body?.review_id,
+  };
+}
+
+/**
+ * Recover the stored result of a previous successful catalog call by Call ID.
+ * Avoids re-calling or re-paying for lost results.
+ */
+export async function getGrowthCallResult(
+  callId: string,
+  signal?: AbortSignal,
+): Promise<{
+  success: boolean;
+  callId: string;
+  data?: unknown;
+  costMicro?: number;
+  costUsd?: number;
+  error?: string;
+}> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("TREG_TOKEN environment variable is missing.");
+  }
+
+  const cleanCallId = encodeURIComponent(callId.trim());
+  const url = new URL(`/calls/${cleanCallId}/result`, TREG_BASE_URL);
+
+  const response = await fetch(url.toString(), {
+    method: "GET",
+    headers: {
+      "X-Treg-Token": token,
+      Accept: "application/json",
+    },
+    signal,
+  });
+
+  const costMicroStr = response.headers.get("X-Treg-Cost-Micro");
+  const costMicro = costMicroStr ? parseInt(costMicroStr, 10) : undefined;
+  const costUsd = costMicro !== undefined ? costMicro / 1_000_000 : undefined;
+
+  let body: unknown;
+  const contentType = response.headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    body = await response.json().catch(() => null);
+  } else {
+    body = await response.text().catch(() => null);
+  }
+
+  if (!response.ok) {
+    const errorMsg =
+      typeof body === "object" && body !== null
+        ? (body as Record<string, unknown>).message || (body as Record<string, unknown>).error
+        : body;
+    return {
+      success: false,
+      callId,
+      error: String(errorMsg || `Failed to retrieve call result (${response.status})`),
+    };
+  }
+
+  return {
+    success: true,
+    callId,
+    costMicro,
+    costUsd,
+    data: body,
   };
 }
 
