@@ -26,7 +26,7 @@ const highlights = [
 
 const redirectTo = computed(() => {
   const value = route.query.redirect;
-  return typeof value === "string" && value.startsWith("/") ? value : "/";
+  return typeof value === "string" && value.startsWith("/") ? value : "/chat";
 });
 
 async function handleSubmit() {

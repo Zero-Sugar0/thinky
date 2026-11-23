@@ -19,7 +19,7 @@ const { data, error, pending: resumePending } = await useAsyncData(
 );
 
 if (error.value || !data.value?.thread) {
-  await navigateTo("/");
+  await navigateTo("/chat");
 }
 
 const thread = computed(() => data.value!.thread);
