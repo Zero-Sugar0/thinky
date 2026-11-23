@@ -56,7 +56,7 @@ defineShortcuts({
     >
       <template #header="{ collapsed }">
         <NuxtLink
-          to="/"
+          to="/chat"
           class="flex items-center min-w-0"
           :class="collapsed ? 'mx-auto' : 'px-2.5'"
         >

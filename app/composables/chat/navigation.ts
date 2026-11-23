@@ -12,10 +12,10 @@ type PendingMessage = {
 
 let pendingMessage: PendingMessage | null = null;
 
-const CHAT_PATH = /^\/chat\/[^/]+$/;
+const CHAT_PATH = /^\/chat(?:\/[^/]+)?$/;
 
 function isHomeChatTransition(from: string, to: string) {
-  return (from === "/" && CHAT_PATH.test(to)) || (CHAT_PATH.test(from) && to === "/");
+  return (from === "/chat" && CHAT_PATH.test(to)) || (CHAT_PATH.test(from) && to === "/chat");
 }
 
 async function navigateWithChatPromptTransition(to: string) {
@@ -89,7 +89,7 @@ export function consumePendingMessage(chatId: string) {
 export async function startNewChat() {
   pendingMessage = null;
   resetStreamLog();
-  await navigateWithChatPromptTransition("/");
+  await navigateWithChatPromptTransition("/chat");
 }
 
 export function useChatNavigation(chatId: MaybeRefOrGetter<string>) {
