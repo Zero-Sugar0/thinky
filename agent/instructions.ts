@@ -53,9 +53,9 @@ You have access to meeting bot tools (\`meeting_join\`, \`meeting_status\`, \`me
 
 # Growth Engine (Enrichment, SEO, Leads & Web Intelligence)
 
-You have access to 4,100+ specialized growth, lead, SEO, and enrichment tools across 123+ providers via Growth Engine tools:
+You have access to 4,200+ catalog tools across 139+ providers, plus team-registered custom tools via Growth Engine tools:
 - **Direct 1-Shot Tools**: Use \`growth_find_leads\` for prospect discovery, \`growth_find_email\` for work emails, \`growth_find_phone\` for phone numbers, \`growth_verify_email\` for deliverability checks, \`growth_enrich_company\` for company intel, \`growth_similar_companies\` for competitor search, \`growth_serp\` for Google rankings, \`growth_web_extract\` for clean page markdown extraction, and \`growth_balance\` to check remaining credits.
-- **Dynamic Exploration Hub**: Use \`growth_search\` to find tools by capability, \`growth_inspect\` to inspect parameters and pricing, \`growth_call\` to execute any endpoint (with async polling, routing controls, and cost caps), \`growth_call_result\` to recover previous call results, \`growth_review\` to submit quality ratings, and \`growth_request\` to report missing capabilities.
+- **Dynamic Exploration Hub**: Use \`growth_my_tools\` first when a task may be covered by a team-registered API or connection; use \`growth_search\` to discover catalog tools, \`growth_inspect\` to inspect schemas and pricing, and \`growth_call\` to execute endpoints. For routed contact endpoints, use \`verify: true\` when available and strict domain matching when a requested company domain must match. Use \`growth_call_result\` to recover previous call results, \`growth_review\` for invited quality ratings, \`growth_mark\` only after later evidence confirms a result was correct or wrong, \`growth_request\` for missing catalog capabilities, and \`growth_balance\` when spend or remaining credits matter.
 
 Key Rules:
 - **Search by the Job**: Search by capability rather than guessing provider names.

@@ -9,6 +9,8 @@ import {
   submitGrowthReview,
   getGrowthCallResult,
   getGrowthBalance,
+  markGrowthCall,
+  listGrowthTools,
 } from "../agent/lib/growth-engine.ts";
 
 test("sanitizeMetaValue cleans customer tag values according to treg specs", () => {
@@ -422,6 +424,73 @@ test("getGrowthBalance fetches credit balance", async () => {
     assert.equal(res.success, true);
     assert.equal(res.balanceUsd, 5.0);
     assert.equal(res.balanceMicro, 5000000);
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("markGrowthCall posts checked result feedback to /marks", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let requestedUrl;
+  let capturedBody;
+
+  globalThis.fetch = async (url, init) => {
+    requestedUrl = new URL(url.toString());
+    capturedBody = JSON.parse(init?.body || "{}");
+    return new Response(JSON.stringify({ mark_id: "mark_123", status: "received" }), {
+      status: 201,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const result = await markGrowthCall({
+      callId: "call_123",
+      basis: "cross_checked",
+      items: [{ index: 2, field: "email", verdict: "wrong" }],
+      checked: 5,
+      evidenceCallId: "verify_456",
+    });
+    assert.equal(result.success, true);
+    assert.equal(result.markId, "mark_123");
+    assert.equal(requestedUrl?.pathname, "/marks");
+    assert.deepEqual(capturedBody, {
+      call_id: "call_123",
+      basis: "cross_checked",
+      items: [{ index: 2, field: "email", verdict: "wrong" }],
+      checked: 5,
+      evidence_call_id: "verify_456",
+    });
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (prevToken === undefined) delete process.env.TREG_TOKEN;
+    else process.env.TREG_TOKEN = prevToken;
+  }
+});
+
+test("listGrowthTools reads registered team tools", async () => {
+  const prevToken = process.env.TREG_TOKEN;
+  process.env.TREG_TOKEN = "test-token";
+  const originalFetch = globalThis.fetch;
+  let requestedUrl;
+
+  globalThis.fetch = async (url) => {
+    requestedUrl = new URL(url.toString());
+    return new Response(JSON.stringify({ tools: [{ name: "custom-api", host: "api.example.test" }] }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  try {
+    const result = await listGrowthTools();
+    assert.equal(result.success, true);
+    assert.equal(result.tools[0].name, "custom-api");
+    assert.equal(requestedUrl?.pathname, "/tools");
   } finally {
     globalThis.fetch = originalFetch;
     if (prevToken === undefined) delete process.env.TREG_TOKEN;

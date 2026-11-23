@@ -4,7 +4,7 @@ import { searchGrowthCatalog } from "../lib/growth-engine.js";
 
 export default defineTool({
   description:
-    "Search across 4,100+ specialized growth tools across 123+ providers for leads, SEO, backlinks, SERP data, email/phone verification, company enrichment, social media analysis, and web scraping. Searches by the job to be done.",
+    "Search across 4,200+ catalog tools across 139+ providers for leads, SEO, backlinks, SERP data, email/phone verification, company enrichment, social media analysis, and web scraping. Searches by the job to be done.",
   inputSchema: z.object({
     query: z
       .string()

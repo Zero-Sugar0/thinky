@@ -55,6 +55,22 @@ export default defineTool({
       .boolean()
       .optional()
       .describe("If true, bypasses the 10% cached response and forces a live request upstream."),
+    verify: z
+      .boolean()
+      .optional()
+      .describe("For supported routed people/contact endpoints, verify email or phone results in the same call. Phone verification checks line status, not that the number belongs to the person."),
+    domainMatch: z
+      .enum(["strict"])
+      .optional()
+      .describe("For routed email finding, continue past off-domain matches to prefer an address matching the requested domain; each provider attempt may cost money."),
+    complete: z
+      .boolean()
+      .optional()
+      .describe("For routed endpoints, continue the provider waterfall until the result satisfies the endpoint's completion contract."),
+    prefer: z
+      .array(z.string())
+      .optional()
+      .describe("Optional provider IDs to prefer when continuing a routed call, for example providers named in _treg.paging."),
   }),
   outputSchema: z.object({
     success: z.boolean(),
@@ -85,6 +101,10 @@ export default defineTool({
       stopOnFirstMiss,
       strictFilters,
       noCache,
+      verify,
+      domainMatch,
+      complete,
+      prefer,
     },
     ctx,
   ) {
@@ -103,6 +123,10 @@ export default defineTool({
         stopOnFirstMiss,
         strictFilters,
         noCache,
+        verify,
+        domainMatch,
+        complete,
+        prefer,
         customerId,
         signal: ctx.abortSignal,
       });
