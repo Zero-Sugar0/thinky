@@ -1,11 +1,11 @@
 ---
 name: growth-engine
-description: Use Growth Engine tools to access 4,100+ endpoints across 123+ providers for B2B leads, prospect discovery, email and phone enrichment, SEO, SERP rankings, backlinks, company signals, social profiles, and web data.
+description: Use Growth Engine tools to access 4,200+ catalog tools across 139+ providers for B2B leads, prospect discovery, email and phone enrichment, SEO, SERP rankings, backlinks, company signals, social profiles, and web data.
 ---
 
 # Growth Engine Skill
 
-Growth Engine connects your agent to over 4,100 API endpoints across 123+ providers for market intelligence, B2B lead generation, enrichment, and SEO.
+Growth Engine connects your agent to over 4,200 catalog tools across 139+ providers for market intelligence, B2B lead generation, enrichment, and SEO.
 
 ## Available Tools
 
@@ -13,7 +13,9 @@ Growth Engine connects your agent to over 4,100 API endpoints across 123+ provid
 - **`growth_search`**: Search the tool catalog by the job you want done.
   - Examples: `"find leads by job title"`, `"google serp organic"`, `"verify email"`, `"backlinks for domain"`, `"tiktok profile"`.
 - **`growth_inspect`**: Inspect an endpoint's schemas, parameters, pricing model, and ready-to-call examples.
-- **`growth_call`**: Execute any tool endpoint across providers or routed capabilities (`treg.<job>`). Supports `awaitAsync` for asynchronous generation tasks, cost ceilings (`maxCostUsd`), `idempotencyKey`, routing controls (`stopOnFirstMiss`, `strictFilters`, `noCache`), and returns provider `advice` and `ignoredFilters`.
+- **`growth_my_tools`**: List the team's own registered APIs and connections before using catalog endpoints.
+- **`growth_call`**: Execute any tool endpoint across providers or routed capabilities (`treg.<job>`). Supports `awaitAsync` for asynchronous generation tasks, cost ceilings (`maxCostUsd`), `idempotencyKey`, routing controls (`stopOnFirstMiss`, `strictFilters`, `verify`, `domainMatch`, `complete`, `prefer`, `noCache`), and returns provider `advice` and `ignoredFilters`.
+- **`growth_mark`**: Privately mark previously checked call results as correct, wrong, stale, or other supported verdicts, with evidence basis and optional row references.
 - **`growth_call_result`**: Recover the stored response of any previous successful catalog call by `callId` at zero cost without paying or re-querying.
 - **`growth_review`**: Rate a tool call's usefulness (`useful`, `partly`, `not_useful`, `not_sure`) with optional feedback by `callId`.
 - **`growth_request`**: Submit a feature request or feedback when a data capability is missing from the catalog.
@@ -46,9 +48,11 @@ Use the direct 1-shot tools:
 
 ### 2. For Custom or Advanced Capabilities
 Use the dynamic hub:
-1. Search with `growth_search`: e.g. `{ "query": "reddit subreddit posts" }`
-2. Inspect if needed with `growth_inspect`: e.g. `{ "toolId": "scrapecreators.reddit.subreddit.posts" }`
-3. Execute with `growth_call`: e.g. `{ "toolId": "...", "query": { "subreddit": "saas" } }`
+1. Check the team's registered tools with `growth_my_tools` before choosing a catalog provider; team-owned credentials are used first and avoid catalog charges.
+2. Search with `growth_search`: e.g. `{ "query": "reddit subreddit posts" }`. Search by the job and use `sort: "newest"` or `addedWithinDays` to discover recent additions.
+3. Inspect with `growth_inspect` before calling when inputs, cost, or provider choice are not already clear.
+4. Execute with `growth_call`: e.g. `{ "toolId": "...", "query": { "subreddit": "saas" } }`. Use `verify: true` for supported contact routes, `domainMatch: "strict"` when a requested domain must match, and pass an idempotency key before retrying uncertain paid calls.
+5. Use `growth_call_result` to recover a result instead of repeating a potentially paid call. Use `growth_mark` only after later evidence confirms a result; use `growth_review` when the result carries a review invitation.
 
 ---
 

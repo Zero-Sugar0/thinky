@@ -1,7 +1,7 @@
 /**
  * Growth Engine Client
  *
- * Provides agent tools access to 4,100+ endpoints across 123+ providers
+ * Provides agent tools access to 4,200+ catalog tools across 139+ providers
  * for lead generation, SEO & SERPs, enrichment, social signals, and data extraction.
  * Powered by treg (https://treg.to) under the hood.
  */
@@ -75,6 +75,10 @@ export interface GrowthCallOptions {
   stopOnFirstMiss?: boolean;
   strictFilters?: boolean;
   noCache?: boolean;
+  verify?: boolean;
+  domainMatch?: "strict";
+  complete?: boolean;
+  prefer?: string[];
   extraHeaders?: Record<string, string>;
   signal?: AbortSignal;
 }
@@ -275,6 +279,22 @@ export async function callGrowthTool(
     headers["X-Treg-Route-Strict-Filters"] = "1";
   }
 
+  if (options.verify) {
+    headers["X-Treg-Route-Verify"] = "true";
+  }
+
+  if (options.domainMatch) {
+    headers["X-Treg-Route-Domain-Match"] = options.domainMatch;
+  }
+
+  if (options.complete) {
+    headers["X-Treg-Route-Complete"] = "1";
+  }
+
+  if (options.prefer?.length) {
+    headers["X-Treg-Route-Prefer"] = options.prefer.join(",");
+  }
+
   if (options.noCache) {
     headers["Cache-Control"] = "no-cache";
   }
@@ -359,11 +379,12 @@ export async function callGrowthTool(
 
         await new Promise((resolve) => setTimeout(resolve, 3000));
 
-        const pollUrl = pollPath.startsWith("http")
-          ? pollPath
-          : new URL(pollPath, TREG_BASE_URL).toString();
+        const pollUrl = new URL(pollPath, TREG_BASE_URL);
+        if (pollUrl.origin !== new URL(TREG_BASE_URL).origin) {
+          throw new Error("Growth Engine returned an async poll URL outside its trusted service origin.");
+        }
 
-        const pollRes = await fetch(pollUrl, {
+        const pollRes = await fetch(pollUrl.toString(), {
           method: "GET",
           headers: {
             "X-Treg-Token": token,
@@ -378,9 +399,15 @@ export async function callGrowthTool(
             pollData?.status || pollData?.state || (pollData?.output as Record<string, unknown>)?.status || "",
           ).toLowerCase();
 
-          if (finalStatuses.includes(currentStatus) || pollRes.status === 200) {
-            response = pollRes;
+          if (finalStatuses.includes(currentStatus)) {
             responseBody = pollData;
+            response = ["failed", "error"].includes(currentStatus)
+              ? new Response(JSON.stringify(pollData), {
+                  status: 500,
+                  statusText: `Async task ${currentStatus}`,
+                  headers: pollRes.headers,
+                })
+              : pollRes;
             isDone = true;
           }
         }
@@ -432,6 +459,99 @@ export async function callGrowthTool(
     ignoredFilters,
     asyncDescriptor,
     data: responseBody,
+  };
+}
+
+/**
+ * List the tools registered by the active Treg team.
+ */
+export async function listGrowthTools(
+  signal?: AbortSignal,
+): Promise<{ success: boolean; tools: Array<Record<string, unknown>>; error?: string }> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("Growth Engine is not configured: TREG_TOKEN environment variable is missing.");
+  }
+
+  const response = await fetch(new URL("/tools", TREG_BASE_URL), {
+    method: "GET",
+    headers: { "X-Treg-Token": token, Accept: "application/json" },
+    signal,
+  });
+  const body = (await response.json().catch(() => null)) as
+    | { tools?: Array<Record<string, unknown>>; error?: string; message?: string }
+    | Array<Record<string, unknown>>
+    | null;
+
+  if (!response.ok) {
+    const error = body && !Array.isArray(body) ? body.message || body.error : undefined;
+    return { success: false, tools: [], error: String(error || `Failed to list team tools (${response.status})`) };
+  }
+
+  const tools = Array.isArray(body) ? body : body?.tools || [];
+  return { success: true, tools };
+}
+
+/**
+ * Privately mark checked rows from a previous Treg catalog call.
+ */
+export async function markGrowthCall(
+  params: {
+    callId: string;
+    basis: "bounced" | "cross_checked" | "user_said" | "impression";
+    items: Array<{
+      index?: number;
+      field?: string;
+      verdict: "correct" | "wrong" | "stale" | "wrong_entity" | "missing" | "irrelevant" | "duplicate" | "other";
+    }>;
+    checked?: number;
+    evidenceCallId?: string;
+    note?: string;
+  },
+  signal?: AbortSignal,
+): Promise<{ success: boolean; callId: string; markId?: string; status?: string; error?: string }> {
+  const token = process.env.TREG_TOKEN;
+  if (!token) {
+    throw new Error("Growth Engine is not configured: TREG_TOKEN environment variable is missing.");
+  }
+
+  const response = await fetch(new URL("/marks", TREG_BASE_URL), {
+    method: "POST",
+    headers: {
+      "X-Treg-Token": token,
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify({
+      call_id: params.callId,
+      basis: params.basis,
+      items: params.items,
+      checked: params.checked,
+      evidence_call_id: params.evidenceCallId,
+      note: params.note,
+    }),
+    signal,
+  });
+  const body = (await response.json().catch(() => null)) as {
+    mark_id?: string;
+    status?: string;
+    error?: string;
+    message?: string;
+  } | null;
+
+  if (!response.ok) {
+    return {
+      success: false,
+      callId: params.callId,
+      error: body?.message || body?.error || `Failed to mark call (${response.status})`,
+    };
+  }
+
+  return {
+    success: true,
+    callId: params.callId,
+    markId: body?.mark_id,
+    status: body?.status,
   };
 }
 
