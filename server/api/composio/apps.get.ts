@@ -3,6 +3,7 @@ import { requireSessionUserId } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {
   const userId = await requireSessionUserId(event);
+  const { eventsOnly } = getQuery(event);
   const limit = 50;
 
   if (!isComposioConfigured()) {
@@ -33,6 +34,40 @@ export default defineEventHandler(async (event) => {
       if (acc.status === "ACTIVE" && !acc.isDisabled && acc.toolkit?.slug) {
         activeConnectionsMap.set(acc.toolkit.slug.toLowerCase(), acc.id);
       }
+    }
+
+    if (eventsOnly === "true") {
+      const apps = await Promise.all(
+        [...activeConnectionsMap.entries()].map(async ([slug, connectedAccountId]) => {
+          try {
+            const response = await composio.triggers.listTypes({
+              toolkits: [slug],
+              limit: 1,
+            });
+            const eventCount = response.items?.length ?? 0;
+            if (!eventCount) return null;
+
+            return {
+              slug,
+              name: slug.replace(/[_-]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
+              description: "Connected app with available event triggers.",
+              icon: COMPOSIO_APP_ICONS[slug],
+              categories: [],
+              isConnected: true,
+              connectedAccountId,
+              eventCount,
+            };
+          } catch {
+            return null;
+          }
+        }),
+      );
+      const availableApps = apps.filter((app): app is NonNullable<typeof app> => app !== null);
+      return {
+        configured: true,
+        apps: availableApps,
+        totalCount: availableApps.length,
+      };
     }
 
     const toolkits = new Map<string, ComposioAppSummary>();

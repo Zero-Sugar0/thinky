@@ -18,13 +18,20 @@ interface TriggerType {
   payload?: Record<string, unknown>;
 }
 
+interface EventAppSummary extends ComposioAppSummary {
+  eventCount?: number;
+}
+
 interface AppsResponse {
-  apps: ComposioAppSummary[];
+  apps: EventAppSummary[];
   configured: boolean;
 }
 
 const toast = useToast();
-const { data, pending, refresh } = useFetch<AppsResponse>("/api/composio/apps", { server: false });
+const { data, pending, refresh } = useFetch<AppsResponse>("/api/composio/apps", {
+  query: { eventsOnly: "true" },
+  server: false,
+});
 
 const selectedApp = ref<ComposioAppSummary>();
 const selectedType = ref("");
@@ -55,7 +62,7 @@ function formatTriggerName(trigger?: TriggerType | TriggerRecord) {
 }
 
 const displayedApps = computed(() => {
-  const base = allApps.value;
+  const base = connectedApps.value;
   if (!appSearchQuery.value.trim()) return base;
   const q = appSearchQuery.value.trim().toLowerCase();
   return base.filter(app =>
@@ -263,7 +270,7 @@ async function connectCurrentApp() {
 
       <!-- Only connected apps can receive live events -->
       <div class="space-y-2">
-        <p class="text-[11px] leading-4 text-muted">{{ allApps.length }} apps · available triggers</p>
+        <p class="text-[11px] leading-4 text-muted">{{ connectedApps.length }} connected apps with events</p>
         <UInput
           v-model="appSearchQuery"
           icon="i-lucide-search"
@@ -329,9 +336,7 @@ async function connectCurrentApp() {
                 title="Connected"
               />
             </div>
-            <p class="truncate text-[10px] text-muted">
-              {{ app.isConnected ? 'Connected' : 'Connect first' }}
-            </p>
+            <p class="truncate text-[10px] text-muted">Events available</p>
           </div>
 
           <UIcon
