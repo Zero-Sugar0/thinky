@@ -6,6 +6,7 @@ import {
   listActiveComposioAccounts,
   requireComposioUserId,
 } from "../lib/composio-session.js";
+import { recordAction } from "../lib/tasks-internal.js";
 
 export default defineTool({
   description:
@@ -32,6 +33,16 @@ export default defineTool({
         [account.toolkit.slug]: account.id,
       });
       const executionResult = await session.execute(toolSlug, toolArgs, undefined, { signal: ctx.abortSignal });
+
+      // Audit every external side effect. Arguments are never stored, only the outcome.
+      await recordAction({
+        userId,
+        toolSlug,
+        toolkit: account.toolkit.slug,
+        status: executionResult.resultType,
+        summary: `${toolSlug} ${executionResult.resultType === "completed" ? "completed" : "did not complete"}`,
+        externalLogId: executionResult.logId ?? null,
+      }).catch(() => undefined);
 
       return {
         success: executionResult.resultType === "completed",
