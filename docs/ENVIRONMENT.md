@@ -130,8 +130,8 @@ All scheduled work runs on Upstash QStash, not on Eve cron. Create two schedules
 
 | Route | Schedule | Purpose |
 |-------|----------|---------|
-| `POST https://your-domain.vercel.app/api/cron/dispatch` | every minute (`* * * * *`) | Sends due reminders and drains queued check-ins to each user's channels |
-| `POST https://your-domain.vercel.app/api/cron/proactive-check` | every 30 minutes | Decides whether each opted-in user gets a check-in, then queues it |
+| `POST https://your-domain.vercel.app/api/cron/dispatch` | every 15 minutes (`*/15 * * * *`) | Sends due reminders and drains queued check-ins to each user's channels |
+| `POST https://your-domain.vercel.app/api/cron/proactive-check` | hourly (`0 * * * *`) | Decides whether each opted-in user gets a routine check-in, then queues it. Each user sets their own frequency (2h, 4h, 8h or daily) in Settings, and urgent overdue items are not limited by it |
 
 The check-in policy is random within limits: quiet hours 22:00 to 08:00 in the user's timezone, at most three check-ins in any 24 hours, a six-hour cooldown per category, and about half of routine windows produce one. Overdue or due-soon tasks are always surfaced.
 
