@@ -11,7 +11,7 @@ const questions = [
 </script>
 
 <template>
-  <section id="faq" class="border-t border-slate-200 bg-[#f7f8fa] px-5 py-20 sm:px-8 sm:py-28">
+  <section id="faq" class="border-t border-slate-200 bg-[#f7f8fa] px-5 py-16 sm:px-8 sm:py-20">
     <div class="mx-auto max-w-7xl">
       <div class="mx-auto max-w-2xl text-center">
         <p class="eyebrow">Good questions</p>
