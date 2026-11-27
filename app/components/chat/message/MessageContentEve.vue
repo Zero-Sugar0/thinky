@@ -96,7 +96,10 @@ const showThinking = computed(
 </script>
 
 <template>
-  <div class="chat-message-content space-y-1">
+  <div
+    class="chat-message-content flex min-w-0 flex-col gap-1"
+    :class="message.role === 'user' ? 'w-full items-end' : 'w-full items-start'"
+  >
     <ChatActivityIndicator v-if="showThinking" />
 
   <template
@@ -186,7 +189,7 @@ const showThinking = computed(
     <template v-else-if="isTextUIPart(part)">
       <div
         v-if="message.role === 'assistant'"
-        class="chat-prose relative min-w-0 text-xs sm:text-[13px] leading-5 sm:leading-[1.45rem] text-default [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary [&_code]:text-[0.85em]"
+        class="chat-prose chat-assistant-copy relative min-w-0 max-w-full text-[13px] leading-[1.4] text-default [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-primary/40 [&_a:hover]:decoration-primary [&_code]:text-[0.85em]"
       >
         <ChatComark
           :key="isPartStreaming(part) ? `${message.id}-text-${part.text.length}` : `${message.id}-text-${index}`"
@@ -201,7 +204,7 @@ const showThinking = computed(
       </div>
         <div
           v-else
-          class="chat-prose inline-block w-fit max-w-[min(92%,42rem)] rounded-xl rounded-tr-sm border border-default/70 bg-elevated/80 px-3.5 py-2.5 text-sm leading-6 text-highlighted shadow-sm sm:px-4 sm:py-3 sm:text-[15px] sm:leading-[1.6] [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-2 [&_pre]:max-w-full [&_table]:text-xs"
+          class="chat-prose chat-user-bubble w-fit max-w-full rounded-none border border-default bg-elevated px-2 py-1 text-[13px] leading-[1.35] text-highlighted [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-1 [&_pre]:max-w-full [&_table]:text-[12px]"
         >
           <ChatComark
             :value="part.text"

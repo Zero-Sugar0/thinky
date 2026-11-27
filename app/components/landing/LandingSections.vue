@@ -12,7 +12,7 @@ const steps = [
 </script>
 
 <template>
-  <section id="what-it-does" class="px-5 py-20 sm:px-8 sm:py-28">
+  <section id="what-it-does" class="px-5 py-16 sm:px-8 sm:py-20">
     <div class="mx-auto max-w-7xl">
       <div class="mx-auto max-w-2xl text-center">
         <p class="eyebrow">A more useful kind of assistant</p>
@@ -46,7 +46,7 @@ const steps = [
     </div>
   </section>
 
-  <section id="meetings" class="border-y border-slate-200 bg-[#f7f8fa] px-5 py-20 sm:px-8 sm:py-28">
+  <section id="meetings" class="border-y border-slate-200 bg-[#f7f8fa] px-5 py-16 sm:px-8 sm:py-20">
     <div class="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:gap-16">
       <div>
         <p class="eyebrow">A seat at the table</p>
@@ -69,7 +69,7 @@ const steps = [
     </div>
   </section>
 
-  <section id="how-it-works" class="px-5 py-20 sm:px-8 sm:py-28">
+  <section id="how-it-works" class="px-5 py-16 sm:px-8 sm:py-20">
     <div class="mx-auto max-w-7xl">
       <div class="mx-auto max-w-2xl text-center">
         <p class="eyebrow">Simple by design</p>
@@ -86,7 +86,7 @@ const steps = [
     </div>
   </section>
 
-  <section class="px-5 pb-20 sm:px-8 sm:pb-28">
+  <section class="px-5 pb-16 sm:px-8 sm:pb-20">
     <div class="mx-auto grid max-w-7xl overflow-hidden rounded-[28px] border border-slate-200 bg-white md:grid-cols-2">
       <div class="p-7 sm:p-10 lg:p-14">
         <p class="eyebrow">Room to think</p>
@@ -107,7 +107,7 @@ const steps = [
     </div>
   </section>
 
-  <section class="border-y border-slate-200 bg-[#f7f8fa] px-5 py-20 sm:px-8 sm:py-24">
+  <section class="border-y border-slate-200 bg-[#f7f8fa] px-5 py-14 sm:px-8 sm:py-16">
     <div class="mx-auto grid max-w-7xl items-center gap-8 md:grid-cols-[1fr_auto]">
       <div><p class="eyebrow">The right kind of helpful</p><h2 class="mt-3 max-w-2xl text-2xl font-semibold tracking-[-0.045em] text-slate-950 sm:text-3xl">Built to be useful, not to take over.</h2><p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500">Thinky can research, remember, organize, and participate. You choose what to connect and when it’s time to act.</p></div>
       <UButton to="/capabilities" color="neutral" variant="outline" class="rounded-full border-slate-300 bg-white px-5">See all capabilities <UIcon name="i-lucide-arrow-up-right" class="size-4" /></UButton>
