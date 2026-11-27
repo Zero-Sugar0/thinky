@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
+import { THINKY_MEETING_AVATAR_BASE64 } from "./meeting-avatar.js";
 
 /**
  * Recall.ai Client Library
@@ -42,115 +43,6 @@ export function getPublicApiBaseUrl(): string | undefined {
     process.env.NUXT_PUBLIC_SITE_URL ||
     undefined
   );
-}
-
-function getMeetingVoiceSigningSecret(): string {
-  const secret = process.env.BETTER_AUTH_SECRET;
-  if (!secret) {
-    throw new Error("BETTER_AUTH_SECRET environment variable is missing.");
-  }
-  return secret;
-}
-
-function encryptMeetingVoiceContext(context: string): string {
-  const iv = crypto.randomBytes(12);
-  const key = crypto.createHash("sha256").update(getMeetingVoiceSigningSecret()).digest();
-  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
-  const ciphertext = Buffer.concat([cipher.update(context, "utf8"), cipher.final()]);
-  return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString("base64url");
-}
-
-function decryptMeetingVoiceContext(encrypted: string): string | undefined {
-  try {
-    const payload = Buffer.from(encrypted, "base64url");
-    if (payload.length < 28) return undefined;
-    const iv = payload.subarray(0, 12);
-    const tag = payload.subarray(12, 28);
-    const ciphertext = payload.subarray(28);
-    const key = crypto.createHash("sha256").update(getMeetingVoiceSigningSecret()).digest();
-    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
-    decipher.setAuthTag(tag);
-    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
-  } catch {
-    return undefined;
-  }
-}
-
-export function createMeetingVoiceToken(joinAt: string, meetingContext?: string): string {
-  const scheduledAt = Date.parse(joinAt);
-  if (!Number.isFinite(scheduledAt)) {
-    throw new Error("Meeting join time must be a valid ISO 8601 timestamp.");
-  }
-
-  const now = Math.floor(Date.now() / 1000);
-  const joinAtSeconds = Math.floor(scheduledAt / 1000);
-  const normalizedMeetingContext = meetingContext?.trim();
-  if (normalizedMeetingContext && Buffer.byteLength(normalizedMeetingContext, "utf8") > 900) {
-    throw new Error("Meeting context must be 900 UTF-8 bytes or fewer.");
-  }
-
-  const payload = {
-    purpose: "meeting-voice",
-    notBefore: Math.max(now - 60, joinAtSeconds - 15 * 60),
-    expiresAt: joinAtSeconds + 8 * 60 * 60,
-    nonce: crypto.randomBytes(16).toString("base64url"),
-    ...(normalizedMeetingContext
-      ? { meetingContextCiphertext: encryptMeetingVoiceContext(normalizedMeetingContext) }
-      : {}),
-  };
-  if (payload.expiresAt <= now) {
-    throw new Error("Meeting join time is too far in the past to start a voice session.");
-  }
-
-  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = crypto.createHmac("sha256", getMeetingVoiceSigningSecret()).update(encodedPayload).digest("base64url");
-  return `${encodedPayload}.${signature}`;
-}
-
-function readVerifiedMeetingVoiceClaims(token: string): Record<string, unknown> | undefined {
-  const [encodedPayload, signature, extra] = token.split(".");
-  if (!encodedPayload || !signature || extra !== undefined) return undefined;
-
-  const expected = crypto.createHmac("sha256", getMeetingVoiceSigningSecret()).update(encodedPayload).digest();
-  let actual: Buffer;
-  try {
-    actual = Buffer.from(signature, "base64url");
-  } catch {
-    return undefined;
-  }
-  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return undefined;
-
-  let payload: unknown;
-  try {
-    payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
-  } catch {
-    return undefined;
-  }
-  if (typeof payload !== "object" || payload === null) return undefined;
-
-  const claims = payload as Record<string, unknown>;
-  const now = Math.floor(Date.now() / 1000);
-  if (
-    claims.purpose !== "meeting-voice" ||
-    typeof claims.notBefore !== "number" ||
-    typeof claims.expiresAt !== "number" ||
-    typeof claims.nonce !== "string" ||
-    claims.notBefore > now ||
-    claims.expiresAt <= now
-  ) return undefined;
-
-  return claims;
-}
-
-export function verifyMeetingVoiceToken(token: string): boolean {
-  return readVerifiedMeetingVoiceClaims(token) !== undefined;
-}
-
-export function getMeetingVoiceContext(token: string): string | undefined {
-  const encrypted = readVerifiedMeetingVoiceClaims(token)?.meetingContextCiphertext;
-  if (typeof encrypted !== "string") return undefined;
-  const context = decryptMeetingVoiceContext(encrypted);
-  return context && Buffer.byteLength(context, "utf8") <= 900 ? context : undefined;
 }
 
 /**
@@ -296,14 +188,13 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
   }
 
   if (!publicBaseUrl) {
-    throw new Error("PUBLIC_API_BASE_URL is required for the meeting voice facilitator.");
+    throw new Error("PUBLIC_API_BASE_URL is required for Recall meeting transcript callbacks.");
   }
   const publicUrl = new URL(publicBaseUrl);
   if (publicUrl.protocol !== "https:" || publicUrl.hostname === "localhost" || publicUrl.hostname.endsWith(".localhost")) {
-    throw new Error("PUBLIC_API_BASE_URL must be a publicly reachable HTTPS URL for the meeting voice facilitator.");
+    throw new Error("PUBLIC_API_BASE_URL must be a publicly reachable HTTPS URL for Recall meeting callbacks.");
   }
 
-  const voiceToken = createMeetingVoiceToken(joinAt, options.meetingContext);
   const recordingConfig: Record<string, unknown> = {
     include_bot_in_recording: {
       audio: true,
@@ -342,11 +233,54 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
       webex: "web_4_core",
     },
     recording_config: recordingConfig,
+    automatic_video_output: {
+      in_call_not_recording: {
+        kind: "jpeg",
+        b64_data: THINKY_MEETING_AVATAR_BASE64,
+      },
+      in_call_recording: {
+        kind: "jpeg",
+        b64_data: THINKY_MEETING_AVATAR_BASE64,
+      },
+    },
     output_media: {
-      camera: {
-        kind: "webpage",
+      audio: {
+        kind: "deepgram",
         config: {
-          url: `${publicUrl.origin}/meeting-agent/${voiceToken}`,
+          agent: {
+            language: "en",
+            listen: {
+              provider: {
+                type: "deepgram",
+                model: "nova-3",
+              },
+            },
+            think: {
+              provider: {
+                type: "open_ai",
+                model: "gpt-4o-mini",
+              },
+              prompt: [
+                "You are Thinky, a transparent AI meeting participant. You are not a human attendee and do not impersonate anyone.",
+                "Listen carefully to the full discussion. Speak in natural, concise sentences when directly addressed or when you can materially help with a clarification, synthesis, missed consideration, or focused question.",
+                "Do not interrupt; wait for a natural pause. Do not speak just to fill silence. Keep each turn to one or two short sentences unless the group asks for detail.",
+                "Answer the question asked. Never invent facts, decisions, owners, deadlines, user opinions, or commitments. Respect requests to stop speaking or leave.",
+                options.meetingContext?.trim()
+                  ? `Private meeting context, only to inform relevant answers; do not recite or disclose it unnecessarily:\n${options.meetingContext.trim()}`
+                  : "",
+              ]
+                .filter(Boolean)
+                .join("\n\n"),
+            },
+            speak: {
+              provider: {
+                type: "deepgram",
+                model: "aura-2-thalia-en",
+              },
+            },
+            greeting:
+              "Hi, Thinky here. I’m an AI meeting assistant. This call is being recorded for a transcript and follow-up. I’ll listen and speak when I can help.",
+          },
         },
       },
     },
