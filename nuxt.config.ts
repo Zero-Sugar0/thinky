@@ -42,6 +42,7 @@ export default defineNuxtConfig({
   },
   nitro: {
     compressPublicAssets: true,
+    serverAssets: [{ baseName: "identity", dir: "./agent/identity" }],
     rollupConfig: {
       plugins: [
         {

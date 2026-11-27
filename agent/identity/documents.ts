@@ -15,6 +15,11 @@ export const identityDocuments = {
 
 export type IdentityDocument = keyof typeof identityDocuments;
 
+/** Company and business context for meeting voice agents. PERSONAL.md is excluded on purpose. */
+export function meetingBriefing(): string {
+  return `${company.trim()}\n\n${business.trim()}`;
+}
+
 export function instructionSection(name: string): string | null {
   return getInstructionSection(instructions, name);
 }

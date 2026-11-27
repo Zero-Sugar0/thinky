@@ -1,6 +1,7 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { createMeetingBot } from "../lib/recall.js";
+import { meetingBriefing } from "../identity/documents.js";
 
 export default defineTool({
   description:
@@ -52,6 +53,7 @@ export default defineTool({
   async execute({ meetingUrl, botName, joinAt, joinMessage, meetingContext, enableRealtimeTranscript }, ctx) {
     try {
       const bot = await createMeetingBot({
+        briefing: meetingBriefing(),
         meetingUrl,
         botName,
         joinAt,

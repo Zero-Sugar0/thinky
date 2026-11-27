@@ -2,8 +2,6 @@ import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
 
 import { THINKY_MEETING_AVATAR_BASE64 } from "./meeting-avatar.js";
-import companyBriefing from "../identity/COMPANY.md?raw";
-import businessBriefing from "../identity/BUSINESS.md?raw";
 
 /**
  * Recall.ai client library.
@@ -224,6 +222,8 @@ export interface CreateBotOptions {
   meetingContext?: string;
   enableRealtimeTranscript?: boolean;
   bridgeToken?: string;
+  /** Company and business context from COMPANY.md and BUSINESS.md. */
+  briefing?: string;
 }
 
 export interface BotStatusChange {
@@ -371,7 +371,7 @@ function buildCreateBotPayload(
                 type: "open_ai",
                 model: "gpt-5-mini",
               },
-              prompt: buildThinkyPrompt(options.meetingContext),
+              prompt: buildThinkyPrompt(options.meetingContext, options.briefing),
               functions: options.bridgeToken
                 ? buildBridgeFunctions(publicUrl.origin, options.bridgeToken)
                 : [],
@@ -409,12 +409,14 @@ const MEETING_TOOLS_PROMPT = [
   "Say briefly what you are doing before a tool call that takes time. Keep spoken answers short and never claim an action happened unless its tool returned success.",
 ].join("\n\n");
 
-function buildThinkyPrompt(meetingContext?: string): string {
-  const sections = [
-    THINKY_AGENT_PROMPT,
-    `Company and business context. Use it for facts and tone; do not recite it unprompted:\n${companyBriefing}\n\n${businessBriefing}`,
-    MEETING_TOOLS_PROMPT,
-  ];
+function buildThinkyPrompt(meetingContext?: string, briefing?: string): string {
+  const sections = [THINKY_AGENT_PROMPT];
+  if (briefing?.trim()) {
+    sections.push(
+      `Company and business context. Use it for facts and tone; do not recite it unprompted:\n${briefing.trim()}`,
+    );
+  }
+  sections.push(MEETING_TOOLS_PROMPT);
 
   const context = meetingContext?.trim();
   if (context) {
