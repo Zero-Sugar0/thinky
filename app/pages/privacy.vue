@@ -1,0 +1,12 @@
+<script setup lang="ts">
+definePageMeta({ layout: false, prerender: true });
+useSeoMeta({ title: "Privacy with Thinky", description: "How Thinky approaches personal context, connected services, and meeting participation." });
+</script>
+
+<template>
+  <main class="marketing-page">
+    <LandingHeader />
+    <article class="px-5 py-16 sm:px-8 sm:py-24"><div class="mx-auto max-w-3xl"><p class="eyebrow">Privacy and control</p><h1 class="mt-4 text-5xl font-medium tracking-[-0.06em] text-slate-950 sm:text-6xl">Your context belongs to you.</h1><p class="mt-6 text-base leading-7 text-slate-600">Thinky is designed to help with personal context and connected services while keeping you in control of what you share and what happens next.</p><div class="mt-12 space-y-9 border-t border-slate-200 pt-8"><section><h2 class="text-xl font-semibold tracking-[-0.03em] text-slate-900">What Thinky remembers</h2><p class="mt-3 text-sm leading-6 text-slate-600">Thinky can retain useful profile and memory information to provide continuity between conversations. Manage your profile and agent memory from your account settings.</p></section><section><h2 class="text-xl font-semibold tracking-[-0.03em] text-slate-900">Connected services</h2><p class="mt-3 text-sm leading-6 text-slate-600">When you connect an app, Thinky can use the access you grant to help with relevant requests. You can review and manage connected services in settings.</p></section><section><h2 class="text-xl font-semibold tracking-[-0.03em] text-slate-900">Meetings</h2><p class="mt-3 text-sm leading-6 text-slate-600">Thinky identifies itself as an AI participant and announces meeting participation. Use it only where recording and participation are appropriate, and make sure attendees have provided any required notice or consent.</p></section><section><h2 class="text-xl font-semibold tracking-[-0.03em] text-slate-900">Your choices</h2><p class="mt-3 text-sm leading-6 text-slate-600">You decide what information to share, which integrations to connect, and when to ask Thinky to take an action. Review account settings for the controls available in this deployment.</p></section></div><p class="mt-10 border-t border-slate-200 pt-6 text-xs leading-5 text-slate-400">This page describes product behavior at a high level and is not a substitute for the privacy terms of any connected service or deployment operator.</p></div></article>
+    <LandingFooter />
+  </main>
+</template>

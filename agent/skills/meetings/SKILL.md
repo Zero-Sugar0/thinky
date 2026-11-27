@@ -5,11 +5,11 @@ description: Join Zoom, Google Meet, Microsoft Teams, and Webex calls as a trans
 
 # Meeting Assistant Skill
 
-Equips the agent with a speaking AI meeting facilitator powered by Gemini Live through Vercel AI Gateway, plus real-time and post-meeting Deepgram transcription through Recall.ai.
+Equips the agent with a live, speaking AI participant powered by Gemini Live through Vercel AI Gateway, plus real-time and post-meeting transcription through Recall.ai.
 
 ## Tools
 
-- **`meeting_join`**: Joins a video call immediately or at a scheduled time (`joinAt`) as Thinky. The bot announces that it is an AI, speaks with participants, and helps guide the discussion.
+- **`meeting_join`**: Joins a video call immediately or at a scheduled time (`joinAt`) as Thinky. It announces that it is an AI participant, listens to the live conversation, and speaks briefly when addressed or when it can materially help.
 - **`meeting_status`**: Queries the bot's current state (`in_waiting_room`, `in_call_recording`, `done`).
 - **`meeting_transcript`**: Downloads and formats the speaker-grouped readable transcript after a meeting has ended.
 - **`meeting_leave`**: Commands the bot to exit an active meeting call.
@@ -28,10 +28,10 @@ the complete saved transcript after the call.
    {
      "meetingUrl": "https://meet.google.com/abc-defg-hij",
      "botName": "Thinky",
-     "joinMessage": "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes."
+     "joinMessage": "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help when useful."
    }
    ```
-   Do not describe it as a human attendee or a silent notetaker. It should listen, let participants finish, and keep spoken contributions brief and useful.
+   Do not describe Thinky as a human attendee or a silent notetaker. It should listen to the full discussion, let participants finish, speak only when addressed or genuinely useful, keep turns concise, and stay quiet when the group is progressing without it.
 2. **Monitor**:
    Check if the bot was admitted into the meeting via `meeting_status`:
    ```json

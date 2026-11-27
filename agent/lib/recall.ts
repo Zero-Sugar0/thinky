@@ -293,6 +293,7 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
       zoom: "web_4_core",
       google_meet: "web_4_core",
       microsoft_teams: "web_4_core",
+      webex: "web_4_core",
     },
     recording_config: recordingConfig,
     output_media: {
@@ -308,7 +309,7 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
         send_to: "everyone",
         message:
           options.joinMessage ||
-          "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes.",
+          "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help with context or next steps when useful.",
         pin: true,
       },
     },

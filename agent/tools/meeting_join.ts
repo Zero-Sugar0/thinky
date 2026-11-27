@@ -4,7 +4,7 @@ import { createMeetingBot } from "../lib/recall.js";
 
 export default defineTool({
   description:
-    "Join a Zoom, Google Meet, Microsoft Teams, or Webex meeting as Thinky. The bot speaks with participants, helps guide the discussion, and records the meeting for a transcript.",
+    "Join a Zoom, Google Meet, Microsoft Teams, or Webex call transparently as Thinky, an AI participant. Thinky listens to the live conversation and can respond in a natural voice when addressed or when a brief contribution would genuinely help; it does not impersonate a human. The call is recorded for a speaker-attributed transcript and follow-up.",
   inputSchema: z.object({
     meetingUrl: z
       .string()

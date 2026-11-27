@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware(async (to) => {
-  if (to.path === "/" || to.path === "/login") {
+  if (["/", "/login", "/capabilities", "/meeting-assistant", "/privacy"].includes(to.path)) {
     return;
   }
 
