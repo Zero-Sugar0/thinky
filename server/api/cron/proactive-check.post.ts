@@ -1,69 +1,33 @@
-import { Receiver } from "@upstash/qstash";
-import { db, schema } from "@nuxthub/db";
 import { eq } from "drizzle-orm";
-import type { H3Event } from "h3";
-import {
-  analyzeUserContextForProactiveSuggestion,
-  dispatchProactiveSuggestion,
-  getRecentProactiveSuggestionsForUser,
-} from "~~/server/utils/proactive";
+import { db, schema } from "@nuxthub/db";
+import { verifyQStashOrSecret } from "~~/server/utils/qstash";
+import { decideCheckin, type CheckinRolls } from "~~/server/utils/checkin-policy";
+import { composeCheckin, gatherCheckin } from "~~/server/utils/checkin";
+import { dispatchProactiveSuggestion } from "~~/server/utils/proactive";
+import type { ProactiveChannel } from "#shared/types/profile";
+import { pruneOldSignals } from "~~/server/utils/signals";
 import { fetchUserMemoryEntries } from "~~/server/utils/memory";
-import { listThreadsForUser } from "~~/server/utils/threads";
 
-async function verifyQStashOrSecret(event: H3Event): Promise<boolean> {
-  const currentSigningKey = process.env.QSTASH_CURRENT_SIGNING_KEY;
-  const nextSigningKey = process.env.QSTASH_NEXT_SIGNING_KEY;
-  const internalSecret = process.env.INTERNAL_API_SECRET;
-  const cronSecret = process.env.CRON_SECRET;
-
-  const authHeader = getHeader(event, "authorization");
-  if (authHeader) {
-    const bearer = authHeader.replace(/^Bearer\s+/i, "").trim();
-    if (internalSecret && bearer === internalSecret) return true;
-    if (cronSecret && bearer === cronSecret) return true;
-  }
-
-  // If QStash signing keys are configured, verify the signature
-  const signature = getHeader(event, "upstash-signature");
-  if (currentSigningKey && signature) {
-    try {
-      const receiver = new Receiver({
-        currentSigningKey,
-        nextSigningKey: nextSigningKey || currentSigningKey,
-      });
-
-      const body = await readRawBody(event, "utf-8");
-      const url = getRequestURL(event).toString();
-
-      return await receiver.verify({
-        signature,
-        body: body || "",
-        url,
-      });
-    }
-    catch {
-      return false;
-    }
-  }
-
-  // Allow in development without strict QStash key if internal secret matches or not configured
-  if (import.meta.dev) {
-    return true;
-  }
-
-  return false;
+function randomRolls(): CheckinRolls {
+  const values = new Uint32Array(2);
+  crypto.getRandomValues(values);
+  return {
+    gate: values[0]! / 0x1_0000_0000,
+    pick: values[1]! / 0x1_0000_0000,
+  };
 }
 
+/**
+ * Runs on a QStash schedule. For each opted-in user it decides whether a check-in is
+ * due right now, and if so writes it and queues it for the dispatcher.
+ */
 export default defineEventHandler(async (event) => {
-  const authorized = await verifyQStashOrSecret(event);
-  if (!authorized) {
-    throw createError({
-      statusCode: 401,
-      statusMessage: "Unauthorized QStash or cron request",
-    });
+  if (!(await verifyQStashOrSecret(event))) {
+    throw createError({ statusCode: 401, statusMessage: "Unauthorized QStash or cron request" });
   }
 
-  // Select all profiles where proactiveEnabled is not 'false'
+  await pruneOldSignals(7);
+
   const profiles = await db.select({
     userId: schema.userProfiles.userId,
     timezone: schema.userProfiles.timezone,
@@ -75,59 +39,38 @@ export default defineEventHandler(async (event) => {
     .from(schema.userProfiles)
     .innerJoin(schema.user, eq(schema.userProfiles.userId, schema.user.id));
 
-  const results: Array<{ userId: string; dispatched: boolean; channel?: string; suggestion?: string }> = [];
+  const results: Array<{ userId: string; category?: string; queued: boolean; reason?: string }> = [];
 
-  for (const userProfile of profiles) {
-    if (userProfile.proactiveEnabled === "false") {
+  for (const profile of profiles) {
+    if (profile.proactiveEnabled === "false") {
+      results.push({ userId: profile.userId, queued: false, reason: "disabled" });
       continue;
     }
 
-    const recentSuggestions = await getRecentProactiveSuggestionsForUser(userProfile.userId);
-    const memories = await fetchUserMemoryEntries(userProfile.userId);
-
-    // Retrieve recent threads to check for recent task or conversation titles
-    const userThreads = await listThreadsForUser(userProfile.userId);
-    const recentThreadTitles = userThreads.slice(0, 3).map(t => t.title).join("; ");
-
-    const candidate = await analyzeUserContextForProactiveSuggestion({
-      userId: userProfile.userId,
-      userName: userProfile.userName,
-      timezone: userProfile.timezone,
-      bio: userProfile.bio,
+    const memories = await fetchUserMemoryEntries(profile.userId);
+    const { signals, facts } = await gatherCheckin({
+      userId: profile.userId,
+      timezone: profile.timezone,
+      name: profile.userName?.split(" ")[0] ?? "",
+      bio: profile.bio,
       memories,
-      recentChatSummary: recentThreadTitles ? `Recent active threads: ${recentThreadTitles}` : undefined,
-      recentSuggestions,
     });
 
-    if (candidate) {
-      const channelPref = (userProfile.proactiveChannel === "slack" || userProfile.proactiveChannel === "all")
-        ? userProfile.proactiveChannel
-        : "chat";
-
-      const dispatchResult = await dispatchProactiveSuggestion({
-        userId: userProfile.userId,
-        candidate,
-        channelPref,
-      });
-
-      results.push({
-        userId: userProfile.userId,
-        dispatched: dispatchResult.success,
-        channel: dispatchResult.dispatchedTo.join(", "),
-        suggestion: candidate.content,
-      });
+    const category = decideCheckin(signals, randomRolls());
+    if (!category) {
+      results.push({ userId: profile.userId, queued: false, reason: "no check-in due" });
+      continue;
     }
-    else {
-      results.push({
-        userId: userProfile.userId,
-        dispatched: false,
-      });
-    }
+
+    const content = await composeCheckin(category, facts);
+    const dispatched = await dispatchProactiveSuggestion({
+      userId: profile.userId,
+      candidate: { type: category, content },
+      channelPref: profile.proactiveChannel as ProactiveChannel,
+    });
+
+    results.push({ userId: profile.userId, category, queued: dispatched.success });
   }
 
-  return {
-    ok: true,
-    processed: results.length,
-    results,
-  };
+  return { ok: true, processed: results.length, results };
 });

@@ -3,6 +3,7 @@ import { defaultPhotonAuth, photonIMessageChannel } from "eve/channels/photon";
 import { agent } from "../../shared/agent.js";
 import { buildAppSessionAuth } from "../../shared/app-auth.js";
 import { fetchPhoneLink } from "../lib/phone-internal.js";
+import { saveDeliveryTarget } from "../lib/delivery-targets-internal.js";
 
 // Every iMessage is a private conversation, and eve titles a run with the
 // message text when none is given — the same exposure the Slack channel avoids
@@ -26,7 +27,7 @@ export default photonIMessageChannel({
   // The Chat SDK runtime labels the sender "eve" unless told otherwise.
   userName: agent.name,
 
-  async onMessage(_ctx, message) {
+  async onMessage(ctx, message) {
     if (message.author.isBot) {
       return null;
     }
@@ -46,6 +47,9 @@ export default photonIMessageChannel({
         ],
       };
     }
+
+    // Remember this thread so the dispatcher can reach the user here later.
+    await saveDeliveryTarget(link.appUserId, "imessage", ctx.thread.id).catch(() => undefined);
 
     return {
       title: TITLE,

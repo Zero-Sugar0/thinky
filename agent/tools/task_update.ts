@@ -12,11 +12,12 @@ export default defineTool({
     title: z.string().min(1).max(200).optional(),
     notes: z.string().max(4000).optional(),
     dueAt: z.string().datetime({ offset: true }).nullable().optional(),
+    remindAt: z.string().datetime({ offset: true }).nullable().optional().describe("New reminder time, or null to cancel the reminder"),
   }),
   outputSchema: z.object({ id: z.string(), status: z.string(), dueAt: z.number().nullable() }),
-  async execute({ id, status, title, notes, dueAt }, ctx) {
+  async execute({ id, status, title, notes, dueAt, remindAt }, ctx) {
     const userId = requireUserId(ctx.session.auth.current?.principalId);
-    const task = await updateTask(userId, id, { status, title, notes, dueAt });
+    const task = await updateTask(userId, id, { status, title, notes, dueAt, notifyAt: remindAt });
     return { id: task.id, status: task.status, dueAt: task.dueAt };
   },
 });

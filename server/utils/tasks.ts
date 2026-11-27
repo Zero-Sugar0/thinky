@@ -10,6 +10,8 @@ function rowToTask(row: typeof schema.agentTasks.$inferSelect): AgentTask {
     status: row.status as AgentTaskStatus,
     source: row.source as AgentTaskSource,
     dueAt: row.dueAt?.getTime() ?? null,
+    notifyAt: row.notifyAt?.getTime() ?? null,
+    notifiedAt: row.notifiedAt?.getTime() ?? null,
     completedAt: row.completedAt?.getTime() ?? null,
     createdAt: row.createdAt.getTime(),
     updatedAt: row.updatedAt.getTime(),
@@ -39,6 +41,7 @@ export async function createTaskForUser(input: {
   title: string;
   notes: string;
   dueAt?: Date | null;
+  notifyAt?: Date | null;
   source: AgentTaskSource;
 }): Promise<AgentTask> {
   const id = crypto.randomUUID();
@@ -48,6 +51,7 @@ export async function createTaskForUser(input: {
     title: input.title,
     notes: input.notes,
     dueAt: input.dueAt ?? null,
+    notifyAt: input.notifyAt ?? null,
     source: input.source,
   });
 
@@ -65,6 +69,7 @@ export async function updateTaskForUser(
     title?: string;
     notes?: string;
     dueAt?: Date | null;
+    notifyAt?: Date | null;
     status?: "open" | "done" | "cancelled";
   },
 ): Promise<AgentTask | null> {
@@ -85,6 +90,9 @@ export async function updateTaskForUser(
       title: patch.title ?? existing.title,
       notes: patch.notes ?? existing.notes,
       dueAt: patch.dueAt === undefined ? existing.dueAt : patch.dueAt,
+      notifyAt: patch.notifyAt === undefined ? existing.notifyAt : patch.notifyAt,
+      // Changing the reminder time re-arms the reminder.
+      notifiedAt: patch.notifyAt === undefined ? existing.notifiedAt : null,
       status: patch.status ?? existing.status,
       completedAt,
     })

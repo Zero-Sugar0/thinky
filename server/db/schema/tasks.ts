@@ -12,13 +12,22 @@ export const agentTasks = pgTable("agent_tasks", {
   status: text("status").notNull().default("open"),
   source: text("source").notNull().default("chat"),
   dueAt: timestamp("due_at"),
+  /** When to send a reminder. Null means no reminder. */
+  notifyAt: timestamp("notify_at"),
+  /** Set once a reminder has been delivered, so it is never sent twice. */
+  notifiedAt: timestamp("notified_at"),
+  /** Lease held by the dispatcher while it delivers, so overlapping runs skip the task. */
+  claimedUntil: timestamp("claimed_until"),
   completedAt: timestamp("completed_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
-}, table => [index("agent_tasks_user_status_idx").on(table.userId, table.status)]);
+}, table => [
+  index("agent_tasks_user_status_idx").on(table.userId, table.status),
+  index("agent_tasks_notify_idx").on(table.notifyAt),
+]);
 
 export const agentTasksRelations = relations(agentTasks, ({ one }) => ({
   user: one(user, {
