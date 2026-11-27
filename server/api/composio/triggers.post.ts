@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { getComposioClient, isComposioConfigured } from "~~/server/utils/composio";
 import { requireSessionUserId } from "~~/server/utils/session";
+import { isSupportedTrigger } from "~~/server/utils/composio-trigger-catalog";
 
 const bodySchema = z.object({
   slug: z.string().min(1).max(180),
@@ -15,6 +16,9 @@ export default defineEventHandler(async (event) => {
   if (!composio) throw createError({ statusCode: 503, statusMessage: "Composio is not configured" });
 
   const input = bodySchema.parse(await readBody(event));
+  if (!isSupportedTrigger(input.slug)) {
+    throw createError({ statusCode: 400, statusMessage: "This event is not supported" });
+  }
   try {
     const result = await composio.triggers.create(userId, input.slug, {
       connectedAccountId: input.connectedAccountId,

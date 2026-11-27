@@ -2,6 +2,7 @@ import { z } from "zod";
 import { db, schema } from "@nuxthub/db";
 import { createMeetingBot } from "~~/agent/lib/recall";
 import { requireSessionUserId } from "~~/server/utils/session";
+import { DEFAULT_MEETING_VOICE, isMeetingVoice } from "~~/shared/meeting-voices";
 import { loadMeetingBriefing } from "~~/server/utils/meeting-briefing";
 import { recordMeetingActivity } from "~~/server/utils/meeting-activity";
 
@@ -11,6 +12,7 @@ const CreateMeetingSchema = z.object({
   botName: z.string().optional(),
   joinAt: z.string().optional(),
   joinMessage: z.string().optional(),
+  voice: z.string().refine(isMeetingVoice, "Unknown voice").optional(),
 });
 
 export default defineEventHandler(async (event) => {
@@ -18,6 +20,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, (b) => CreateMeetingSchema.parse(b));
 
   const botName = body.botName || "Thinky";
+  const voice = body.voice ?? DEFAULT_MEETING_VOICE;
   // Per-meeting secret that authenticates the voice agent's tool calls back to us.
   const bridgeToken = `${crypto.randomUUID()}${crypto.randomUUID()}`.replace(/-/g, "");
 
@@ -30,6 +33,7 @@ export default defineEventHandler(async (event) => {
     joinMessage: body.joinMessage,
     enableRealtimeTranscript: true,
     bridgeToken,
+    voice,
   });
 
   const meetingId = crypto.randomUUID();
@@ -44,6 +48,7 @@ export default defineEventHandler(async (event) => {
       meetingUrl: body.meetingUrl,
       title: body.title || `Meeting on ${new Date().toLocaleDateString()}`,
       botName,
+      voice,
       status: "scheduled",
       joinAt: body.joinAt ? new Date(body.joinAt) : new Date(),
     })

@@ -1,4 +1,5 @@
 import { getComposioClient, COMPOSIO_APP_ICONS, isComposioConfigured, type ComposioAppSummary } from "~~/server/utils/composio";
+import { COMPOSIO_TRIGGER_CATALOG, normalizeToolkitKey } from "~~/server/utils/composio-trigger-catalog";
 import { requireSessionUserId } from "~~/server/utils/session";
 
 export default defineEventHandler(async (event) => {
@@ -37,45 +38,43 @@ export default defineEventHandler(async (event) => {
     }
 
     if (eventsOnly === "true") {
-      const connectedSlugs = [...activeConnectionsMap.keys()];
-      if (connectedSlugs.length === 0) {
-        return { configured: true, apps: [] as ComposioAppSummary[], totalCount: 0 };
+      // Events come only from the supported trigger catalog. Connection state is
+      // shown per toolkit so people can see what is set up and what is missing.
+      const connectedByKey = new Map<string, string>();
+      for (const acc of connectedAccountsResponse.items) {
+        if (acc.status === "ACTIVE" && !acc.isDisabled && acc.toolkit?.slug) {
+          connectedByKey.set(normalizeToolkitKey(acc.toolkit.slug), acc.id);
+        }
       }
-      const toolkitMetadata = await composio.toolkits.getMany(connectedSlugs).catch(() => []);
+
+      const toolkitMetadata = await composio.toolkits
+        .getMany(COMPOSIO_TRIGGER_CATALOG.map(entry => entry.toolkit.toLowerCase()))
+        .catch(() => []);
       const metadataBySlug = new Map(
         toolkitMetadata.map(toolkit => [toolkit.slug.toLowerCase(), toolkit]),
       );
 
-      const apps = await Promise.all(
-        [...activeConnectionsMap.entries()].map(async ([slug, connectedAccountId]) => {
-          try {
-            const response = await composio.triggers.listTypes({
-              toolkits: [slug],
-              limit: 1,
-            });
-            if (!response.items?.length) return null;
+      const apps = COMPOSIO_TRIGGER_CATALOG.map((entry) => {
+        const slug = entry.toolkit.toLowerCase();
+        const toolkit = metadataBySlug.get(slug);
+        const connectedAccountId = connectedByKey.get(normalizeToolkitKey(entry.toolkit));
+        return {
+          slug,
+          name: toolkit?.name || entry.toolkit.replace(/_/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
+          description: toolkit?.meta?.description || "",
+          logo: toolkit?.meta?.logo || undefined,
+          icon: COMPOSIO_APP_ICONS[slug],
+          categories: toolkit?.meta?.categories?.map(category => category.name) ?? [],
+          isConnected: Boolean(connectedAccountId),
+          connectedAccountId,
+          eventCount: entry.triggers.length,
+        };
+      }).sort((x, y) => Number(y.isConnected) - Number(x.isConnected) || x.name.localeCompare(y.name));
 
-            const toolkit = metadataBySlug.get(slug);
-            return {
-              slug,
-              name: toolkit?.name || slug.replace(/[_-]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
-              description: toolkit?.meta?.description || "",
-              logo: toolkit?.meta?.logo || undefined,
-              icon: COMPOSIO_APP_ICONS[slug],
-              categories: toolkit?.meta?.categories?.map(category => category.name) ?? [],
-              isConnected: true,
-              connectedAccountId,
-            };
-          } catch {
-            return null;
-          }
-        }),
-      );
-      const availableApps = apps.filter((app): app is NonNullable<typeof app> => app !== null);
       return {
         configured: true,
-        apps: availableApps,
-        totalCount: availableApps.length,
+        apps,
+        totalCount: apps.length,
       };
     }
 

@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
 
 import { THINKY_MEETING_AVATAR_BASE64 } from "./meeting-avatar.js";
+import { DEFAULT_MEETING_VOICE, isMeetingVoice } from "../../shared/meeting-voices.js";
 
 /**
  * Recall.ai client library.
@@ -222,6 +223,8 @@ export interface CreateBotOptions {
   meetingContext?: string;
   enableRealtimeTranscript?: boolean;
   bridgeToken?: string;
+  /** Deepgram Flux voice id, for example flux-alexis-en. */
+  voice?: string;
   /** Company and business context from COMPANY.md and BUSINESS.md. */
   briefing?: string;
 }
@@ -363,7 +366,11 @@ function buildCreateBotPayload(
             listen: {
               provider: {
                 type: "deepgram",
-                model: "nova-3",
+                version: "v2",
+                model: "flux-general-en",
+                eager_eot_threshold: 0.5,
+                eot_threshold: 0.7,
+                eot_timeout_ms: 5000,
               },
             },
             think: {
@@ -380,7 +387,7 @@ function buildCreateBotPayload(
               provider: {
                 type: "deepgram",
                 version: "v2",
-                model: "flux-alexis-en",
+                model: options.voice && isMeetingVoice(options.voice) ? options.voice : DEFAULT_MEETING_VOICE,
                 speed: 1.05,
                 expressivity: 1,
               },
