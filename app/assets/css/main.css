@@ -7,18 +7,18 @@
 }
 
 :root {
-  --ui-primary: black;
+  --ui-primary: #2f6bff;
   --ui-container: var(--container-3xl);
   --ui-radius: 0.65rem;
-  --thinky-accent: #171717;
-  --thinky-accent-soft: color-mix(in oklab, #171717 10%, transparent);
+  --thinky-accent: #2f6bff;
+  --thinky-accent-soft: color-mix(in oklab, #2f6bff 10%, transparent);
   overscroll-behavior-y: none;
 }
 
 .dark {
-  --ui-primary: white;
-  --thinky-accent: #f5f5f5;
-  --thinky-accent-soft: color-mix(in oklab, #f5f5f5 14%, transparent);
+  --ui-primary: #6e96ff;
+  --thinky-accent: #6e96ff;
+  --thinky-accent-soft: color-mix(in oklab, #6e96ff 16%, transparent);
 }
 
 ::view-transition-old(root),
@@ -45,8 +45,10 @@
   border-radius: 3px;
 }
 
-*::-webkit-scrollbar-thumb:hover {
-  background: oklch(35% 0 0 / 0.6);
+@media (hover: hover) {
+  *::-webkit-scrollbar-thumb:hover {
+    background: oklch(35% 0 0 / 0.6);
+  }
 }
 
 .dark {
@@ -57,6 +59,73 @@
   --ui-border: oklch(26.9% 0 0);
   --ui-border-muted: oklch(23% 0 0);
   --ui-border-accented: oklch(30% 0 0);
+}
+
+@layer components {
+  .marketing-page {
+    min-height: 100vh;
+    background: #fff;
+    color: #111827;
+    font-family: var(--font-sans);
+    color-scheme: light;
+  }
+
+  .eyebrow {
+    color: #2f6bff;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    line-height: 1.4;
+    text-transform: uppercase;
+  }
+
+  .section-title {
+    color: #111827;
+    font-size: clamp(1.9rem, 4vw, 2.75rem);
+    font-weight: 500;
+    letter-spacing: -0.055em;
+    line-height: 1.08;
+  }
+
+  .section-copy {
+    margin-inline: auto;
+    max-width: 38rem;
+    color: #6b7280;
+    font-size: 0.92rem;
+    line-height: 1.75;
+  }
+
+  .feature-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 1.25rem;
+    background: white;
+    padding: 1.35rem;
+    transition: border-color 160ms ease, transform 160ms ease;
+  }
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: #f9fafb;
+    padding: 0.3rem 0.6rem;
+    color: #6b7280;
+    font-size: 0.62rem;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  @media (hover: hover) {
+    .feature-card:hover {
+      border-color: #cbd5e1;
+      transform: translateY(-2px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .feature-card { transition: none; }
+  }
 }
 
 @layer base {

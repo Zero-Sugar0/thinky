@@ -1,138 +1,67 @@
-<script setup lang="ts">
-const features = [
-  { label: "Long-term memory", icon: "i-lucide-brain", class: "landing-feature--memory" },
-  { label: "Works across your apps", icon: "i-lucide-panels-top-left", class: "landing-feature--apps" },
-  { label: "Thoughtful automation", icon: "i-lucide-zap", class: "landing-feature--automation" },
-  { label: "You stay in control", icon: "i-lucide-shield-check", class: "landing-feature--control" },
-];
-</script>
-
 <template>
-  <section class="landing-hero relative isolate overflow-hidden px-5 pb-14 pt-16 sm:px-8 sm:pb-20 sm:pt-24">
-    <div class="landing-hero__glow" aria-hidden="true" />
-    <div class="relative z-10 mx-auto flex max-w-4xl flex-col items-center text-center">
-      <p class="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-white/55 sm:text-xs">
-        <span class="size-1.5 rounded-full bg-white/80" />
-        Your always-on personal assistant
-      </p>
-      <h1 class="max-w-4xl text-balance text-5xl font-semibold leading-[0.98] tracking-[-0.065em] text-white sm:text-7xl lg:text-[5.6rem]">
-        A little more room
-        <span class="block text-white/55">to think.</span>
-      </h1>
-      <p class="mt-6 max-w-xl text-pretty text-sm leading-6 text-white/60 sm:text-base sm:leading-7">
-        Thinky remembers what matters, works across the tools you already use, and takes care of the small things that keep your day moving.
-      </p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <UButton to="/login" color="neutral" size="lg" class="rounded-full bg-white px-6 font-medium text-black hover:bg-white/90">
-          Get started
-          <template #trailing><UIcon name="i-lucide-arrow-up-right" class="size-4" /></template>
-        </UButton>
-        <UButton to="#how-it-helps" color="neutral" variant="outline" size="lg" class="rounded-full border-white/15 bg-white/[0.03] px-6 text-white hover:bg-white/[0.08]">
-          Meet Thinky
-        </UButton>
+  <section class="overflow-hidden px-5 pb-14 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:pt-24">
+    <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
+      <div class="max-w-xl">
+        <p class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[11px] font-medium text-blue-700">
+          <span class="size-1.5 rounded-full bg-[#2f6bff]" /> A personal assistant with continuity
+        </p>
+        <h1 class="mt-6 text-balance text-[2.9rem] font-medium leading-[1.04] tracking-[-0.065em] text-slate-950 sm:text-6xl lg:text-[4.5rem]">
+          A little more room <span class="text-[#2f6bff]">to think.</span>
+        </h1>
+        <p class="mt-6 max-w-lg text-pretty text-base leading-7 text-slate-600 sm:text-[17px] sm:leading-8">
+          Thinky remembers the context you choose to share, works across your tools, and can join the conversation when you need another thoughtful voice.
+        </p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <UButton to="/login" color="primary" size="lg" class="rounded-full px-6 font-medium">Get started <UIcon name="i-lucide-arrow-up-right" class="size-4" /></UButton>
+          <UButton to="#what-it-does" color="neutral" variant="outline" size="lg" class="rounded-full border-slate-300 bg-white px-6 font-medium text-slate-700">See what Thinky can do</UButton>
+        </div>
+        <div class="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400">
+          <span>Meet Thinky on:</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500"><UIcon name="i-lucide-globe-2" class="size-3.5"/> Web</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500"><UIcon name="i-lucide-message-circle" class="size-3.5"/> Connected chats</span>
+          <span class="inline-flex items-center gap-1.5 text-slate-500"><UIcon name="i-lucide-video" class="size-3.5"/> Meetings</span>
+        </div>
       </div>
-    </div>
 
-    <div class="landing-stage relative mx-auto mt-10 h-[19rem] max-w-5xl sm:mt-14 sm:h-[25rem]">
-      <div class="landing-stage__orbit landing-stage__orbit--outer" aria-hidden="true" />
-      <div class="landing-stage__orbit landing-stage__orbit--inner" aria-hidden="true" />
-      <div class="landing-stage__core" aria-hidden="true">
-        <div class="landing-stage__core-inner"><AppLogo class="size-24 text-white grayscale sm:size-32" /></div>
+      <div class="relative mx-auto w-full max-w-[660px] lg:mx-0 lg:ml-auto">
+        <div class="absolute -inset-5 rounded-[34px] bg-blue-50/70 blur-2xl" aria-hidden="true" />
+        <div class="relative overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-[0_24px_80px_-45px_rgba(15,23,42,0.35)]">
+          <div class="flex items-center justify-between border-b border-slate-100 px-4 py-3 sm:px-5">
+            <div class="flex items-center gap-2.5"><AppLogo class="size-6 text-[#2f6bff]"/><span class="text-xs font-semibold text-slate-800">Thinky</span><span class="text-[11px] text-slate-400">· Personal assistant</span></div>
+            <span class="flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-medium text-emerald-700"><span class="size-1.5 rounded-full bg-emerald-500"/> Ready</span>
+          </div>
+          <div class="grid min-h-[360px] sm:min-h-[410px] sm:grid-cols-[150px_1fr]">
+            <aside class="hidden border-r border-slate-100 bg-slate-50/70 p-3 sm:block">
+              <p class="px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Your space</p>
+              <div class="mt-1 space-y-1 text-[11px] text-slate-600">
+                <div class="flex items-center gap-2 rounded-lg bg-blue-50 px-2.5 py-2 font-medium text-blue-700"><UIcon name="i-lucide-message-square" class="size-3.5"/> New chat</div>
+                <div class="flex items-center gap-2 rounded-lg px-2.5 py-2"><UIcon name="i-lucide-video" class="size-3.5"/> Meetings</div>
+                <div class="flex items-center gap-2 rounded-lg px-2.5 py-2"><UIcon name="i-lucide-brain" class="size-3.5"/> Memory</div>
+              </div>
+              <p class="mt-7 px-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">Recent</p>
+              <div class="mt-2 space-y-3 px-2 text-[10px] leading-4 text-slate-500"><p>Project Atlas timeline</p><p>Ideas for next week</p><p>Notes from the team</p></div>
+            </aside>
+            <div class="flex min-w-0 flex-col p-4 sm:p-6">
+              <div class="mx-auto w-full max-w-md flex-1 space-y-5">
+                <div class="pt-4 text-center sm:pt-7"><p class="text-sm font-semibold text-slate-900">What’s on your mind?</p><p class="mt-1 text-[11px] text-slate-400">A thought, a question, or a task to untangle.</p></div>
+                <div class="ml-auto max-w-[85%] rounded-2xl rounded-br-md bg-blue-600 px-4 py-3 text-xs leading-5 text-white">Help me prep for tomorrow’s project check-in. You know where we left off.</div>
+                <div class="flex items-start gap-2.5">
+                  <AppLogo class="mt-0.5 size-6 shrink-0 text-[#2f6bff]" />
+                  <div class="min-w-0 rounded-2xl rounded-tl-md border border-slate-100 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-700">
+                    <p>Of course. Last time, the team agreed to share the revised timeline before the check-in. Want a short agenda and the open questions?</p>
+                    <div class="mt-3 flex flex-wrap gap-1.5"><span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] text-slate-500">Key decisions</span><span class="rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] text-slate-500">Open questions</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-5 rounded-xl border border-slate-200 bg-white p-2 shadow-sm">
+                <div class="flex min-h-10 items-center justify-between gap-3 px-2"><span class="text-xs text-slate-400">Ask Thinky anything…</span><span class="grid size-7 place-items-center rounded-lg bg-[#2f6bff] text-white"><UIcon name="i-lucide-arrow-up" class="size-4"/></span></div>
+                <div class="flex items-center gap-3 px-2 pb-1 pt-1 text-[10px] text-slate-400"><span class="inline-flex items-center gap-1"><UIcon name="i-lucide-paperclip" class="size-3"/> Add context</span><span class="inline-flex items-center gap-1"><UIcon name="i-lucide-mic" class="size-3"/> Voice</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="absolute -bottom-5 right-4 hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-lg sm:flex"><span class="grid size-7 place-items-center rounded-lg bg-blue-50 text-[#2f6bff]"><UIcon name="i-lucide-brain" class="size-4"/></span><span class="text-[11px] font-medium text-slate-700">Context, carried forward</span></div>
       </div>
-      <div class="landing-stage__floor" aria-hidden="true" />
-      <div v-for="feature in features" :key="feature.label" class="landing-feature" :class="feature.class">
-        <UIcon :name="feature.icon" class="size-3.5 shrink-0 text-white/75" />
-        <span>{{ feature.label }}</span>
-      </div>
-      <p class="absolute inset-x-0 bottom-1 text-center font-mono text-[9px] uppercase tracking-[0.22em] text-white/30 sm:text-[10px]">
-        Present when you need it. Quiet when you don’t.
-      </p>
     </div>
   </section>
 </template>
-
-<style scoped>
-.landing-hero__glow {
-  position: absolute;
-  z-index: -1;
-  inset: -12rem 0 auto;
-  height: 38rem;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 50% 24%, rgb(255 255 255 / 8%), transparent 66%);
-}
-.landing-stage { isolation: isolate; }
-.landing-stage__orbit {
-  position: absolute;
-  left: 50%;
-  bottom: -18rem;
-  border: 1px solid rgb(255 255 255 / 10%);
-  border-radius: 50%;
-  transform: translateX(-50%);
-}
-.landing-stage__orbit--outer { width: min(88vw, 58rem); height: min(88vw, 58rem); }
-.landing-stage__orbit--inner { bottom: -13rem; width: min(66vw, 43rem); height: min(66vw, 43rem); border-color: rgb(255 255 255 / 7%); }
-.landing-stage__core {
-  position: absolute;
-  left: 50%;
-  bottom: -4rem;
-  display: grid;
-  width: 19rem;
-  height: 19rem;
-  place-items: start center;
-  padding-top: 2.4rem;
-  border: 1px solid rgb(255 255 255 / 18%);
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 38%, rgb(255 255 255 / 15%), rgb(255 255 255 / 3%) 45%, transparent 70%);
-  box-shadow: 0 -18px 100px rgb(255 255 255 / 9%);
-  transform: translateX(-50%);
-}
-.landing-stage__core-inner {
-  display: grid;
-  width: 11rem;
-  height: 11rem;
-  place-items: center;
-  border: 1px solid rgb(255 255 255 / 15%);
-  border-radius: 2.5rem;
-  background: linear-gradient(145deg, rgb(255 255 255 / 12%), rgb(255 255 255 / 2%));
-  box-shadow: 0 24px 60px rgb(0 0 0 / 45%);
-}
-.landing-stage__floor {
-  position: absolute;
-  right: -3rem;
-  bottom: 0;
-  left: -3rem;
-  height: 5rem;
-  background: linear-gradient(transparent, #080808 78%);
-}
-.landing-feature {
-  position: absolute;
-  z-index: 2;
-  display: inline-flex;
-  align-items: center;
-  gap: .55rem;
-  border: 1px solid rgb(255 255 255 / 12%);
-  border-radius: 999px;
-  background: rgb(15 15 16 / 90%);
-  padding: .6rem .85rem;
-  color: rgb(255 255 255 / 70%);
-  font-size: .72rem;
-  backdrop-filter: blur(12px);
-  animation: landing-float 6s ease-in-out infinite;
-}
-.landing-feature--memory { top: 27%; left: 4%; }
-.landing-feature--apps { top: 38%; right: 3%; animation-delay: -1.4s; }
-.landing-feature--automation { top: 64%; left: 1%; animation-delay: -2.7s; }
-.landing-feature--control { top: 68%; right: 0; animation-delay: -3.6s; }
-@keyframes landing-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
-@media (max-width: 520px) {
-  .landing-stage__core { width: 15rem; height: 15rem; bottom: -3rem; }
-  .landing-stage__core-inner { width: 9rem; height: 9rem; border-radius: 2rem; }
-  .landing-stage__core-inner :deep(svg) { width: 5rem; height: 5rem; }
-  .landing-feature { gap: .4rem; padding: .48rem .65rem; font-size: .62rem; }
-  .landing-feature--memory { left: 0; }
-  .landing-feature--apps { right: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .landing-feature { animation: none; }
-}
-</style>

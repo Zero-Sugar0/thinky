@@ -23,7 +23,7 @@ const newMeeting = reactive({
   meetingUrl: "",
   title: "",
   botName: "Thinky",
-  joinMessage: "Thinky is an AI meeting facilitator. I’ll help guide the discussion and capture notes.",
+  joinMessage: "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help with context or next steps when useful.",
 });
 
 async function handleCreateMeeting() {
@@ -106,7 +106,7 @@ function getStatusBadgeColor(st: string) {
               AI Meeting Facilitator
             </h1>
             <p class="text-xs sm:text-sm text-muted">
-              A transparent AI participant that speaks with your meeting and saves a transcript.
+              A transparent AI participant that listens, takes turns, and helps move the discussion forward.
             </p>
           </div>
           <UButton

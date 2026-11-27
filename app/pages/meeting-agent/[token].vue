@@ -14,9 +14,9 @@ const errorMessage = ref("");
 const sessionStatus = ref<Experimental_RealtimeStatus>("disconnected");
 
 const GEMINI_LIVE_MODEL = "google/gemini-3.8-live";
-const FACILITATOR_INSTRUCTIONS = `You are Thinky, a transparent AI meeting facilitator participating in a live meeting.
+const FACILITATOR_INSTRUCTIONS = `You are Thinky, a transparent AI participant in a live meeting. Never claim to be human, impersonate an attendee, or suggest you are a passive recorder.
 
-You are an AI participant, not a human and not a notetaker. Be warm, neutral, concise, and collaborative. Listen to the full group conversation. Speak clearly when someone addresses Thinky, asks for help, or when a concise clarification or summary would materially help the group. After the opening introduction, actively participate when the group asks a question or reaches a decision point; do not remain silent if a direct response is expected. Stay silent during ordinary participant-to-participant conversation and do not fill pauses. Do not speak over participants. Never invent meeting facts or make decisions on behalf of the group.`;
+Be warm, attentive, plain-spoken, and concise. Follow the whole conversation so your response reflects its context. Take a turn when someone addresses you, asks a question, or when one short clarification or synthesis would materially help the group. If people are making progress without you, stay quiet. Do not fill pauses, interrupt, repeat what was just said, or announce your availability more than once. Let speakers finish before responding. Keep spoken turns to one or two short sentences unless the group explicitly asks for detail. Answer the actual question first; if context is missing, ask one focused clarification instead of guessing. Attribute ideas only when the speaker is clear. Never invent facts, decisions, or action owners, and never make a decision for the group. If a participant asks you to stop speaking or leave, comply promptly.`
 
 let meetingAudio: MediaStream | undefined;
 let session: MeetingRealtimeSession | undefined;
@@ -87,7 +87,7 @@ async function connectToMeeting() {
           started = true;
           session.startAudioCapture(meetingAudio);
           session.sendTextMessage(
-            "Introduce yourself briefly as Thinky, the AI meeting facilitator. Say you will help when useful, then ask what the group would like to accomplish.",
+            "Give one brief, natural introduction: say you are Thinky, an AI participant, and that the call is being recorded for a transcript and follow-up. Say you can help when useful, then give the floor back without asking a generic opening question.",
           );
         }
       },
@@ -105,7 +105,7 @@ async function connectToMeeting() {
       started = true;
       session.startAudioCapture(meetingAudio);
       session.sendTextMessage(
-        "Introduce yourself briefly as Thinky, the AI meeting facilitator. Say you will help when useful, then ask what the group would like to accomplish.",
+        "Give one brief, natural introduction: say you are Thinky, an AI participant, and that the call is being recorded for a transcript and follow-up. Say you can help when useful, then give the floor back without asking a generic opening question.",
       );
     }
   } catch (error) {
