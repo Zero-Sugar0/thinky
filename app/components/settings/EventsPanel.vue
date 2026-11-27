@@ -14,7 +14,11 @@ interface TriggerType {
   slug?: string;
   name?: string;
   description?: string;
-  config?: Record<string, unknown>;
+  config?: {
+    properties?: Record<string, unknown>;
+    required?: string[];
+    [key: string]: unknown;
+  };
   payload?: Record<string, unknown>;
 }
 
@@ -44,9 +48,11 @@ const loading = ref(false);
 const saving = ref(false);
 const connectingSlug = ref<string | null>(null);
 const appSearchQuery = ref("");
+const failedLogos = ref<Record<string, boolean>>({});
+const triggerToDelete = ref<TriggerRecord | null>(null);
+let appLoadRequest = 0;
 
-const allApps = computed(() => data.value?.apps ?? []);
-const connectedApps = computed(() => allApps.value.filter(app => app.isConnected));
+const connectedApps = computed(() => (data.value?.apps ?? []).filter(app => app.isConnected));
 
 function formatTriggerName(trigger?: TriggerType | TriggerRecord) {
   const raw = trigger && "name" in trigger
