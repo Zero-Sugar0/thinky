@@ -67,14 +67,17 @@ const quickChats = [
     </template>
 
     <template #body>
-      <div class="hero-glow flex flex-1">
-        <UContainer class="flex flex-1 flex-col justify-center gap-4 py-8 sm:gap-6">
+      <div class="flex flex-1">
+        <UContainer class="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-5 px-3 py-8 sm:px-4">
           <div class="space-y-1">
-            <h1 class="text-3xl font-bold text-highlighted sm:text-4xl">
+            <p class="text-[13px] leading-5 text-muted">
+              Thinky
+            </p>
+            <h1 class="text-balance text-2xl font-medium text-highlighted sm:text-[1.75rem]">
               {{ greeting }}
             </h1>
-            <p class="text-sm text-muted sm:text-base">
-              Thinky — your personal agent
+            <p class="text-pretty text-[13px] leading-5 text-muted">
+              Your personal agent
             </p>
           </div>
 
@@ -94,7 +97,7 @@ const quickChats = [
             </template>
           </UChatPrompt>
 
-          <div class="flex flex-wrap gap-2">
+          <div class="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
             <UButton
               v-for="quickChat in quickChats"
               :key="quickChat.label"
@@ -103,7 +106,7 @@ const quickChats = [
               size="sm"
               color="neutral"
               variant="outline"
-              class="rounded-full"
+              class="h-auto justify-start rounded-none px-2.5 py-2 text-[13px] leading-5"
               @click="quickChat.action()"
             />
           </div>

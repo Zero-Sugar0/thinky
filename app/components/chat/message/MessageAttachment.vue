@@ -12,17 +12,17 @@ const label = computed(() => props.part.filename || "Attached file");
     :download="part.filename"
     target="_blank"
     rel="noopener noreferrer"
-    class="group inline-flex max-w-full items-center gap-2 rounded-xl border border-default bg-elevated/70 p-1.5 text-left transition-colors hover:bg-accented"
+    class="group inline-flex max-w-full items-center gap-2 rounded-none border border-default bg-elevated/70 p-1 text-left transition-colors hover:bg-accented"
   >
     <img
       v-if="isImage"
       :src="part.url"
       :alt="label"
-      class="size-16 rounded-lg object-cover"
+      class="size-14 rounded-none object-cover"
     >
     <span
       v-else
-      class="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted text-dimmed"
+      class="flex size-14 shrink-0 items-center justify-center rounded-none bg-muted text-dimmed"
       aria-hidden="true"
     >
       <UIcon name="i-lucide-file" class="size-6" />

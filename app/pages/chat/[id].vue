@@ -131,15 +131,32 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
         v-else
         class="flex flex-1"
       >
-        <UContainer class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 px-2 sm:gap-4 sm:px-3">
+        <UContainer class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 px-3 sm:px-4">
           <UChatMessages
             should-auto-scroll
             :messages="messages"
             :status="status"
-            :spacing-offset="96"
-            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'mr-auto flex w-full min-w-0 max-w-2xl items-start text-sm leading-6 sm:text-[15px] sm:leading-7' } }"
-            :user="{ side: 'right', variant: 'naked', ui: { container: 'ml-auto flex justify-end w-full' } }"
-            class="pt-(--ui-header-height) pb-4 sm:pb-6"
+            :spacing-offset="72"
+            :assistant="{
+              side: 'left',
+              variant: 'naked',
+              ui: {
+                container: 'me-auto flex w-full min-w-0 max-w-2xl items-start gap-2 pb-2',
+                content: 'w-full min-w-0 space-y-1 text-[13px] leading-snug',
+                body: 'w-full min-w-0',
+              },
+            }"
+            :user="{
+              side: 'right',
+              variant: 'naked',
+              ui: {
+                container: 'ms-auto flex w-fit max-w-[min(85%,32rem)] justify-end pb-2',
+                content: 'w-fit max-w-full space-y-1',
+                body: 'w-fit max-w-full',
+                header: 'mb-1 justify-end',
+              },
+            }"
+            class="pt-(--ui-header-height) pb-3"
           >
             <template #indicator>
               <ChatActivityIndicator />
