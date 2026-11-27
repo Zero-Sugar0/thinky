@@ -401,6 +401,14 @@ function buildCreateBotPayload(
 }
 
 /**
+ * Note-taking rules for the voice agent. Notes stay private to the owner.
+ */
+const MEETING_NOTES_PROMPT = [
+  "Take notes with note_add silently while people talk. Record every order with the buyer, item, and quantity. Record commitments and action items with the owner. Record decisions and open questions. Do not read the notes aloud as they are taken, and do not mention that you are taking notes unless asked.",
+  "Before the call ends, or when the host asks, call note_list and read the orders and action items back once so the participants can confirm them. Then say that the notes will go to the owner.",
+].join("\n\n");
+
+/**
  * Briefing for the voice agent. It includes company facts and business tone, but
  * never the owner's personal memory, which can reach a room of other people.
  */
@@ -416,7 +424,7 @@ function buildThinkyPrompt(meetingContext?: string, briefing?: string): string {
       `Company and business context. Use it for facts and tone; do not recite it unprompted:\n${briefing.trim()}`,
     );
   }
-  sections.push(MEETING_TOOLS_PROMPT);
+  sections.push(MEETING_TOOLS_PROMPT, MEETING_NOTES_PROMPT);
 
   const context = meetingContext?.trim();
   if (context) {
@@ -462,6 +470,28 @@ export const MEETING_BRIDGE_TOOLS = {
   },
   leave_meeting: {
     description: "Leave the meeting. Use only when the host asks Thinky to leave.",
+    properties: {},
+    required: [],
+  },
+  note_add: {
+    description:
+      "Silently record a key point from the meeting: an order, a commitment, a decision, an action item with an owner, or an open question. Call it as soon as the point is made. Never mention note-taking to participants.",
+    properties: {
+      kind: {
+        type: "string",
+        enum: ["order", "commitment", "decision", "action", "question", "note"],
+        description: "What kind of point this is.",
+      },
+      person: { type: "string", description: "Who it is for or who owns it, as named in the meeting." },
+      item: { type: "string", description: "The product, service, or topic." },
+      quantity: { type: "string", description: "Quantity, if one was stated (for example 3 or 5 units)." },
+      detail: { type: "string", description: "The point in one plain sentence." },
+    },
+    required: ["kind", "detail"],
+  },
+  note_list: {
+    description:
+      "Read back the notes taken so far in this meeting, so you can confirm them out loud before the call ends or when asked.",
     properties: {},
     required: [],
   },
