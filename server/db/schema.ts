@@ -5,3 +5,4 @@ export * from "./schema/phone";
 export * from "./schema/profile";
 export * from "./schema/proactive";
 export * from "./schema/meetings";
+export * from "./schema/tasks";
