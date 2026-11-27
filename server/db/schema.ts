@@ -6,3 +6,5 @@ export * from "./schema/profile";
 export * from "./schema/proactive";
 export * from "./schema/meetings";
 export * from "./schema/tasks";
+export * from "./schema/notifications";
+export * from "./schema/signals";

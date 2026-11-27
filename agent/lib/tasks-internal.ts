@@ -24,6 +24,7 @@ export async function createTask(input: {
   title: string;
   notes?: string;
   dueAt?: string | null;
+  notifyAt?: string | null;
   source: AgentTaskSource;
 }) {
   const { task } = await callInternal<{ task: AgentTask }>("/api/internal/tasks", {
@@ -36,7 +37,7 @@ export async function createTask(input: {
 export async function updateTask(
   userId: string,
   id: string,
-  patch: { title?: string; notes?: string; dueAt?: string | null; status?: "open" | "done" | "cancelled" },
+  patch: { title?: string; notes?: string; dueAt?: string | null; notifyAt?: string | null; status?: "open" | "done" | "cancelled" },
 ) {
   const { task } = await callInternal<{ task: AgentTask }>(`/api/internal/tasks/${encodeURIComponent(id)}`, {
     method: "PATCH",

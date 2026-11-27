@@ -14,6 +14,7 @@ export const taskCreateSchema = z.object({
   title: z.string().trim().min(1).max(200),
   notes: z.string().max(4000).default(""),
   dueAt: z.coerce.date().nullable().optional(),
+  notifyAt: z.coerce.date().nullable().optional(),
   source: taskSourceSchema.default("chat"),
 });
 
@@ -22,6 +23,7 @@ export const taskUpdateSchema = z.object({
   title: z.string().trim().min(1).max(200).optional(),
   notes: z.string().max(4000).optional(),
   dueAt: z.coerce.date().nullable().optional(),
+  notifyAt: z.coerce.date().nullable().optional(),
   status: z.enum(["open", "done", "cancelled"]).optional(),
 });
 

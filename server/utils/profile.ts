@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@nuxthub/db";
-import type { UserProfile, UserProfilePatch, UserProfileWithUser } from "#shared/types/profile";
+import { PROACTIVE_CHANNELS, type ProactiveChannel, type UserProfile, type UserProfilePatch, type UserProfileWithUser } from "#shared/types/profile";
 import {
   deletePhoneLinkForAppUser,
   getPhoneLinkForAppUser,
@@ -14,7 +14,7 @@ function rowToProfile(row: typeof schema.userProfiles.$inferSelect): UserProfile
     locale: row.locale,
     bio: row.bio,
     proactiveEnabled: row.proactiveEnabled !== "false",
-    proactiveChannel: (row.proactiveChannel === "slack" || row.proactiveChannel === "all") ? row.proactiveChannel : "chat",
+    proactiveChannel: PROACTIVE_CHANNELS.includes(row.proactiveChannel as ProactiveChannel) ? row.proactiveChannel as ProactiveChannel : "chat",
     updatedAt: row.updatedAt.getTime(),
   };
 }

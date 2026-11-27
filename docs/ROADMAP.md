@@ -19,9 +19,9 @@ Status of the platform build-out. **Done** means implemented and tested in this 
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Proactive suggestions to every channel (Telegram, iMessage) | Next | Current dispatch only supports web chat and Slack. |
-| Proactive suggestions driven by tasks, not just memory and thread titles | Next | Should read `agent_tasks` for overdue and upcoming items. |
-| Reminders at due time | Next | Needs a scheduler (QStash) that fires per task, not an hourly sweep. |
+| Proactive suggestions to every channel | Partial | Web chat and Slack are delivered by QStash. Telegram is delivered once a chat is linked. iMessage needs an Eve channel handoff. |
+| Proactive suggestions driven by tasks, not just memory and thread titles | Done | Overdue, due-soon, and stale tasks shape the check-in policy and wording. |
+| Reminders at due time | Done | Tasks with `remindAt` are sent once by the QStash dispatcher, every minute. |
 | Hard enforcement of standing rules | Partial | Rules are injected and the playbook says to apply them. Nothing checks an action against them before it runs. |
 | Action log viewer in the app | Next | Data is recorded. Needs an internal endpoint and a page. |
 | Undo for reversible actions | Next | Depends on each Composio toolkit. Needs per-action undo mapping. |
@@ -30,6 +30,11 @@ Status of the platform build-out. **Done** means implemented and tested in this 
 | Eval coverage | Next | `evals/` has greeting and calculator only. Needs memory, tasks, Composio, handoff, and delegation evals. |
 | Model routing (small model for routine turns, larger for planning and research) | Next | Currently a single model in `agent/agent.ts`. |
 | Per-user cost tracking | Next | Growth tools report `costUsd`. Model and tool spend are not aggregated. |
+
+| Random, varied check-ins (important, undone task, follow-up, conversation, update) | Done | Pure policy in `server/utils/checkin-policy.ts`, with quiet hours, daily cap, cooldowns, and a random gate. |
+| Composio trigger signals feed check-ins | Done | The Composio webhook records toolkit, trigger and time only. Message content is never stored. |
+| Telegram account linking | Next | Telegram chats cannot be tied to a Thinky user yet. Needs a link-code flow like Slack's. |
+| iMessage delivery from QStash | Next | Needs an Eve channel handoff reachable from a route, or an iMessage send API. |
 
 ## Extraordinary features
 

@@ -10,13 +10,15 @@ const form = reactive({
   locale: "en",
   bio: "",
   proactiveEnabled: true,
-  proactiveChannel: "chat" as "chat" | "slack" | "all",
+  proactiveChannel: "chat" as "chat" | "slack" | "imessage" | "telegram" | "all",
 });
 
 const proactiveChannels = [
   { value: "chat", label: "Web Chat (Default)", description: "Post in active or latest chat thread" },
   { value: "slack", label: "Slack DM", description: "Direct message via connected Slack account" },
-  { value: "all", label: "All Channels", description: "Deliver to both Web Chat and Slack" },
+  { value: "imessage", label: "iMessage", description: "Text via your linked iMessage number" },
+  { value: "telegram", label: "Telegram", description: "Message via your linked Telegram chat" },
+  { value: "all", label: "All Channels", description: "Deliver to every channel you are reachable on" },
 ];
 
 const saving = ref(false);

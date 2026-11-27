@@ -1,4 +1,5 @@
 import { getComposioClient, isComposioConfigured } from "~~/server/utils/composio";
+import { recordComposioSignal } from "~~/server/utils/signals";
 
 export default defineEventHandler(async (event) => {
   if (!isComposioConfigured()) throw createError({ statusCode: 503, statusMessage: "Composio is not configured" });
@@ -24,7 +25,16 @@ export default defineEventHandler(async (event) => {
       timestamp: (rawPayload as { timestamp?: string })?.timestamp,
     });
 
-    // Handle trigger event dispatch or processing here
+    // Keep a sanitized record (toolkit, trigger, time) so check-ins can mention real activity.
+    // Message content is never stored. A failure here must not reject the webhook.
+    if (normalizedPayload.userId && normalizedPayload.toolkitSlug) {
+      await recordComposioSignal({
+        userId: normalizedPayload.userId,
+        toolkit: normalizedPayload.toolkitSlug,
+        triggerSlug: normalizedPayload.triggerSlug,
+      }).catch(error => console.warn("[composio] could not record signal", error instanceof Error ? error.message : error));
+    }
+
     return {
       received: true,
       triggerSlug: normalizedPayload.triggerSlug,
