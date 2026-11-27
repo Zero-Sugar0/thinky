@@ -137,7 +137,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             :messages="messages"
             :status="status"
             :spacing-offset="96"
-            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'mr-auto flex w-full min-w-0 max-w-2xl items-start text-xs sm:text-[13px] leading-5 sm:leading-6' } }"
+            :assistant="{ side: 'left', variant: 'naked', ui: { container: 'mr-auto flex w-full min-w-0 max-w-2xl items-start text-sm leading-6 sm:text-[15px] sm:leading-7' } }"
             :user="{ side: 'right', variant: 'naked', ui: { container: 'ml-auto flex justify-end w-full' } }"
             class="pt-(--ui-header-height) pb-4 sm:pb-6"
           >

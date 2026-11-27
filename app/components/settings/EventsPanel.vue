@@ -14,7 +14,11 @@ interface TriggerType {
   slug?: string;
   name?: string;
   description?: string;
-  config?: Record<string, unknown>;
+  config?: {
+    properties?: Record<string, unknown>;
+    required?: string[];
+    [key: string]: unknown;
+  };
   payload?: Record<string, unknown>;
 }
 
@@ -44,9 +48,11 @@ const loading = ref(false);
 const saving = ref(false);
 const connectingSlug = ref<string | null>(null);
 const appSearchQuery = ref("");
+const failedLogos = ref<Record<string, boolean>>({});
+let appLoadRequest = 0;
 
+const connectedApps = computed(() => (data.value?.apps ?? []).filter(app => app.isConnected));
 const allApps = computed(() => data.value?.apps ?? []);
-const connectedApps = computed(() => allApps.value.filter(app => app.isConnected));
 
 function formatTriggerName(trigger?: TriggerType | TriggerRecord) {
   const raw = trigger && "name" in trigger
@@ -72,41 +78,41 @@ const displayedApps = computed(() => {
   );
 });
 
-// Auto-select first connected app or first app when loaded
 watch(data, (val) => {
-  if (val?.apps?.length && !selectedApp.value) {
-    const firstConnected = val.apps.find(a => a.isConnected);
-    if (firstConnected) {
-      void loadApp(firstConnected);
-    } else if (val.apps[0]) {
-      void loadApp(val.apps[0]);
-    }
+  if (!selectedApp.value && val?.apps?.length) {
+    void loadApp(val.apps[0]);
   }
 }, { immediate: true });
 
 async function loadApp(app?: ComposioAppSummary) {
+  const requestId = ++appLoadRequest;
   selectedApp.value = app;
   selectedType.value = "";
   selectedTypeDetail.value = null;
   triggerTypes.value = [];
   triggers.value = [];
   triggerConfig.value = "{}";
-  if (!app) return;
+  if (!app) {
+    loading.value = false;
+    return;
+  }
   loading.value = true;
   try {
     const result = await $fetch<{ types: TriggerType[]; triggers: TriggerRecord[] }>("/api/composio/triggers", {
       query: { toolkit: app.slug },
     });
+    if (requestId !== appLoadRequest) return;
     triggerTypes.value = result.types ?? [];
     triggers.value = result.triggers ?? [];
   } catch (err) {
+    if (requestId !== appLoadRequest) return;
     toast.add({
       title: "Could not load events",
       description: err instanceof Error ? err.message : "Try again later",
       color: "error",
     });
   } finally {
-    loading.value = false;
+    if (requestId === appLoadRequest) loading.value = false;
   }
 }
 
@@ -136,11 +142,28 @@ async function enableTrigger() {
   if (!selectedApp.value || !selectedType.value) return;
   let config: Record<string, unknown>;
   try {
-    config = JSON.parse(triggerConfig.value || "{}");
+    const parsed: unknown = JSON.parse(triggerConfig.value || "{}");
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      throw new TypeError("Expected a JSON object");
+    }
+    config = parsed as Record<string, unknown>;
   } catch {
     toast.add({
-      title: "Invalid configuration",
-      description: "Use a valid JSON object.",
+      title: "Invalid event settings",
+      description: "Enter a valid JSON object.",
+      color: "error",
+    });
+    return;
+  }
+
+  const missingRequired = selectedTypeDetail.value?.config?.required?.filter((key) => {
+    const value = config[key];
+    return value === undefined || value === null || value === "";
+  }) ?? [];
+  if (missingRequired.length) {
+    toast.add({
+      title: "Required settings missing",
+      description: `Add values for: ${missingRequired.join(", ")}.`,
       color: "error",
     });
     return;
@@ -247,8 +270,8 @@ async function connectCurrentApp() {
     <aside class="space-y-3">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-1.5">
-          <p class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted">
-            Apps & Toolkits
+          <p class="text-xs font-semibold text-highlighted">
+            Apps with events
           </p>
           <span
             v-if="allApps.length"
@@ -270,13 +293,12 @@ async function connectCurrentApp() {
 
       <!-- Only connected apps can receive live events -->
       <div class="space-y-2">
-        <p class="text-[11px] leading-4 text-muted">{{ connectedApps.length }} connected apps with events</p>
         <UInput
           v-model="appSearchQuery"
           icon="i-lucide-search"
-          size="xs"
-          placeholder="Filter connected apps..."
-          class="w-full text-xs"
+          size="sm"
+          placeholder="Search apps"
+          class="w-full"
         />
       </div>
 
@@ -315,10 +337,12 @@ async function connectCurrentApp() {
         >
           <span class="flex size-7 shrink-0 items-center justify-center rounded-md border border-default bg-default">
             <img
-              v-if="app.logo"
+              v-if="app.logo && !failedLogos[app.slug]"
               :src="app.logo"
               :alt="app.name"
               class="size-5 object-contain"
+              loading="lazy"
+              @error="failedLogos[app.slug] = true"
             >
             <UIcon
               v-else
@@ -371,10 +395,11 @@ async function connectCurrentApp() {
           <div class="flex items-center gap-3">
             <span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-default bg-elevated">
               <img
-                v-if="selectedApp.logo"
+                v-if="selectedApp.logo && !failedLogos[selectedApp.slug]"
                 :src="selectedApp.logo"
                 :alt="selectedApp.name"
                 class="size-6 object-contain"
+                @error="failedLogos[selectedApp.slug] = true"
               >
               <UIcon
                 v-else
@@ -383,11 +408,11 @@ async function connectCurrentApp() {
               />
             </span>
             <div>
-              <p class="text-base font-semibold text-highlighted">
-                {{ selectedApp.name }} Events & Triggers
+              <p class="text-sm font-semibold text-highlighted">
+                {{ selectedApp.name }}
               </p>
               <p class="text-xs text-muted">
-                {{ triggerTypes.length }} available events · {{ triggers.length }} enabled
+                {{ triggerTypes.length }} event types · {{ triggers.length }} configured
               </p>
             </div>
           </div>
@@ -431,18 +456,9 @@ async function connectCurrentApp() {
                 {{ selectedApp.name }} is not connected yet
               </p>
               <p class="mt-0.5 text-[11px] opacity-90">
-                You can browse available event types below. To activate a live trigger, connect your account first.
+                Connect this account to enable event triggers.
               </p>
             </div>
-            <UButton
-              color="warning"
-              variant="solid"
-              size="xs"
-              :loading="connectingSlug === selectedApp.slug"
-              @click="connectCurrentApp"
-            >
-              Connect Now
-            </UButton>
           </div>
         </div>
 
@@ -454,40 +470,21 @@ async function connectCurrentApp() {
               class="size-4 text-primary"
             />
             <p class="text-xs font-semibold text-highlighted">
-              Configure New Trigger
+              New trigger
             </p>
           </div>
 
           <div class="space-y-3">
             <div>
-              <label class="mb-1 block text-[11px] font-medium text-muted">Select Event Type</label>
+              <label class="mb-1 block text-xs font-medium text-muted">Event type</label>
               <USelectMenu
                 v-model="selectedType"
                 :items="triggerTypes.map(t => ({ label: t.name || t.slug || 'Unnamed event', value: t.slug || '' }))"
                 value-key="value"
                 searchable
-                placeholder="Search available events (e.g. commit, push, issue, email)..."
+                placeholder="Choose an event type"
                 size="sm"
               />
-            </div>
-
-            <div v-if="triggerTypes.length" class="space-y-2 pt-1">
-              <div class="flex items-center justify-between px-1">
-                <p class="text-[11px] font-semibold text-highlighted">{{ selectedApp.slug }} trigger types</p>
-                <span class="font-mono text-[10px] text-muted">{{ triggerTypes.length }} available events</span>
-              </div>
-              <div
-                v-for="type in triggerTypes"
-                :key="type.slug"
-                class="flex w-full min-w-0 items-start gap-3 rounded-lg border border-default bg-default/20 p-3 text-left transition-colors hover:border-primary/40 hover:bg-primary/5"
-              >
-                <UIcon name="i-lucide-webhook" class="mt-0.5 size-4 shrink-0 text-muted" />
-                <span class="min-w-0 flex-1">
-                  <span class="block truncate text-xs font-medium text-highlighted">{{ formatTriggerName(type) }}</span>
-                  <span class="mt-1 block break-all font-mono text-[10px] text-muted">{{ type.slug }}</span>
-                </span>
-                <UButton type="button" size="xs" color="neutral" variant="soft" @click.stop="selectedType = type.slug || ''">Configure</UButton>
-              </div>
             </div>
 
             <!-- Description of selected type -->
@@ -507,9 +504,8 @@ async function connectCurrentApp() {
             </div>
 
             <div>
-              <label class="mb-1 flex items-center justify-between text-[11px] font-medium text-muted">
-                <span>Trigger Config (JSON)</span>
-                <span class="text-[10px] text-dimmed">Optional parameters required by provider</span>
+              <label class="mb-1 block text-xs font-medium text-muted">
+                Event settings (JSON)
               </label>
               <UTextarea
                 v-model="triggerConfig"
@@ -577,9 +573,7 @@ async function connectCurrentApp() {
                     {{ trigger.disabledAt ? 'Paused' : 'Active' }}
                   </UBadge>
                 </div>
-                <p class="mt-0.5 break-all font-mono text-[10px] text-muted">
-                  {{ trigger.triggerSlug || trigger.id || trigger.triggerId }}
-                </p>
+
               </div>
 
               <div class="flex items-center gap-1">

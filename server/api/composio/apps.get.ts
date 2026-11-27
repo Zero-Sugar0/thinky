@@ -37,6 +37,15 @@ export default defineEventHandler(async (event) => {
     }
 
     if (eventsOnly === "true") {
+      const connectedSlugs = [...activeConnectionsMap.keys()];
+      if (connectedSlugs.length === 0) {
+        return { configured: true, apps: [] as ComposioAppSummary[], totalCount: 0 };
+      }
+      const toolkitMetadata = await composio.toolkits.getMany(connectedSlugs).catch(() => []);
+      const metadataBySlug = new Map(
+        toolkitMetadata.map(toolkit => [toolkit.slug.toLowerCase(), toolkit]),
+      );
+
       const apps = await Promise.all(
         [...activeConnectionsMap.entries()].map(async ([slug, connectedAccountId]) => {
           try {
@@ -44,18 +53,18 @@ export default defineEventHandler(async (event) => {
               toolkits: [slug],
               limit: 1,
             });
-            const eventCount = response.items?.length ?? 0;
-            if (!eventCount) return null;
+            if (!response.items?.length) return null;
 
+            const toolkit = metadataBySlug.get(slug);
             return {
               slug,
-              name: slug.replace(/[_-]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
-              description: "Connected app with available event triggers.",
+              name: toolkit?.name || slug.replace(/[_-]/g, " ").replace(/\b\w/g, letter => letter.toUpperCase()),
+              description: toolkit?.meta?.description || "",
+              logo: toolkit?.meta?.logo || undefined,
               icon: COMPOSIO_APP_ICONS[slug],
-              categories: [],
+              categories: toolkit?.meta?.categories?.map(category => category.name) ?? [],
               isConnected: true,
               connectedAccountId,
-              eventCount,
             };
           } catch {
             return null;
