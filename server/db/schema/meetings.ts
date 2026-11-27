@@ -10,9 +10,12 @@ export const meetings = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     botId: text("bot_id").notNull(),
+    bridgeToken: text("bridge_token").unique(), // authenticates Deepgram function calls for this meeting
+    agentSessionId: text("agent_session_id"), // Eve session that handles voice requests for this meeting
     meetingUrl: text("meeting_url").notNull(),
     title: text("title"),
     botName: text("bot_name").default("Thinky Assistant").notNull(),
+    voice: text("voice").default("flux-alexis-en").notNull(), // Deepgram Flux voice model
     status: text("status").default("scheduled").notNull(), // scheduled, in_call, done, fatal
     recordingId: text("recording_id"),
     transcriptId: text("transcript_id"),
@@ -38,3 +41,44 @@ export const meetingsRelations = relations(meetings, ({ one }) => ({
     references: [user.id],
   }),
 }));
+
+/**
+ * Notes the voice agent takes during a meeting: orders, commitments, decisions,
+ * action items, and open questions. They become the meeting outcome.
+ */
+export const meetingNotes = pgTable(
+  "meeting_notes",
+  {
+    id: text("id").primaryKey(),
+    meetingId: text("meeting_id")
+      .notNull()
+      .references(() => meetings.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // order, commitment, decision, action, question, note
+    person: text("person"),
+    item: text("item"),
+    quantity: text("quantity"),
+    detail: text("detail").notNull(),
+    status: text("status").default("open").notNull(), // open, done, dropped
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("meeting_notes_meeting_idx").on(table.meetingId, table.createdAt)],
+);
+
+/**
+ * One row per thing that happened in a meeting: bot status changes, requests Thinky
+ * handled, notes, chat, and screenshare. The meeting page shows it live and after the call.
+ */
+export const meetingActivity = pgTable(
+  "meeting_activity",
+  {
+    id: text("id").primaryKey(),
+    meetingId: text("meeting_id")
+      .notNull()
+      .references(() => meetings.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // status, request, answer, note, chat, screenshare, system
+    title: text("title").notNull(),
+    detail: text("detail"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("meeting_activity_meeting_idx").on(table.meetingId, table.createdAt)],
+);

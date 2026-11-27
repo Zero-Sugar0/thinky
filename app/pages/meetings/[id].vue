@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { MEETING_VOICES } from "~~/shared/meeting-voices";
+
 interface TranscriptEntry {
   speaker: string;
   paragraph: string;
@@ -11,6 +13,7 @@ interface MeetingDetail {
   meetingUrl: string;
   title: string;
   botName: string;
+  voice: string;
   status: string;
   recordingId: string | null;
   transcriptId: string | null;
@@ -23,16 +26,45 @@ interface MeetingDetail {
 const route = useRoute();
 const meetingId = route.params.id as string;
 
+interface ActivityEntry {
+  id: string;
+  kind: string;
+  title: string;
+  detail: string | null;
+  createdAt: string;
+}
+
 const { data, refresh, status } = await useFetch<{ meeting: MeetingDetail }>(`/api/meetings/${meetingId}`);
 const meeting = computed(() => data.value?.meeting);
+const { data: activityData, refresh: refreshActivity } = await useFetch<{ activity: ActivityEntry[] }>(
+  `/api/meetings/${meetingId}/activity`,
+);
+const activity = computed(() => activityData.value?.activity ?? []);
+const voiceName = computed(() => {
+  const id = meeting.value?.voice ?? "";
+  return MEETING_VOICES.find(voice => voice.id === id)?.name ?? id;
+});
+const isLive = computed(() => !!meeting.value && !["done", "fatal"].includes(meeting.value.status));
+
+const activityIcons: Record<string, string> = {
+  status: "i-lucide-radio",
+  request: "i-lucide-message-circle-question",
+  answer: "i-lucide-message-square-text",
+  note: "i-lucide-notebook-pen",
+  chat: "i-lucide-message-square",
+  screenshare: "i-lucide-monitor",
+  system: "i-lucide-info",
+};
+
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
   refreshTimer = setInterval(() => {
-    if (meeting.value && !["done", "fatal"].includes(meeting.value.status)) {
+    if (isLive.value) {
       void refresh();
+      void refreshActivity();
     }
-  }, 10_000);
+  }, 5_000);
 });
 
 onBeforeUnmount(() => {
@@ -118,12 +150,76 @@ onBeforeUnmount(() => {
             </div>
             <div class="flex items-center gap-1.5">
               <UIcon
+                name="i-lucide-audio-lines"
+                class="size-4"
+              />
+              <span>{{ voiceName }} voice</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <UIcon
                 name="i-lucide-calendar"
                 class="size-4"
               />
               <span>{{ new Date(meeting.createdAt).toLocaleString() }}</span>
             </div>
           </div>
+        </div>
+
+        <!-- Activity Section -->
+        <div class="space-y-3 sm:space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-sm sm:text-base font-semibold text-highlighted flex items-center gap-1.5">
+              <UIcon
+                name="i-lucide-activity"
+                class="size-4 sm:size-5 text-primary"
+              />
+              Activity
+            </h2>
+            <UBadge
+              :color="isLive ? 'success' : 'neutral'"
+              variant="subtle"
+              size="xs"
+            >
+              {{ isLive ? "Live" : "Completed" }}
+            </UBadge>
+          </div>
+
+          <div
+            v-if="!activity.length"
+            class="rounded-xl border border-default/60 p-6 text-center text-sm text-muted"
+          >
+            {{ isLive ? "Waiting for the bot to join. Activity appears here as it happens." : "No activity was recorded for this meeting." }}
+          </div>
+
+          <ol
+            v-else
+            class="space-y-2"
+          >
+            <li
+              v-for="entry in activity"
+              :key="entry.id"
+              class="flex gap-3 rounded-lg border border-default/50 bg-elevated/20 p-3"
+            >
+              <UIcon
+                :name="activityIcons[entry.kind] ?? 'i-lucide-circle'"
+                class="size-4 mt-0.5 text-primary shrink-0"
+              />
+              <div class="min-w-0 flex-1 space-y-0.5">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-sm font-medium text-highlighted">{{ entry.title }}</span>
+                  <span class="text-[11px] text-muted font-mono shrink-0">
+                    {{ new Date(entry.createdAt).toLocaleTimeString() }}
+                  </span>
+                </div>
+                <p
+                  v-if="entry.detail"
+                  class="text-xs text-muted whitespace-pre-wrap break-words"
+                >
+                  {{ entry.detail }}
+                </p>
+              </div>
+            </li>
+          </ol>
         </div>
 
         <!-- Transcript Section -->

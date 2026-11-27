@@ -48,8 +48,29 @@ the complete saved transcript after the call.
    - Key discussion points
    - Action items with owners
 
+## Voice bridge: acting in a live call
+
+The Deepgram Voice Agent handles the live conversation. It can also call functions
+that run on our server, through a bridge at `POST /api/meetings/bridge/:tool`. Each
+call carries that meeting's bridge token (stored on the meeting row), so a call can
+only act on its own meeting.
+
+- `ask_thinky`: sends the request to the owner's full agent, acting as the owner, so
+  it uses their memory, tasks, and connectors. The voice agent speaks the answer. It
+  keeps one Eve session per meeting, stored in `agentSessionId`. If the answer takes
+  longer than 15 seconds, it is posted to chat when it is ready.
+- `send_chat`, `share_screen`, `stop_share`, `leave_meeting`: act directly through
+  Recall's API.
+
+The voice agent's briefing includes `COMPANY.md` and `BUSINESS.md` (facts and
+tone). `PERSONAL.md` is never sent into a call; only the main agent reads it.
+
+Approval-gated actions cannot be approved by voice. The agent reports that it needs
+approval, and the owner approves in chat.
+
 ## Requirements
 
+- `INTERNAL_API_SECRET`: shared secret for the bridge from the Voice Agent to the agent.
 - `RECALL_API_KEY`: API key from the chosen Recall region.
 - `RECALL_REGION`: `us-west-2` (default), `us-east-1`, `eu-central-1`, or `ap-northeast-1`.
 - A Deepgram Voice Agent credential saved in the same Recall workspace and region. The bot uses Deepgram Nova-3 for listening and Aura-2 Thalia for speaking; Recall's Voice Agent integration uses OpenAI `gpt-4o-mini` for reasoning.

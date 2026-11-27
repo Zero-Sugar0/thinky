@@ -1,0 +1,1 @@
+ALTER TABLE "meetings" ADD COLUMN "voice" text DEFAULT 'flux-alexis-en' NOT NULL;

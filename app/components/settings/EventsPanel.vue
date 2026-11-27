@@ -68,7 +68,7 @@ function formatTriggerName(trigger?: TriggerType | TriggerRecord) {
 }
 
 const displayedApps = computed(() => {
-  const base = connectedApps.value;
+  const base = allApps.value;
   if (!appSearchQuery.value.trim()) return base;
   const q = appSearchQuery.value.trim().toLowerCase();
   return base.filter(app =>
@@ -291,7 +291,7 @@ async function connectCurrentApp() {
         />
       </div>
 
-      <!-- Only connected apps can receive live events -->
+      <!-- Every supported app is listed. Only connected apps can receive live events. -->
       <div class="space-y-2">
         <UInput
           v-model="appSearchQuery"
@@ -319,11 +319,11 @@ async function connectCurrentApp() {
           v-else-if="!displayedApps.length"
           class="px-2.5 py-8 text-center text-xs text-muted"
         >
-          <p v-if="!connectedApps.length">
-            No connected apps with events are available yet. Connect an app from the Apps tab first.
+          <p v-if="!allApps.length">
+            No event apps are available right now.
           </p>
           <p v-else>
-            No connected event apps match "{{ appSearchQuery }}".
+            No event apps match "{{ appSearchQuery }}".
           </p>
         </div>
 
@@ -360,7 +360,12 @@ async function connectCurrentApp() {
                 title="Connected"
               />
             </div>
-            <p class="truncate text-[10px] text-muted">Events available</p>
+            <p
+              class="truncate text-[10px]"
+              :class="app.isConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted'"
+            >
+              {{ app.isConnected ? "Connected" : "Not connected" }} · {{ app.eventCount ?? 0 }} events
+            </p>
           </div>
 
           <UIcon

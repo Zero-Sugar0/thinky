@@ -1,5 +1,6 @@
 import { getComposioClient, isComposioConfigured } from "~~/server/utils/composio";
 import { requireSessionUserId } from "~~/server/utils/session";
+import { findTriggerCatalogEntry } from "~~/server/utils/composio-trigger-catalog";
 
 export default defineEventHandler(async (event) => {
   const userId = await requireSessionUserId(event);
@@ -68,6 +69,13 @@ export default defineEventHandler(async (event) => {
           break;
         }
       } while (cursor && types.length < 500);
+    }
+
+    if (toolkit) {
+      const entry = findTriggerCatalogEntry(toolkit);
+      if (entry) {
+        types = (types as Array<{ slug?: string }>).filter(type => type.slug && entry.triggers.includes(type.slug));
+      }
     }
 
     let selectedTypeDetail: unknown = null;

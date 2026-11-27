@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { Buffer } from "node:buffer";
 
 import { THINKY_MEETING_AVATAR_BASE64 } from "./meeting-avatar.js";
+import { DEFAULT_MEETING_VOICE, isMeetingVoice } from "../../shared/meeting-voices.js";
 
 /**
  * Recall.ai client library.
@@ -221,6 +222,11 @@ export interface CreateBotOptions {
   joinMessage?: string;
   meetingContext?: string;
   enableRealtimeTranscript?: boolean;
+  bridgeToken?: string;
+  /** Deepgram Flux voice id, for example flux-alexis-en. */
+  voice?: string;
+  /** Company and business context from COMPANY.md and BUSINESS.md. */
+  briefing?: string;
 }
 
 export interface BotStatusChange {
@@ -360,7 +366,11 @@ function buildCreateBotPayload(
             listen: {
               provider: {
                 type: "deepgram",
-                model: "nova-3",
+                version: "v2",
+                model: "flux-general-en",
+                eager_eot_threshold: 0.5,
+                eot_threshold: 0.7,
+                eot_timeout_ms: 5000,
               },
             },
             think: {
@@ -368,13 +378,16 @@ function buildCreateBotPayload(
                 type: "open_ai",
                 model: "gpt-5-mini",
               },
-              prompt: buildThinkyPrompt(options.meetingContext),
+              prompt: buildThinkyPrompt(options.meetingContext, options.briefing),
+              functions: options.bridgeToken
+                ? buildBridgeFunctions(publicUrl.origin, options.bridgeToken)
+                : [],
             },
             speak: {
               provider: {
                 type: "deepgram",
                 version: "v2",
-                model: "flux-alexis-en",
+                model: options.voice && isMeetingVoice(options.voice) ? options.voice : DEFAULT_MEETING_VOICE,
                 speed: 1.05,
                 expressivity: 1,
               },
@@ -394,17 +407,118 @@ function buildCreateBotPayload(
   };
 }
 
-function buildThinkyPrompt(meetingContext?: string): string {
-  const context = meetingContext?.trim();
+/**
+ * Note-taking rules for the voice agent. Notes stay private to the owner.
+ */
+const MEETING_NOTES_PROMPT = [
+  "Take notes with note_add silently while people talk. Record every order with the buyer, item, and quantity. Record commitments and action items with the owner. Record decisions and open questions. Do not read the notes aloud as they are taken, and do not mention that you are taking notes unless asked.",
+  "Before the call ends, or when the host asks, call note_list and read the orders and action items back once so the participants can confirm them. Then say that the notes will go to the owner.",
+].join("\n\n");
 
-  if (!context) {
-    return THINKY_AGENT_PROMPT;
+/**
+ * Briefing for the voice agent. It includes company facts and business tone, but
+ * never the owner's personal memory, which can reach a room of other people.
+ */
+const MEETING_TOOLS_PROMPT = [
+  "You can act in this meeting through tools. Use ask_thinky for anything that needs records, memory, tasks, research, or other systems; it returns the answer for you to say. Use send_chat to post links or written details people should keep. Use share_screen only for a public https page the participants asked to see, and stop_share when they are done with it. Use leave_meeting only when the host asks you to leave.",
+  "Say briefly what you are doing before a tool call that takes time. Keep spoken answers short and never claim an action happened unless its tool returned success.",
+].join("\n\n");
+
+function buildThinkyPrompt(meetingContext?: string, briefing?: string): string {
+  const sections = [THINKY_AGENT_PROMPT];
+  if (briefing?.trim()) {
+    sections.push(
+      `Company and business context. Use it for facts and tone; do not recite it unprompted:\n${briefing.trim()}`,
+    );
+  }
+  sections.push(MEETING_TOOLS_PROMPT, MEETING_NOTES_PROMPT);
+
+  const context = meetingContext?.trim();
+  if (context) {
+    sections.push(
+      `Private meeting context, only to inform relevant answers; do not recite or disclose it unnecessarily:\n${context}`,
+    );
   }
 
-  return [
-    THINKY_AGENT_PROMPT,
-    `Private meeting context, only to inform relevant answers; do not recite or disclose it unnecessarily:\n${context}`,
-  ].join("\n\n");
+  return sections.join("\n\n");
+}
+
+/**
+ * Tools the voice agent can call during the call. Deepgram posts each call to the
+ * bridge endpoint with this meeting's bridge token.
+ */
+export const MEETING_BRIDGE_TOOLS = {
+  ask_thinky: {
+    description:
+      "Ask Thinky, the owner's full assistant, to do anything beyond talking: look up records, save or update tasks, check the owner's notes and preferences, research, or use connected apps. Pass the request in plain words, with any names, dates, and numbers from the conversation. Returns Thinky's answer to say aloud.",
+    properties: {
+      request: { type: "string", description: "What to do or find, in plain words." },
+    },
+    required: ["request"],
+  },
+  send_chat: {
+    description: "Post a message to the meeting chat, for links or details people should keep.",
+    properties: {
+      message: { type: "string", description: "The chat message to post." },
+    },
+    required: ["message"],
+  },
+  share_screen: {
+    description: "Share a public https webpage in the meeting when participants ask to see it.",
+    properties: {
+      url: { type: "string", description: "A public https:// URL to share." },
+    },
+    required: ["url"],
+  },
+  stop_share: {
+    description: "Stop sharing the webpage. Use when the participants are done with it.",
+    properties: {},
+    required: [],
+  },
+  leave_meeting: {
+    description: "Leave the meeting. Use only when the host asks Thinky to leave.",
+    properties: {},
+    required: [],
+  },
+  note_add: {
+    description:
+      "Silently record a key point from the meeting: an order, a commitment, a decision, an action item with an owner, or an open question. Call it as soon as the point is made. Never mention note-taking to participants.",
+    properties: {
+      kind: {
+        type: "string",
+        enum: ["order", "commitment", "decision", "action", "question", "note"],
+        description: "What kind of point this is.",
+      },
+      person: { type: "string", description: "Who it is for or who owns it, as named in the meeting." },
+      item: { type: "string", description: "The product, service, or topic." },
+      quantity: { type: "string", description: "Quantity, if one was stated (for example 3 or 5 units)." },
+      detail: { type: "string", description: "The point in one plain sentence." },
+    },
+    required: ["kind", "detail"],
+  },
+  note_list: {
+    description:
+      "Read back the notes taken so far in this meeting, so you can confirm them out loud before the call ends or when asked.",
+    properties: {},
+    required: [],
+  },
+} as const;
+
+function buildBridgeFunctions(baseUrl: string, bridgeToken: string): Array<Record<string, unknown>> {
+  return Object.entries(MEETING_BRIDGE_TOOLS).map(([name, tool]) => ({
+    name,
+    description: tool.description,
+    parameters: {
+      type: "object",
+      properties: tool.properties,
+      required: tool.required,
+    },
+    endpoint: {
+      url: `${baseUrl}/api/meetings/bridge/${name}`,
+      method: "POST",
+      headers: [{ key: "authorization", value: `Bearer ${bridgeToken}` }],
+    },
+  }));
 }
 
 function validateMeetingUrl(meetingUrl: string): void {
@@ -519,7 +633,7 @@ async function recallRequest({
   errorContext,
   body,
 }: {
-  method: "GET" | "POST";
+  method: "GET" | "POST" | "DELETE";
   path: string;
   errorContext: string;
   body?: unknown;
@@ -747,4 +861,41 @@ export async function downloadAndFormatTranscript(downloadUrl: string): Promise<
     raw,
     fullText,
   };
+}
+
+/**
+ * Posts a chat message into the meeting as the bot.
+ */
+export async function sendChatMessage(botId: string, message: string): Promise<void> {
+  await recallRequest({
+    method: "POST",
+    path: `/bot/${encodeURIComponent(botId)}/send_chat_message/`,
+    errorContext: "Failed to send chat message.",
+    body: { to: "everyone", message },
+  });
+}
+
+/**
+ * Shares a webpage as the bot's screenshare. It shows rendered page content,
+ * never a participant's desktop.
+ */
+export async function startScreenshare(botId: string, url: string): Promise<void> {
+  await recallRequest({
+    method: "POST",
+    path: `/bot/${encodeURIComponent(botId)}/output_media/`,
+    errorContext: "Failed to start screenshare.",
+    body: { screenshare: { kind: "webpage", config: { url } } },
+  });
+}
+
+/**
+ * Stops only the screenshare, leaving the bot's camera avatar running.
+ */
+export async function stopScreenshare(botId: string): Promise<void> {
+  await recallRequest({
+    method: "DELETE",
+    path: `/bot/${encodeURIComponent(botId)}/output_media/`,
+    errorContext: "Failed to stop screenshare.",
+    body: { screenshare: true },
+  });
 }

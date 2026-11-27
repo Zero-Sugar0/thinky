@@ -1,11 +1,18 @@
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { createMeetingBot } from "../lib/recall.js";
+import { meetingBriefing } from "../identity/documents.js";
+import { MEETING_VOICES, isMeetingVoice, DEFAULT_MEETING_VOICE } from "../../shared/meeting-voices.js";
 
 export default defineTool({
   description:
     "Join a Zoom, Google Meet, Microsoft Teams, or Webex call transparently as Thinky, an AI participant. Thinky listens to the live conversation and can respond in a natural voice when addressed or when a brief proactive contribution would help; it does not impersonate a human. The call is recorded for a speaker-attributed transcript and follow-up. Add only concise, non-sensitive meeting goals or user priorities explicitly shared for this call in `meetingContext`; never infer opinions or include secrets.",
   inputSchema: z.object({
+    voice: z
+      .string()
+      .refine(isMeetingVoice, "Unknown voice")
+      .optional()
+      .describe(`Voice Thinky speaks with. One of: ${MEETING_VOICES.map(v => v.id).join(", ")}. Default ${DEFAULT_MEETING_VOICE}.`),
     meetingUrl: z
       .string()
       .url()
@@ -49,9 +56,11 @@ export default defineTool({
     raw: z.unknown().optional(),
     error: z.string().optional(),
   }),
-  async execute({ meetingUrl, botName, joinAt, joinMessage, meetingContext, enableRealtimeTranscript }, ctx) {
+  async execute({ meetingUrl, botName, joinAt, joinMessage, meetingContext, enableRealtimeTranscript, voice }, ctx) {
     try {
       const bot = await createMeetingBot({
+        briefing: meetingBriefing(),
+        voice,
         meetingUrl,
         botName,
         joinAt,
