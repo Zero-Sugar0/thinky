@@ -4,7 +4,7 @@ import { createMeetingBot } from "../lib/recall.js";
 
 export default defineTool({
   description:
-    "Join a Zoom, Google Meet, Microsoft Teams, or Webex call transparently as Thinky, an AI participant. Thinky listens to the live conversation and can respond in a natural voice when addressed or when a brief contribution would genuinely help; it does not impersonate a human. The call is recorded for a speaker-attributed transcript and follow-up.",
+    "Join a Zoom, Google Meet, Microsoft Teams, or Webex call transparently as Thinky, an AI participant. Thinky listens to the live conversation and can respond in a natural voice when addressed or when a brief proactive contribution would help; it does not impersonate a human. The call is recorded for a speaker-attributed transcript and follow-up. Add only concise, non-sensitive meeting goals or user priorities explicitly shared for this call in `meetingContext`; never infer opinions or include secrets.",
   inputSchema: z.object({
     meetingUrl: z
       .string()
@@ -27,6 +27,12 @@ export default defineTool({
       .string()
       .optional()
       .describe("Custom announcement message sent to meeting chat when the bot joins."),
+    meetingContext: z
+      .string()
+      .trim()
+      .max(900)
+      .optional()
+      .describe("Optional brief with relevant, non-sensitive meeting goals and user priorities explicitly shared for this call. Never include secrets, unrelated profile details, or inferred opinions; leave empty when there is no useful context."),
     enableRealtimeTranscript: z
       .boolean()
       .optional()
@@ -43,13 +49,14 @@ export default defineTool({
     raw: z.unknown().optional(),
     error: z.string().optional(),
   }),
-  async execute({ meetingUrl, botName, joinAt, joinMessage, enableRealtimeTranscript }, ctx) {
+  async execute({ meetingUrl, botName, joinAt, joinMessage, meetingContext, enableRealtimeTranscript }, ctx) {
     try {
       const bot = await createMeetingBot({
         meetingUrl,
         botName,
         joinAt,
         joinMessage,
+        meetingContext,
         enableRealtimeTranscript,
       });
 

@@ -52,7 +52,7 @@ onUnmounted(() => document.removeEventListener("click", onDocumentClick));
         class="size-1.5 rounded-full bg-current"
         :class="[statusColor, (status === 'streaming' || status === 'submitted') && 'animate-pulse']"
       />
-      <span class="font-mono">eve stream</span>
+      <span class="font-mono">Thinky status</span>
       <span class="text-dimmed">·</span>
       <span class="font-mono text-dimmed">{{ status }}</span>
       <UIcon

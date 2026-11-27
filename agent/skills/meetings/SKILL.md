@@ -23,15 +23,16 @@ the complete saved transcript after the call.
 ## Workflow
 
 1. **Join Call**:
-   When the user asks Thinky to join and participate in a meeting, call `meeting_join` with the meeting link (e.g. `https://meet.google.com/...` or `https://zoom.us/j/...`). The bot joins transparently as an AI participant, introduces itself aloud, and contributes at natural pauses:
+   When the user asks Thinky to join and participate in a meeting, call `meeting_join` with the meeting link (e.g. `https://meet.google.com/...` or `https://zoom.us/j/...`). Pass a concise, non-sensitive meeting brief only when it is relevant and based on facts or priorities explicitly shared for that call; never include secrets or unrelated profile details. The bot joins transparently as an AI participant, introduces itself aloud, and contributes at natural transitions:
    ```json
    {
      "meetingUrl": "https://meet.google.com/abc-defg-hij",
      "botName": "Thinky",
-     "joinMessage": "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help when useful."
+     "joinMessage": "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help when useful.",
+     "meetingContext": "Optional concise goals and user priorities explicitly shared for this call."
    }
    ```
-   Do not describe Thinky as a human attendee or a silent notetaker. It should listen to the full discussion, let participants finish, speak only when addressed or genuinely useful, keep turns concise, and stay quiet when the group is progressing without it.
+   Do not describe Thinky as a human attendee or a silent notetaker. It should listen to the full discussion and proactively contribute a concise clarification, synthesis, or focused question when it can materially help—even if no one has addressed it—at a natural transition and without interrupting. Keep turns concise and stay quiet when the group is progressing without it. Represent the user's perspective only from relevant facts and priorities explicitly provided for that meeting; never fabricate views or commitments.
 2. **Monitor**:
    Check if the bot was admitted into the meeting via `meeting_status`:
    ```json
