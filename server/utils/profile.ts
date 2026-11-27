@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { db, schema } from "@nuxthub/db";
-import { PROACTIVE_CHANNELS, type ProactiveChannel, type UserProfile, type UserProfilePatch, type UserProfileWithUser } from "#shared/types/profile";
+import { PROACTIVE_CHANNELS, PROACTIVE_FREQUENCIES, type ProactiveChannel, type ProactiveFrequency, type UserProfile, type UserProfilePatch, type UserProfileWithUser } from "#shared/types/profile";
 import {
   deletePhoneLinkForAppUser,
   getPhoneLinkForAppUser,
@@ -15,6 +15,7 @@ function rowToProfile(row: typeof schema.userProfiles.$inferSelect): UserProfile
     bio: row.bio,
     proactiveEnabled: row.proactiveEnabled !== "false",
     proactiveChannel: PROACTIVE_CHANNELS.includes(row.proactiveChannel as ProactiveChannel) ? row.proactiveChannel as ProactiveChannel : "chat",
+    proactiveFrequency: PROACTIVE_FREQUENCIES.includes(row.proactiveFrequency as ProactiveFrequency) ? row.proactiveFrequency as ProactiveFrequency : "4h",
     updatedAt: row.updatedAt.getTime(),
   };
 }
@@ -91,6 +92,7 @@ export async function updateProfileForUser(userId: string, patch: UserProfilePat
       ...(patch.bio !== undefined ? { bio: patch.bio } : {}),
       ...(patch.proactiveEnabled !== undefined ? { proactiveEnabled: String(patch.proactiveEnabled) } : {}),
       ...(patch.proactiveChannel !== undefined ? { proactiveChannel: patch.proactiveChannel } : {}),
+      ...(patch.proactiveFrequency !== undefined ? { proactiveFrequency: patch.proactiveFrequency } : {}),
     })
     .where(eq(schema.userProfiles.userId, userId));
 

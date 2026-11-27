@@ -7,5 +7,6 @@ export const patchProfileBodySchema = z.object({
   bio: z.string().trim().max(500).optional(),
   proactiveEnabled: z.boolean().optional(),
   proactiveChannel: z.enum(["chat", "slack", "imessage", "telegram", "all"]).optional(),
+  proactiveFrequency: z.enum(["2h", "4h", "8h", "daily"]).optional(),
   phoneNumber: z.string().trim().max(20).nullable().optional(),
 });

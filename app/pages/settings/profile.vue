@@ -10,8 +10,16 @@ const form = reactive({
   locale: "en",
   bio: "",
   proactiveEnabled: true,
+  proactiveFrequency: "4h" as "2h" | "4h" | "8h" | "daily",
   proactiveChannel: "chat" as "chat" | "slack" | "imessage" | "telegram" | "all",
 });
+
+const proactiveFrequencies = [
+  { value: "2h", label: "Every 2 hours", description: "Frequent, for active days" },
+  { value: "4h", label: "Every 4 hours", description: "A balanced default" },
+  { value: "8h", label: "Every 8 hours", description: "A few check-ins a day" },
+  { value: "daily", label: "Once a day", description: "A single daily summary" },
+];
 
 const proactiveChannels = [
   { value: "chat", label: "Web Chat (Default)", description: "Post in active or latest chat thread" },
@@ -32,6 +40,7 @@ const isDirty = computed(() => {
     || form.locale !== profile.value.locale
     || form.bio !== profile.value.bio
     || form.proactiveEnabled !== profile.value.proactiveEnabled
+    || form.proactiveFrequency !== profile.value.proactiveFrequency
     || form.proactiveChannel !== profile.value.proactiveChannel;
 });
 
@@ -43,6 +52,7 @@ watch(profile, (value) => {
   form.locale = value.locale;
   form.bio = value.bio;
   form.proactiveEnabled = value.proactiveEnabled ?? true;
+  form.proactiveFrequency = value.proactiveFrequency ?? "4h";
   form.proactiveChannel = value.proactiveChannel ?? "chat";
 }, { immediate: true });
 
@@ -58,6 +68,7 @@ async function handleSave() {
       locale: form.locale,
       bio: form.bio,
       proactiveEnabled: form.proactiveEnabled,
+      proactiveFrequency: form.proactiveFrequency,
       proactiveChannel: form.proactiveChannel,
     });
     await authClient.getSession({ query: { disableCookieCache: true } });
@@ -79,6 +90,7 @@ function resetForm() {
   form.locale = profile.value.locale;
   form.bio = profile.value.bio;
   form.proactiveEnabled = profile.value.proactiveEnabled ?? true;
+  form.proactiveFrequency = profile.value.proactiveFrequency ?? "4h";
   form.proactiveChannel = profile.value.proactiveChannel ?? "chat";
 }
 </script>
@@ -220,6 +232,23 @@ function resetForm() {
             >
               <USwitch
                 v-model="form.proactiveEnabled"
+              />
+            </SettingsRow>
+
+            <SettingsRow
+              v-if="form.proactiveEnabled"
+              inline
+              label="How Often"
+              description="Routine check-ins at most this often. Urgent reminders for overdue tasks still come through."
+            >
+              <UInputMenu
+                v-model="form.proactiveFrequency"
+                :items="proactiveFrequencies"
+                value-key="value"
+                label-key="label"
+                description-key="description"
+                placeholder="Select frequency…"
+                class="w-60"
               />
             </SettingsRow>
 

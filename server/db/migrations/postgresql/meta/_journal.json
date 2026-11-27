@@ -43,6 +43,13 @@
       "when": 1795802625430,
       "tag": "0005_ancient_nick_fury",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795809286754,
+      "tag": "0006_fuzzy_wolf_cub",
+      "breakpoints": true
     }
   ]
 }

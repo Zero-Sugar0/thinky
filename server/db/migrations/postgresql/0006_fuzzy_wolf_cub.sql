@@ -1,0 +1,1 @@
+ALTER TABLE "user_profiles" ADD COLUMN "proactive_frequency" text DEFAULT '4h' NOT NULL;
