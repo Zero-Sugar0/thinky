@@ -3,6 +3,7 @@ import { db, schema } from "@nuxthub/db";
 import { createMeetingBot } from "~~/agent/lib/recall";
 import { requireSessionUserId } from "~~/server/utils/session";
 import { loadMeetingBriefing } from "~~/server/utils/meeting-briefing";
+import { recordMeetingActivity } from "~~/server/utils/meeting-activity";
 
 const CreateMeetingSchema = z.object({
   meetingUrl: z.string().url(),
@@ -47,6 +48,8 @@ export default defineEventHandler(async (event) => {
       joinAt: body.joinAt ? new Date(body.joinAt) : new Date(),
     })
     .returning();
+
+  await recordMeetingActivity({ meetingId, kind: "status", title: "Meeting scheduled", detail: body.meetingUrl });
 
   return { meeting: record };
 });

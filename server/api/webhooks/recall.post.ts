@@ -1,4 +1,15 @@
 import { eq } from "drizzle-orm";
+import { recordMeetingActivity } from "~~/server/utils/meeting-activity";
+
+const BOT_STATUS_LABELS: Record<string, string> = {
+  joining_call: "Bot is joining the call",
+  in_waiting_room: "Bot is in the waiting room",
+  in_call_not_recording: "Bot is in the call",
+  in_call_recording: "Bot is recording the call",
+  call_ended: "Call ended",
+  done: "Meeting completed",
+  fatal: "Bot failed",
+};
 import {
   createAsyncTranscript,
   downloadAndFormatTranscript,
@@ -157,6 +168,19 @@ export default defineEventHandler(async (event) => {
             await updateMeetingWithRetry("Bot status update", () =>
               db.update(schema.meetings).set({ status }).where(eq(schema.meetings.botId, botId)),
             );
+
+            const [meetingRow] = await db
+              .select({ id: schema.meetings.id })
+              .from(schema.meetings)
+              .where(eq(schema.meetings.botId, botId))
+              .limit(1);
+            if (meetingRow) {
+              await recordMeetingActivity({
+                meetingId: meetingRow.id,
+                kind: "status",
+                title: BOT_STATUS_LABELS[status] ?? `Bot status: ${status}`,
+              });
+            }
           }
         }
       } catch (bgError) {
