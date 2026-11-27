@@ -1,4 +1,5 @@
-export type ProactiveChannel = "chat" | "slack" | "all";
+export const PROACTIVE_CHANNELS = ["chat", "slack", "imessage", "telegram", "all"] as const;
+export type ProactiveChannel = (typeof PROACTIVE_CHANNELS)[number];
 
 export interface UserProfile {
   userId: string;

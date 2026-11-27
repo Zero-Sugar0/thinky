@@ -8,6 +8,8 @@ export interface AgentTask {
   status: AgentTaskStatus;
   source: AgentTaskSource;
   dueAt: number | null;
+  notifyAt: number | null;
+  notifiedAt: number | null;
   completedAt: number | null;
   createdAt: number;
   updatedAt: number;

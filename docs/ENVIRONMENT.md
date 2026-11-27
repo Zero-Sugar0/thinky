@@ -124,18 +124,27 @@ Remaining integrations use [Vercel Connect](https://vercel.com/docs/connect). Gi
 
 See [Customization](./CUSTOMIZATION.md#integrations) for setup steps.
 
-## Upstash QStash & Proactive Check (optional)
+## Upstash QStash: check-ins and reminders (optional)
 
-Thinky can proactively review user memories, current timezone, and unfinished tasks on an hourly schedule (e.g. asking about lunch, client follow-ups, or undone tasks) and send suggestions to the user's preferred channel (Web chat or Slack).
+All scheduled work runs on Upstash QStash, not on Eve cron. Create two schedules in the QStash console:
 
-Configure a QStash schedule pointing to:
-`POST https://your-domain.vercel.app/api/cron/proactive-check`
+| Route | Schedule | Purpose |
+|-------|----------|---------|
+| `POST https://your-domain.vercel.app/api/cron/dispatch` | every minute (`* * * * *`) | Sends due reminders and drains queued check-ins to each user's channels |
+| `POST https://your-domain.vercel.app/api/cron/proactive-check` | every 30 minutes | Decides whether each opted-in user gets a check-in, then queues it |
+
+The check-in policy is random within limits: quiet hours 22:00 to 08:00 in the user's timezone, at most three check-ins in any 24 hours, a six-hour cooldown per category, and about half of routine windows produce one. Overdue or due-soon tasks are always surfaced.
 
 | Variable | Description |
 |----------|-------------|
 | `QSTASH_CURRENT_SIGNING_KEY` | Current signing key from Upstash QStash console |
 | `QSTASH_NEXT_SIGNING_KEY` | Next signing key from Upstash QStash console (for key rotation) |
 | `CRON_SECRET` | Optional fallback bearer token for cron jobs |
+| `TELEGRAM_BOT_TOKEN` | Used to send Telegram check-ins and reminders (see the Telegram section) |
+| `ANTHROPIC_API_KEY` | Optional. Writes check-in wording. Without it, fixed templates are used. |
+
+Delivery channels: web chat (always, recorded in the thread), Slack (via the linked Slack account), and Telegram (once a chat is linked). iMessage delivery needs an Eve channel handoff, which the QStash dispatcher cannot start yet, so iMessage check-ins are recorded as not sent. The thread for iMessage is saved when the user messages Thinky, so only the send step is missing.
+
 ## Growth Engine (Treg) (optional)
 
 ### `TREG_TOKEN` (optional)
