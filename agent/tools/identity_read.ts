@@ -4,9 +4,9 @@ import { identityDocuments, instructionSection, instructionSectionNames } from "
 
 export default defineTool({
   description:
-    "Read your own identity or operating playbook. Use document 'soul' for your identity and character, or document 'instructions' with a section name for a specific procedure (e.g. meetings, growth, composio, tasks, actions). Read the relevant section before a task that depends on it.",
+    "Read your own identity or operating playbook. Use document 'soul' for your identity and character, 'instructions' with a section name for a specific procedure (e.g. meetings, growth, composio, tasks, actions), 'business' for the tone to use when writing or speaking for the business, 'company' for facts about the company, or 'personal' for private owner preferences (private conversations only). Read the relevant document before a task that depends on it.",
   inputSchema: z.object({
-    document: z.enum(["soul", "instructions"]),
+    document: z.enum(["soul", "instructions", "company", "business", "personal"]),
     section: z.string().max(64).optional().describe("Section name when document is 'instructions'"),
   }),
   outputSchema: z.object({
@@ -16,6 +16,9 @@ export default defineTool({
   async execute({ document, section }) {
     if (document === "soul") {
       return { content: identityDocuments.soul };
+    }
+    if (document === "company" || document === "business" || document === "personal") {
+      return { content: identityDocuments[document] };
     }
     const names = instructionSectionNames();
     if (!section) {

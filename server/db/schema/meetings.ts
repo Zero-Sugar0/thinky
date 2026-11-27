@@ -10,6 +10,8 @@ export const meetings = pgTable(
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
     botId: text("bot_id").notNull(),
+    bridgeToken: text("bridge_token").unique(), // authenticates Deepgram function calls for this meeting
+    agentSessionId: text("agent_session_id"), // Eve session that handles voice requests for this meeting
     meetingUrl: text("meeting_url").notNull(),
     title: text("title"),
     botName: text("bot_name").default("Thinky Assistant").notNull(),
