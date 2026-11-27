@@ -203,15 +203,7 @@ async function handleSubmit() {
 
       <footer class="flex flex-wrap items-center gap-x-4 gap-y-3 pt-6">
         <p class="text-xs text-dimmed">
-          Built with
-          <NuxtLink
-            to="https://vercel.com/eve"
-            target="_blank"
-            class="text-muted underline-offset-2 hover:text-highlighted hover:underline"
-          >
-            Eve
-          </NuxtLink>
-          on Vercel
+          A little more room to think.
         </p>
       </footer>
     </section>

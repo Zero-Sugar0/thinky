@@ -52,7 +52,31 @@ function getMeetingVoiceSigningSecret(): string {
   return secret;
 }
 
-export function createMeetingVoiceToken(joinAt: string): string {
+function encryptMeetingVoiceContext(context: string): string {
+  const iv = crypto.randomBytes(12);
+  const key = crypto.createHash("sha256").update(getMeetingVoiceSigningSecret()).digest();
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const ciphertext = Buffer.concat([cipher.update(context, "utf8"), cipher.final()]);
+  return Buffer.concat([iv, cipher.getAuthTag(), ciphertext]).toString("base64url");
+}
+
+function decryptMeetingVoiceContext(encrypted: string): string | undefined {
+  try {
+    const payload = Buffer.from(encrypted, "base64url");
+    if (payload.length < 28) return undefined;
+    const iv = payload.subarray(0, 12);
+    const tag = payload.subarray(12, 28);
+    const ciphertext = payload.subarray(28);
+    const key = crypto.createHash("sha256").update(getMeetingVoiceSigningSecret()).digest();
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
+    decipher.setAuthTag(tag);
+    return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
+  } catch {
+    return undefined;
+  }
+}
+
+export function createMeetingVoiceToken(joinAt: string, meetingContext?: string): string {
   const scheduledAt = Date.parse(joinAt);
   if (!Number.isFinite(scheduledAt)) {
     throw new Error("Meeting join time must be a valid ISO 8601 timestamp.");
@@ -60,11 +84,19 @@ export function createMeetingVoiceToken(joinAt: string): string {
 
   const now = Math.floor(Date.now() / 1000);
   const joinAtSeconds = Math.floor(scheduledAt / 1000);
+  const normalizedMeetingContext = meetingContext?.trim();
+  if (normalizedMeetingContext && Buffer.byteLength(normalizedMeetingContext, "utf8") > 900) {
+    throw new Error("Meeting context must be 900 UTF-8 bytes or fewer.");
+  }
+
   const payload = {
     purpose: "meeting-voice",
     notBefore: Math.max(now - 60, joinAtSeconds - 15 * 60),
     expiresAt: joinAtSeconds + 8 * 60 * 60,
     nonce: crypto.randomBytes(16).toString("base64url"),
+    ...(normalizedMeetingContext
+      ? { meetingContextCiphertext: encryptMeetingVoiceContext(normalizedMeetingContext) }
+      : {}),
   };
   if (payload.expiresAt <= now) {
     throw new Error("Meeting join time is too far in the past to start a voice session.");
@@ -75,37 +107,50 @@ export function createMeetingVoiceToken(joinAt: string): string {
   return `${encodedPayload}.${signature}`;
 }
 
-export function verifyMeetingVoiceToken(token: string): boolean {
+function readVerifiedMeetingVoiceClaims(token: string): Record<string, unknown> | undefined {
   const [encodedPayload, signature, extra] = token.split(".");
-  if (!encodedPayload || !signature || extra !== undefined) return false;
+  if (!encodedPayload || !signature || extra !== undefined) return undefined;
 
   const expected = crypto.createHmac("sha256", getMeetingVoiceSigningSecret()).update(encodedPayload).digest();
   let actual: Buffer;
   try {
     actual = Buffer.from(signature, "base64url");
   } catch {
-    return false;
+    return undefined;
   }
-  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return false;
+  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) return undefined;
 
   let payload: unknown;
   try {
     payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8"));
   } catch {
-    return false;
+    return undefined;
   }
-  if (typeof payload !== "object" || payload === null) return false;
+  if (typeof payload !== "object" || payload === null) return undefined;
 
   const claims = payload as Record<string, unknown>;
   const now = Math.floor(Date.now() / 1000);
-  return (
-    claims.purpose === "meeting-voice" &&
-    typeof claims.notBefore === "number" &&
-    typeof claims.expiresAt === "number" &&
-    typeof claims.nonce === "string" &&
-    claims.notBefore <= now &&
-    claims.expiresAt > now
-  );
+  if (
+    claims.purpose !== "meeting-voice" ||
+    typeof claims.notBefore !== "number" ||
+    typeof claims.expiresAt !== "number" ||
+    typeof claims.nonce !== "string" ||
+    claims.notBefore > now ||
+    claims.expiresAt <= now
+  ) return undefined;
+
+  return claims;
+}
+
+export function verifyMeetingVoiceToken(token: string): boolean {
+  return readVerifiedMeetingVoiceClaims(token) !== undefined;
+}
+
+export function getMeetingVoiceContext(token: string): string | undefined {
+  const encrypted = readVerifiedMeetingVoiceClaims(token)?.meetingContextCiphertext;
+  if (typeof encrypted !== "string") return undefined;
+  const context = decryptMeetingVoiceContext(encrypted);
+  return context && Buffer.byteLength(context, "utf8") <= 900 ? context : undefined;
 }
 
 /**
@@ -213,6 +258,7 @@ export interface CreateBotOptions {
   botName?: string;
   joinAt?: string;
   joinMessage?: string;
+  meetingContext?: string;
   enableRealtimeTranscript?: boolean;
 }
 
@@ -257,7 +303,7 @@ export async function createMeetingBot(options: CreateBotOptions): Promise<BotIn
     throw new Error("PUBLIC_API_BASE_URL must be a publicly reachable HTTPS URL for the meeting voice facilitator.");
   }
 
-  const voiceToken = createMeetingVoiceToken(joinAt);
+  const voiceToken = createMeetingVoiceToken(joinAt, options.meetingContext);
   const recordingConfig: Record<string, unknown> = {
     include_bot_in_recording: {
       audio: true,

@@ -18,6 +18,7 @@ import type {
   CamofoxOpenUIToolInvocation,
   CamofoxScreenshotUIToolInvocation,
 } from "~~/shared/utils/tools/camofox";
+import { agent } from "~~/shared/agent";
 
 const props = defineProps<{
   message: UIMessage;
@@ -52,7 +53,19 @@ function getVisibleToolName(part: Parameters<typeof getToolName>[0]) {
   const baseName = toolName.split("__").at(-1) ?? toolName;
   const specialist = specialistProfiles[baseName];
   if (specialist) return `${specialist.name} · ${specialist.team}`;
-  if (isDynamicToolUIPart(part)) return getToolDisplayName(part as EveDynamicToolPart);
+
+  if (isDynamicToolUIPart(part)) {
+    const dynamicPart = part as EveDynamicToolPart;
+    const namespace = getToolNamespace(dynamicPart);
+    const isComposioTool = namespace === "composio" || toolName.startsWith("composio_");
+    const composioAction = baseName.replace(/^composio_/, "");
+
+    if (isComposioTool && composioAction === "search") return "Find an app action";
+    if (isComposioTool && composioAction === "status") return "Connected apps";
+    if (baseName === "load_skill") return `${agent.name} skill`;
+
+    return getToolDisplayName(dynamicPart);
+  }
   return toolName
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
@@ -62,8 +75,14 @@ function getVisibleToolName(part: Parameters<typeof getToolName>[0]) {
 function getVisibleToolTeam(part: Parameters<typeof getToolName>[0]) {
   const toolName = getToolName(part);
   const baseName = toolName.split("__").at(-1) ?? toolName;
-  return specialistProfiles[baseName]?.team
-    ?? (isDynamicToolUIPart(part) ? getToolNamespace(part as EveDynamicToolPart) : undefined);
+  if (specialistProfiles[baseName]) return specialistProfiles[baseName].team;
+  if (!isDynamicToolUIPart(part)) return undefined;
+
+  const dynamicPart = part as EveDynamicToolPart;
+  const namespace = getToolNamespace(dynamicPart);
+  return namespace === "composio" || toolName.startsWith("composio_")
+    ? "Apps"
+    : namespace;
 }
 
 const showThinking = computed(
@@ -182,7 +201,7 @@ const showThinking = computed(
       </div>
         <div
           v-else
-          class="chat-prose inline-block max-w-[min(92%,42rem)] rounded-2xl rounded-tr-md bg-elevated/80 px-4 py-3 text-sm leading-6 text-highlighted shadow-sm ring-1 ring-inset ring-white/5 sm:px-5 sm:py-3.5 sm:text-[15px] sm:leading-7 [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-2 [&_pre]:max-w-full [&_table]:text-xs"
+          class="chat-prose inline-block w-fit max-w-[min(92%,42rem)] rounded-xl rounded-tr-sm border border-default/70 bg-elevated/80 px-3.5 py-2.5 text-sm leading-6 text-highlighted shadow-sm sm:px-4 sm:py-3 sm:text-[15px] sm:leading-[1.6] [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-2 [&_pre]:max-w-full [&_table]:text-xs"
         >
           <ChatComark
             :value="part.text"

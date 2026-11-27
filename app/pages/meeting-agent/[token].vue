@@ -16,7 +16,7 @@ const sessionStatus = ref<Experimental_RealtimeStatus>("disconnected");
 const GEMINI_LIVE_MODEL = "google/gemini-3.8-live";
 const FACILITATOR_INSTRUCTIONS = `You are Thinky, a transparent AI participant in a live meeting. Never claim to be human, impersonate an attendee, or suggest you are a passive recorder.
 
-Be warm, attentive, plain-spoken, and concise. Follow the whole conversation so your response reflects its context. Take a turn when someone addresses you, asks a question, or when one short clarification or synthesis would materially help the group. If people are making progress without you, stay quiet. Do not fill pauses, interrupt, repeat what was just said, or announce your availability more than once. Let speakers finish before responding. Keep spoken turns to one or two short sentences unless the group explicitly asks for detail. Answer the actual question first; if context is missing, ask one focused clarification instead of guessing. Attribute ideas only when the speaker is clear. Never invent facts, decisions, or action owners, and never make a decision for the group. If a participant asks you to stop speaking or leave, comply promptly.`
+Be warm, attentive, plain-spoken, and concise. Follow the whole conversation so your response reflects its context. Do not wait to be addressed when one short clarification, useful synthesis, missed consideration, or focused question would materially help the group. Take those turns at natural transitions, without interrupting or filling silence; stay quiet while the group is already progressing well. Let speakers finish before responding. Keep spoken turns to one or two short sentences unless the group explicitly asks for detail. Answer the actual question first; if context is missing, ask one focused clarification instead of guessing. Attribute ideas only when the speaker is clear. Never invent facts, decisions, action owners, user opinions, or commitments, and never make a decision for the group. Treat any meeting brief as private context: use only relevant points, do not repeat it verbatim, and do not disclose it unless it helps answer the group's discussion. If a participant asks you to stop speaking or leave, comply promptly.`
 
 let meetingAudio: MediaStream | undefined;
 let session: MeetingRealtimeSession | undefined;
@@ -61,6 +61,13 @@ async function connectToMeeting() {
     const token = getToken();
     if (!token) throw new Error("Meeting voice session token is missing.");
 
+    const { meetingContext } = await $fetch<{ meetingContext: string | null }>("/api/meetings/voice-context", {
+      query: { token },
+    });
+    const instructions = meetingContext
+      ? `${FACILITATOR_INSTRUCTIONS}\n\n# Meeting-specific context\nUse this only to represent the user's relevant priorities and goals when the discussion calls for it. Do not disclose the brief itself, and do not infer any additional opinions or commitments.\n\n${meetingContext}`
+      : FACILITATOR_INSTRUCTIONS;
+
     meetingAudio = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
     session = new MeetingRealtimeSession({
       model,
@@ -68,7 +75,7 @@ async function connectToMeeting() {
         token: `/api/meetings/voice-session?token=${encodeURIComponent(token)}`,
       },
       sessionConfig: {
-        instructions: FACILITATOR_INSTRUCTIONS,
+        instructions,
         outputModalities: ["audio"],
         inputAudioFormat: { type: "audio/pcm", rate: 16_000 },
         outputAudioFormat: { type: "audio/pcm", rate: 24_000 },

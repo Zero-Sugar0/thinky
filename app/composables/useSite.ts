@@ -4,7 +4,7 @@ export function useSite() {
   const requestUrl = useRequestURL();
 
   const site = appConfig.site;
-  const origin = runtimeConfig.public.siteUrl || requestUrl.origin;
+  const origin = runtimeConfig.public.siteUrl || runtimeConfig.betterAuthUrl || requestUrl.origin;
 
   return {
     ...site,
@@ -36,10 +36,14 @@ export function useSiteSeo(options?: {
     ogUrl: canonical,
     ogSiteName: site.name,
     ogImage,
+    ogImageAlt: `${site.name} — ${site.tagline}`,
+    ogImageWidth: 1424,
+    ogImageHeight: 752,
     twitterCard: "summary_large_image",
     twitterTitle: title,
     twitterDescription: description,
     twitterImage: ogImage,
+    twitterImageAlt: `${site.name} — ${site.tagline}`,
     twitterSite: site.twitter,
   });
 
@@ -49,7 +53,8 @@ export function useSiteSeo(options?: {
       { name: "author", content: site.author },
       {
         name: "keywords",
-        content: "Eve, Nuxt, personal agent, AI assistant, Better Auth, Slack, iMessage, Telegram, Linear, template",
+        content:
+          "Thinky, personal AI assistant, long-term memory, meeting assistant, connected apps, Slack, iMessage, Telegram, Linear",
       },
     ],
     script: [
