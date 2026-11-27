@@ -4,7 +4,7 @@ import { verifyQStashOrSecret } from "~~/server/utils/qstash";
 import { decideCheckin, type CheckinRolls } from "~~/server/utils/checkin-policy";
 import { composeCheckin, gatherCheckin } from "~~/server/utils/checkin";
 import { dispatchProactiveSuggestion } from "~~/server/utils/proactive";
-import type { ProactiveChannel } from "#shared/types/profile";
+import { FREQUENCY_HOURS, type ProactiveChannel, type ProactiveFrequency } from "#shared/types/profile";
 import { pruneOldSignals } from "~~/server/utils/signals";
 import { fetchUserMemoryEntries } from "~~/server/utils/memory";
 
@@ -34,6 +34,7 @@ export default defineEventHandler(async (event) => {
     bio: schema.userProfiles.bio,
     proactiveEnabled: schema.userProfiles.proactiveEnabled,
     proactiveChannel: schema.userProfiles.proactiveChannel,
+    proactiveFrequency: schema.userProfiles.proactiveFrequency,
     userName: schema.user.name,
   })
     .from(schema.userProfiles)
@@ -54,6 +55,7 @@ export default defineEventHandler(async (event) => {
       name: profile.userName?.split(" ")[0] ?? "",
       bio: profile.bio,
       memories,
+      cadenceHours: FREQUENCY_HOURS[profile.proactiveFrequency as ProactiveFrequency] ?? FREQUENCY_HOURS["4h"],
     });
 
     const category = decideCheckin(signals, randomRolls());

@@ -36,6 +36,7 @@ export async function gatherCheckin(input: {
   name: string;
   bio: string;
   memories: string[];
+  cadenceHours: number;
 }): Promise<{ signals: CheckinSignals; facts: CheckinFacts }> {
   const now = Date.now();
   const tasks = await listTasksForUser(input.userId, "open", 50);
@@ -73,6 +74,7 @@ export async function gatherCheckin(input: {
       recentActivity,
       hasMemories: input.memories.length > 0,
       recentCheckins,
+      cadenceHours: input.cadenceHours,
     },
     facts: {
       name: input.name,

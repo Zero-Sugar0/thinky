@@ -29,6 +29,8 @@ export interface CheckinSignals {
   hasMemories: boolean;
   /** Check-ins queued or sent in the last 24 hours. */
   recentCheckins: RecentCheckin[];
+  /** Minimum hours between routine check-ins, from the user's frequency setting. */
+  cadenceHours: number;
 }
 
 /** Random numbers in [0, 1), supplied by the caller so the decision stays deterministic in tests. */
@@ -61,6 +63,12 @@ export function decideCheckin(signals: CheckinSignals, rolls: CheckinRolls): Che
   if (urgent && !recentlySent(signals, "important")) {
     return "important";
   }
+
+  // Routine check-ins respect the user's chosen frequency. Urgent items above do not.
+  const lastRoutine = signals.recentCheckins
+    .filter(c => c.category !== "important")
+    .reduce<number | null>((min, c) => (min === null || c.hoursAgo < min ? c.hoursAgo : min), null);
+  if (lastRoutine !== null && lastRoutine < signals.cadenceHours) return null;
 
   if (rolls.gate >= BASE_SEND_CHANCE) return null;
 

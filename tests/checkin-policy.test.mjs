@@ -16,6 +16,7 @@ const day = (overrides = {}) => ({
   recentActivity: 0,
   hasMemories: false,
   recentCheckins: [],
+  cadenceHours: 4,
   ...overrides,
 });
 
@@ -68,7 +69,7 @@ test("picks are weighted: the pick roll selects across eligible categories", () 
 test("a category sent recently is excluded from routine picks", () => {
   const signals = day({
     openTasks: 1,
-    recentCheckins: [{ category: "undone_task", hoursAgo: 2 }],
+    recentCheckins: [{ category: "undone_task", hoursAgo: 5 }],
   });
   // undone_task is excluded, so the first remaining eligible category (update) wins at pick 0.
   assert.equal(decideCheckin(signals, { gate: 0, pick: 0 }), "update");
@@ -76,4 +77,21 @@ test("a category sent recently is excluded from routine picks", () => {
 
 test("with nothing to talk about, the conversation category is the fallback", () => {
   assert.equal(decideCheckin(day(), { gate: 0, pick: 0.5 }), "conversation");
+});
+
+test("routine check-ins wait for the user's chosen cadence", () => {
+  const signals = day({ openTasks: 1, cadenceHours: 4, recentCheckins: [{ category: "update", hoursAgo: 2 }] });
+  assert.equal(decideCheckin(signals, gateOpen), null);
+});
+
+test("a routine check-in is allowed again once the cadence has passed", () => {
+  const signals = day({ openTasks: 1, cadenceHours: 4, recentCheckins: [{ category: "update", hoursAgo: 5 }] });
+  assert.notEqual(decideCheckin(signals, gateOpen), null);
+});
+
+test("urgent items bypass the cadence but not the daily cap", () => {
+  const recentCheckins = [{ category: "update", hoursAgo: 1 }];
+  assert.equal(decideCheckin(day({ overdueTasks: 1, cadenceHours: 8, recentCheckins }), gateClosed), "important");
+  const capped = Array.from({ length: DAILY_CHECKIN_CAP }, (_, i) => ({ category: "update", hoursAgo: i + 1 }));
+  assert.equal(decideCheckin(day({ overdueTasks: 1, cadenceHours: 8, recentCheckins: capped }), gateClosed), null);
 });

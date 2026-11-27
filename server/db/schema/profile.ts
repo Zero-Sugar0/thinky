@@ -11,6 +11,7 @@ export const userProfiles = pgTable("user_profiles", {
   bio: text("bio").notNull().default(""),
   proactiveEnabled: text("proactive_enabled").notNull().default("true"),
   proactiveChannel: text("proactive_channel").notNull().default("chat"),
+  proactiveFrequency: text("proactive_frequency").notNull().default("4h"),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => new Date())
