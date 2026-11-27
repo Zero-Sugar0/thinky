@@ -5,7 +5,7 @@ description: Join Zoom, Google Meet, Microsoft Teams, and Webex calls as a trans
 
 # Meeting Assistant Skill
 
-Equips the agent with a live, speaking AI participant powered by Gemini Live through Vercel AI Gateway, plus real-time and post-meeting transcription through Recall.ai.
+Equips the agent with a live, speaking AI participant powered by Recall.ai’s native Deepgram Voice Agent integration, plus real-time and post-meeting transcription through Recall.ai.
 
 ## Tools
 
@@ -52,9 +52,8 @@ the complete saved transcript after the call.
 
 - `RECALL_API_KEY`: API key from the chosen Recall region.
 - `RECALL_REGION`: `us-west-2` (default), `us-east-1`, `eu-central-1`, or `ap-northeast-1`.
+- A Deepgram Voice Agent credential saved in the same Recall workspace and region. The bot uses Deepgram Nova-3 for listening and Aura-2 Thalia for speaking; Recall's Voice Agent integration uses OpenAI `gpt-4o-mini` for reasoning.
 - `RECALL_WORKSPACE_VERIFICATION_SECRET`: Secret to verify webhook signatures.
-- `PUBLIC_API_BASE_URL`: Stable, public HTTPS web app URL used by Recall to load the facilitator page.
-- `AI_GATEWAY_API_KEY`: Vercel AI Gateway key for local or non-Vercel deployments; Vercel deployments can use Gateway's automatic OIDC authentication.
-- `BETTER_AUTH_SECRET`: Must be the same on the web and Eve services to sign and verify facilitator session URLs.
+- `PUBLIC_API_BASE_URL`: Stable, public HTTPS app URL receiving Recall transcript and lifecycle webhooks.
 
-The web and Eve services need `RECALL_API_KEY`, `PUBLIC_API_BASE_URL`, and the same `BETTER_AUTH_SECRET`. The web service also needs Vercel AI Gateway authentication to mint short-lived Gemini Live sessions. Recall Output Media supplies meeting audio to the facilitator webpage and sends its audio output back into the call. Configure Deepgram in the selected Recall region. Gemini Live handles conversational speech-to-speech directly, including turn detection and interruptions; Deepgram real-time transcript events and post-meeting transcript artifacts are separate from that live voice path.
+Set `RECALL_API_KEY` on both the web and Eve services if both can create bots. Set `PUBLIC_API_BASE_URL` on each service that creates bots. The web service also needs `RECALL_WORKSPACE_VERIFICATION_SECRET` to verify incoming callbacks. Save the Deepgram credential under Agents → Deepgram in the matching Recall region; do not send provider API keys in bot requests. The live call audio is sent to Deepgram through `output_media.audio`, which handles recognition, reasoning, and spoken replies without a custom webpage or Vercel AI Gateway. A generated 16:9 JPEG is supplied through `automatic_video_output` as Thinky's in-call video avatar. Deepgram real-time transcript events and post-meeting transcript artifacts remain separately configured for saved transcripts.

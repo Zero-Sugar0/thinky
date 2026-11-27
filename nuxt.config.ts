@@ -15,14 +15,6 @@ export default defineNuxtConfig({
   routeRules: {
     "/login": { prerender: true },
     "/": { ssr: true, headers: privateNoStore },
-    "/meeting-agent/**": {
-      ssr: false,
-      headers: {
-        "cache-control": "no-store",
-        "referrer-policy": "no-referrer",
-        "x-robots-tag": "noindex, nofollow",
-      },
-    },
     "/chat/**": { ssr: true, headers: privateNoStore },
     "/settings/**": { ssr: true, headers: privateNoStore },
     "/api/auth/**": { headers: noStore },
@@ -34,7 +26,6 @@ export default defineNuxtConfig({
     "/api/memory": { headers: privateNoStore },
     "/api/memory/**": { headers: privateNoStore },
     "/api/connectors": { headers: privateNoStore },
-    "/api/meetings/voice-session": { headers: noStore },
     "/api/slack/**": { headers: privateNoStore },
     "/api/integrations/**": { headers: privateNoStore },
     "/eve/v1/**": { headers: noStore },
