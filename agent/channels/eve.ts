@@ -26,8 +26,31 @@ function appSession(): AuthFn<Request> {
   };
 }
 
+function internalBridge(): AuthFn<Request> {
+  return async (request) => {
+    const secret = process.env.INTERNAL_API_SECRET?.trim();
+    const authorization = request.headers.get("authorization") ?? "";
+    const onBehalfOf = request.headers.get("x-on-behalf-of")?.trim();
+
+    if (!secret || !onBehalfOf || authorization !== `Bearer ${secret}`) {
+      return null;
+    }
+
+    // Trusted server-to-server call for a meeting owner. Acting as the owner keeps
+    // their memory, tasks, and connectors in scope.
+    return {
+      attributes: {},
+      authenticator: "internal-bridge",
+      issuer: "internal",
+      principalId: onBehalfOf,
+      principalType: "user",
+    };
+  };
+}
+
 export default eveChannel({
   auth: [
+    internalBridge(),
     appSession(),
     vercelOidc(),
   ],
