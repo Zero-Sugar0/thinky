@@ -36,17 +36,34 @@ const displayParts = computed(() => getMergedParts(normalizeEveParts(rawParts.va
 const isBusy = computed(
   () => props.status === "submitted" || props.status === "streaming",
 );
-const expandedMessageParts = ref(new Set<string>());
+const specialistProfiles: Record<string, { name: string; team: string }> = {
+  communicator: { name: "Alice Morgan", team: "Writing" },
+  growth: { name: "Marcus Lee", team: "Growth" },
+  meetings: { name: "Priya Shah", team: "Meetings" },
+  planner: { name: "Jordan Ellis", team: "Planning" },
+  researcher: { name: "Maya Chen", team: "Research" },
+  seo: { name: "Oliver Reed", team: "SEO" },
+  operations: { name: "Elena Ruiz", team: "Operations" },
+  finance: { name: "Daniel Brooks", team: "Finance" },
+};
 
-function isExpanded(key: string) {
-  return expandedMessageParts.value.has(key);
+function getVisibleToolName(part: Parameters<typeof getToolName>[0]) {
+  const toolName = getToolName(part);
+  const baseName = toolName.split("__").at(-1) ?? toolName;
+  const specialist = specialistProfiles[baseName];
+  if (specialist) return `${specialist.name} · ${specialist.team}`;
+  if (isDynamicToolUIPart(part)) return getToolDisplayName(part as EveDynamicToolPart);
+  return toolName
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, letter => letter.toUpperCase());
 }
 
-function toggleExpanded(key: string) {
-  const next = new Set(expandedMessageParts.value);
-  if (next.has(key)) next.delete(key);
-  else next.add(key);
-  expandedMessageParts.value = next;
+function getVisibleToolTeam(part: Parameters<typeof getToolName>[0]) {
+  const toolName = getToolName(part);
+  const baseName = toolName.split("__").at(-1) ?? toolName;
+  return specialistProfiles[baseName]?.team
+    ?? (isDynamicToolUIPart(part) ? getToolNamespace(part as EveDynamicToolPart) : undefined);
 }
 
 const showThinking = computed(
@@ -107,8 +124,8 @@ const showThinking = computed(
       </UChatTool>
       <UChatTool
         v-else-if="getToolName(part) !== 'ask_question'"
-        :text="isDynamicToolUIPart(part) ? getToolDisplayName(part as EveDynamicToolPart) : getToolName(part)"
-        :suffix="isDynamicToolUIPart(part) ? getToolNamespace(part as EveDynamicToolPart) : undefined"
+        :text="getVisibleToolName(part)"
+        :suffix="getVisibleToolTeam(part)"
         :streaming="isToolStreaming(part)"
         chevron="leading"
         :default-open="part.state === 'approval-requested' || part.state === 'approval-responded'"
@@ -165,22 +182,12 @@ const showThinking = computed(
       </div>
         <div
           v-else
-          class="inline-block max-w-[min(92%,42rem)] rounded-[1.25rem] rounded-tr-md bg-elevated/80 px-4 py-2.5 text-xs leading-5 text-highlighted shadow-sm ring-1 ring-inset ring-white/5 sm:text-[13px] [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2"
+          class="chat-prose inline-block max-w-[min(92%,42rem)] rounded-2xl rounded-tr-md bg-elevated/80 px-4 py-3 text-sm leading-6 text-highlighted shadow-sm ring-1 ring-inset ring-white/5 sm:px-5 sm:py-3.5 sm:text-[15px] sm:leading-7 [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-2 [&_pre]:max-w-full [&_table]:text-xs"
         >
-          <p
-            class="whitespace-pre-wrap"
-            :class="!isExpanded(`${message.id}-${index}`) && part.text.split('\\n').length > 7 ? 'line-clamp-7' : ''"
-          >
-            {{ part.text }}
-          </p>
-          <button
-            v-if="part.text.split('\\n').length > 7"
-            type="button"
-            class="mt-1 block w-full text-center text-xs font-medium text-muted transition-colors hover:text-highlighted"
-            @click="toggleExpanded(`${message.id}-${index}`)"
-          >
-            {{ isExpanded(`${message.id}-${index}`) ? 'Show less' : 'Show full message' }}
-          </button>
+          <ChatComark
+            :value="part.text"
+            :streaming="isPartStreaming(part)"
+          />
         </div>
     </template>
   </template>

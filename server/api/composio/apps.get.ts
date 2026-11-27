@@ -38,6 +38,9 @@ export default defineEventHandler(async (event) => {
 
     if (eventsOnly === "true") {
       const connectedSlugs = [...activeConnectionsMap.keys()];
+      if (connectedSlugs.length === 0) {
+        return { configured: true, apps: [] as ComposioAppSummary[], totalCount: 0 };
+      }
       const toolkitMetadata = await composio.toolkits.getMany(connectedSlugs).catch(() => []);
       const metadataBySlug = new Map(
         toolkitMetadata.map(toolkit => [toolkit.slug.toLowerCase(), toolkit]),
