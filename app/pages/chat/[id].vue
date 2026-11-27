@@ -86,6 +86,80 @@ onMounted(() => {
   consumePendingOnMount(send);
 });
 
+const toast = useToast();
+const recording = ref(false);
+const transcribing = ref(false);
+let recorder: MediaRecorder | undefined;
+let recordedChunks: Blob[] = [];
+
+// Records a short clip, transcribes it on the server, and places the text in the composer for review.
+async function toggleRecording() {
+  if (transcribing.value) return;
+
+  if (recording.value) {
+    recorder?.stop();
+    return;
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+    toast.add({ title: "Voice input is not supported in this browser", color: "error" });
+    return;
+  }
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+    recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
+    recordedChunks = [];
+
+    recorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+
+    recorder.onstop = async () => {
+      stream.getTracks().forEach(track => track.stop());
+      recording.value = false;
+
+      const blob = new Blob(recordedChunks, { type: recorder?.mimeType || "audio/webm" });
+      if (blob.size === 0) return;
+
+      transcribing.value = true;
+      try {
+        const response = await fetch("/api/voice/transcribe", {
+          method: "POST",
+          headers: { "content-type": blob.type },
+          body: blob,
+        });
+        if (!response.ok) throw new Error(`Transcription failed (${response.status})`);
+
+        const { text } = await response.json() as { text: string };
+        if (text) {
+          input.value = input.value.trim() ? `${input.value.trim()} ${text}` : text;
+        }
+        else {
+          toast.add({ title: "No speech detected", color: "warning" });
+        }
+      }
+      catch {
+        toast.add({ title: "Could not transcribe that recording", color: "error" });
+      }
+      finally {
+        transcribing.value = false;
+      }
+    };
+
+    recorder.start();
+    recording.value = true;
+  }
+  catch {
+    toast.add({ title: "Microphone access was blocked", color: "error" });
+  }
+}
+
+onUnmounted(() => {
+  if (recording.value) recorder?.stop();
+});
+
 function handleSubmit(e: Event) {
   e.preventDefault();
   const text = input.value.trim();
@@ -210,6 +284,16 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
                 class="sr-only"
                 @change="handleAttachmentChange"
               >
+              <UButton
+                :icon="recording ? 'i-lucide-square' : 'i-lucide-mic'"
+                :color="recording ? 'error' : 'neutral'"
+                :variant="recording ? 'soft' : 'ghost'"
+                :loading="transcribing"
+                size="sm"
+                :aria-label="recording ? 'Stop recording' : 'Dictate a message'"
+                :title="recording ? 'Stop recording' : 'Dictate a message'"
+                @click="toggleRecording"
+              />
               <UButton
                 icon="i-lucide-plus"
                 color="neutral"

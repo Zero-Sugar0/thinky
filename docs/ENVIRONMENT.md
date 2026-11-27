@@ -285,3 +285,14 @@ pnpm db:migrate
 
 Pointing `DATABASE_URL` at a fresh Neon branch does the same without dropping
 anything.
+
+## Voice: Deepgram (optional)
+
+`DEEPGRAM_API_KEY` enables voice. The web chat has a dictation button that records a clip, transcribes it on the server through `POST /api/voice/transcribe`, and places the text in the composer for review. `POST /api/voice/speak` returns MP3 audio for a reply. iMessage voice notes are transcribed before the agent reads them. Without the key, dictation shows an error and voice notes are answered with a note that transcription is off.
+
+## iMessage: Photon 2.0 / Spectrum (optional)
+
+Set `IMESSAGE_PROJECT_ID`, `IMESSAGE_PROJECT_SECRET` and `IMESSAGE_WEBHOOK_SECRET` on the eve service. This switches iMessage to `agent/channels/imessage.ts`, which receives Spectrum webhooks at `POST /imessage/webhook` and replies through the same conversation. The Eve Photon channel stands down while these are set, so messages are not answered twice. Point the Photon webhook at the eve service's `/imessage/webhook` URL.
+
+Known limits: replies are sent from a conversation cached in the process that received the message. On a server that restarts or scales out, a reply can be skipped for that conversation until the next message arrives. Proactive iMessage check-ins are still recorded as not sent.
+
