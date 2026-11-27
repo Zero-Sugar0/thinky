@@ -1,6 +1,9 @@
 <script setup lang="ts">
+import { DEFAULT_MEETING_VOICE, MEETING_VOICES } from "~~/shared/meeting-voices";
+
 interface Meeting {
   id: string;
+  voice?: string;
   meetingUrl: string;
   title: string;
   botName: string;
@@ -24,7 +27,13 @@ const newMeeting = reactive({
   title: "",
   botName: "Thinky",
   joinMessage: "Thinky is an AI participant. This call is being recorded for a transcript and follow-up; I can help with context or next steps when useful.",
+  voice: DEFAULT_MEETING_VOICE,
 });
+
+const voiceItems = MEETING_VOICES.map(voice => ({
+  label: `${voice.name} · ${voice.accent} ${voice.gender.toLowerCase()} · ${voice.character.split(",")[0]}`,
+  value: voice.id,
+}));
 
 async function handleCreateMeeting() {
   if (!newMeeting.meetingUrl) return;
@@ -152,6 +161,17 @@ function getStatusBadgeColor(st: string) {
                   v-model="newMeeting.title"
                   placeholder="Q2 Sales Sync"
                 />
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium mb-1">Thinky's voice</label>
+                <USelect
+                  v-model="newMeeting.voice"
+                  :items="voiceItems"
+                  value-key="value"
+                  class="w-full"
+                />
+                <p class="mt-1 text-xs text-muted">Chosen for this meeting. The voice can't change once the bot has joined.</p>
               </div>
 
               <div>

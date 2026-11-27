@@ -15,6 +15,7 @@ export const meetings = pgTable(
     meetingUrl: text("meeting_url").notNull(),
     title: text("title"),
     botName: text("bot_name").default("Thinky Assistant").notNull(),
+    voice: text("voice").default("flux-alexis-en").notNull(), // Deepgram Flux voice model
     status: text("status").default("scheduled").notNull(), // scheduled, in_call, done, fatal
     recordingId: text("recording_id"),
     transcriptId: text("transcript_id"),

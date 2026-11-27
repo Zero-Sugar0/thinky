@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { MEETING_VOICES } from "~~/shared/meeting-voices";
+
 interface TranscriptEntry {
   speaker: string;
   paragraph: string;
@@ -11,6 +13,7 @@ interface MeetingDetail {
   meetingUrl: string;
   title: string;
   botName: string;
+  voice: string;
   status: string;
   recordingId: string | null;
   transcriptId: string | null;
@@ -37,6 +40,10 @@ const { data: activityData, refresh: refreshActivity } = await useFetch<{ activi
   `/api/meetings/${meetingId}/activity`,
 );
 const activity = computed(() => activityData.value?.activity ?? []);
+const voiceName = computed(() => {
+  const id = meeting.value?.voice ?? "";
+  return MEETING_VOICES.find(voice => voice.id === id)?.name ?? id;
+});
 const isLive = computed(() => !!meeting.value && !["done", "fatal"].includes(meeting.value.status));
 
 const activityIcons: Record<string, string> = {
@@ -140,6 +147,13 @@ onBeforeUnmount(() => {
                 class="size-4"
               />
               <span>{{ meeting.botName }}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <UIcon
+                name="i-lucide-audio-lines"
+                class="size-4"
+              />
+              <span>{{ voiceName }} voice</span>
             </div>
             <div class="flex items-center gap-1.5">
               <UIcon
