@@ -1,6 +1,7 @@
 import { asc, eq } from "drizzle-orm";
 import { db, schema } from "@nuxthub/db";
 import { askThinkyForMeeting } from "~~/agent/lib/meeting-bridge";
+import { recordMeetingActivity } from "~~/server/utils/meeting-activity";
 import {
   getMeetingBot,
   leaveMeetingBot,
@@ -42,6 +43,8 @@ export default defineEventHandler(async (event) => {
         const request = String(input.request ?? "").trim();
         if (!request) return { result: "Tell me what you'd like me to do." };
 
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "request", title: "Asked Thinky", detail: request });
+
         const { sessionId, reply } = await askThinkyForMeeting({
           userId: meeting.userId,
           sessionId: meeting.agentSessionId,
@@ -57,11 +60,14 @@ export default defineEventHandler(async (event) => {
         }
 
         const answer = await reply;
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "answer", title: "Thinky answered", detail: answer });
         // When the wait ran out, post the real answer to chat once it finishes.
         if (answer.startsWith("I'm still working")) {
           reply
             .then(async (late) => {
-              if (late) await sendChatMessage(botId, late);
+              if (!late) return;
+              await sendChatMessage(botId, late);
+              await recordMeetingActivity({ meetingId: meeting.id, kind: "answer", title: "Thinky answered (posted to chat)", detail: late });
             })
             .catch((error) => console.error("[meeting-bridge] late answer failed:", error));
         }
@@ -72,6 +78,7 @@ export default defineEventHandler(async (event) => {
         const message = String(input.message ?? "").trim();
         if (!message) return { result: "Nothing to post." };
         await sendChatMessage(botId, message.slice(0, 1000));
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "chat", title: "Posted to meeting chat", detail: message });
         return { result: "Posted to the meeting chat." };
       }
 
@@ -79,16 +86,19 @@ export default defineEventHandler(async (event) => {
         const url = String(input.url ?? "").trim();
         if (!url.startsWith("https://")) return { result: "Only public https:// pages can be shared." };
         await startScreenshare(botId, url);
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "screenshare", title: "Started screenshare", detail: url });
         return { result: "Sharing the page now. It takes a few seconds to load." };
       }
 
       case "stop_share": {
         await stopScreenshare(botId);
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "screenshare", title: "Stopped screenshare" });
         return { result: "Stopped sharing." };
       }
 
       case "leave_meeting": {
         await leaveMeetingBot(botId);
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "system", title: "Thinky left the meeting" });
         return { result: "Leaving the meeting." };
       }
 
@@ -97,6 +107,7 @@ export default defineEventHandler(async (event) => {
         const detail = String(input.detail ?? "").trim();
         if (!detail) return { result: "Nothing to note." };
 
+        await recordMeetingActivity({ meetingId: meeting.id, kind: "note", title: `Noted (${kind})`, detail: detail });
         await db.insert(schema.meetingNotes).values({
           id: crypto.randomUUID(),
           meetingId: meeting.id,

@@ -62,3 +62,22 @@ export const meetingNotes = pgTable(
   },
   (table) => [index("meeting_notes_meeting_idx").on(table.meetingId, table.createdAt)],
 );
+
+/**
+ * One row per thing that happened in a meeting: bot status changes, requests Thinky
+ * handled, notes, chat, and screenshare. The meeting page shows it live and after the call.
+ */
+export const meetingActivity = pgTable(
+  "meeting_activity",
+  {
+    id: text("id").primaryKey(),
+    meetingId: text("meeting_id")
+      .notNull()
+      .references(() => meetings.id, { onDelete: "cascade" }),
+    kind: text("kind").notNull(), // status, request, answer, note, chat, screenshare, system
+    title: text("title").notNull(),
+    detail: text("detail"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [index("meeting_activity_meeting_idx").on(table.meetingId, table.createdAt)],
+);

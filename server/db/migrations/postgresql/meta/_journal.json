@@ -64,6 +64,13 @@
       "when": 1795813490804,
       "tag": "0008_abandoned_clint_barton",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795815322920,
+      "tag": "0009_hard_puck",
+      "breakpoints": true
     }
   ]
 }
