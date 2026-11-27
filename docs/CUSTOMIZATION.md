@@ -83,6 +83,26 @@ export default defineMemory({
 See the [Eve memory guide](https://eve.dev/docs/memory) for backends and custom
 providers.
 
+### Memory slots and identity files
+
+Thinky separates what it *is* from what it *knows*:
+
+| File or slot | Owner | Loaded | Purpose |
+|--------------|-------|--------|---------|
+| `agent/identity/SOUL.md` | Developers (in git) | Every turn | Identity, character, values, boundaries |
+| `agent/identity/INSTRUCTIONS.md` | Developers (in git) | On demand via `identity_read` | Operating playbooks, one `## section` per procedure |
+| `profile` memory slot | Agent, per user | Every turn | Preferences, likes, routines, stable facts (the user's PROFILE) |
+| `rules` memory slot | Agent, per user | Every turn | Standing rules the user sets for how Thinky should behave |
+
+Identity is kept in version-controlled files rather than writable memory, so a
+user cannot rewrite who the agent is through conversation. Change `SOUL.md` or
+`INSTRUCTIONS.md` in a commit and review it like any other code.
+
+Tasks and commitments are not memory. They live in the `agent_tasks` table and are
+managed with `task_create`, `task_list`, and `task_update`. External actions
+performed through Composio are audited in `agent_action_log` (tool slug, outcome,
+and a summary; arguments are never stored).
+
 ## 4. Add a tool
 
 1. Create `agent/tools/my-tool.ts` using Eve's `defineTool`
