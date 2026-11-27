@@ -85,12 +85,7 @@ async function connectToMeeting() {
       },
       onEvent(event) {
         updateStatus(event);
-        if (
-          (event.type === "session-created" || event.type === "session-updated")
-          && !started
-          && meetingAudio
-          && session
-        ) {
+        if (event.type === "session-updated" && !started && meetingAudio && session) {
           started = true;
           session.startAudioCapture(meetingAudio);
           session.sendTextMessage(
@@ -105,16 +100,6 @@ async function connectToMeeting() {
     });
 
     await session.connect();
-
-    // Do not depend on a provider event race: start the microphone capture and
-    // first spoken turn as soon as the realtime connection is ready.
-    if (!started && meetingAudio) {
-      started = true;
-      session.startAudioCapture(meetingAudio);
-      session.sendTextMessage(
-        "Give one brief, natural introduction: say you are Thinky, an AI participant, and that the call is being recorded for a transcript and follow-up. Say you can help when useful, then give the floor back without asking a generic opening question.",
-      );
-    }
   } catch (error) {
     console.error("[meeting-voice] Could not start facilitator:", error);
     meetingAudio?.getTracks().forEach((track) => track.stop());
