@@ -1,3 +1,4 @@
+import { generateText } from "ai";
 import { inArray, gt, and, eq } from "drizzle-orm";
 import { db, schema } from "@nuxthub/db";
 import { listTasksForUser } from "~~/server/utils/tasks";
@@ -133,8 +134,8 @@ export function templateCheckin(category: CheckinCategory, facts: CheckinFacts):
 
 /** Writes the check-in in the assistant's voice, grounded only in the facts provided. */
 export async function composeCheckin(category: CheckinCategory, facts: CheckinFacts): Promise<string> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return templateCheckin(category, facts);
+  // Model calls go through Vercel AI Gateway (AI_GATEWAY_API_KEY, or OIDC on Vercel).
+  if (!process.env.AI_GATEWAY_API_KEY && !process.env.VERCEL) return templateCheckin(category, facts);
 
   const prompt = [
     "You are Thinky, a thoughtful personal assistant sending one proactive check-in message.",
@@ -149,24 +150,13 @@ export async function composeCheckin(category: CheckinCategory, facts: CheckinFa
   ].join("\n");
 
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "x-api-key": apiKey,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-5-5",
-        max_tokens: 200,
-        messages: [{ role: "user", content: prompt }],
-      }),
+    const { text } = await generateText({
+      model: "anthropic/claude-haiku-5.5",
+      prompt,
+      maxOutputTokens: 120,
     });
-    if (!res.ok) return templateCheckin(category, facts);
-
-    const data = await res.json() as { content?: Array<{ type: string; text?: string }> };
-    const text = data.content?.find(block => block.type === "text")?.text?.trim() ?? "";
-    return text.length > 0 && text.length <= 500 ? text : templateCheckin(category, facts);
+    const reply = text.trim();
+    return reply.length > 0 && reply.length <= 500 ? reply : templateCheckin(category, facts);
   }
   catch {
     return templateCheckin(category, facts);
