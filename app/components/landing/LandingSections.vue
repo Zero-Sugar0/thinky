@@ -24,21 +24,21 @@ const steps = [
         <article v-for="(item, index) in capabilities" :key="item.title" class="feature-card group">
           <div class="flex items-center justify-between">
             <span class="chip">{{ item.eyebrow }}</span>
-            <UIcon :name="item.icon" class="size-4 text-[#2f6bff]" />
+            <UIcon :name="item.icon" class="size-4 text-[#111827]" />
           </div>
           <h3 class="mt-6 text-xl font-semibold tracking-[-0.04em] text-slate-950">{{ item.title }}</h3>
           <p class="mt-2 min-h-[4.5rem] text-sm leading-6 text-slate-500">{{ item.copy }}</p>
           <div v-if="index === 0" class="mt-7 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex items-center gap-2 text-[11px] font-medium text-slate-400"><span class="size-1.5 rounded-full bg-[#2f6bff]" /> A note Thinky kept</div>
+            <div class="flex items-center gap-2 text-[11px] font-medium text-slate-400"><span class="size-1.5 rounded-full bg-[#111827]" /> A note Thinky kept</div>
             <p class="mt-3 text-sm leading-5 text-slate-700">“Keep Tuesdays meeting-free for deep work.”</p>
             <p class="mt-2 text-[11px] text-slate-400">Saved from your conversation · just now</p>
           </div>
           <div v-else-if="index === 1" class="mt-7 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex items-center gap-2"><span class="grid size-6 place-items-center rounded-lg bg-blue-100 text-[#2f6bff]"><UIcon name="i-lucide-search" class="size-3.5" /></span><span class="text-xs font-medium text-slate-700">Finding the useful detail</span></div>
-            <div class="mt-3 space-y-2"><div class="h-2 w-full rounded-full bg-slate-200"/><div class="h-2 w-4/5 rounded-full bg-slate-200"/><div class="h-2 w-3/5 rounded-full bg-blue-100"/></div>
+            <div class="flex items-center gap-2"><span class="grid size-6 place-items-center rounded-lg bg-slate-200 text-[#111827]"><UIcon name="i-lucide-search" class="size-3.5" /></span><span class="text-xs font-medium text-slate-700">Finding the useful detail</span></div>
+            <div class="mt-3 space-y-2"><div class="h-2 w-full rounded-full bg-slate-200"/><div class="h-2 w-4/5 rounded-full bg-slate-200"/><div class="h-2 w-3/5 rounded-full bg-slate-200"/></div>
           </div>
           <div v-else class="mt-7 rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <div class="flex items-start gap-2.5"><span class="grid size-7 shrink-0 place-items-center rounded-full bg-blue-100 text-[#2f6bff]"><UIcon name="i-lucide-bot" class="size-4" /></span><div class="rounded-xl rounded-tl-sm bg-white px-3 py-2 text-xs leading-5 text-slate-600 shadow-sm">I’ve got the context. What would you like to do next?</div></div>
+            <div class="flex items-start gap-2.5"><span class="grid size-7 shrink-0 place-items-center rounded-full bg-slate-200 text-[#111827]"><UIcon name="i-lucide-bot" class="size-4" /></span><div class="rounded-xl rounded-tl-sm bg-white px-3 py-2 text-xs leading-5 text-slate-600 shadow-sm">I’ve got the context. What would you like to do next?</div></div>
             <div class="mt-3 ml-9 flex gap-2"><span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-500">Draft a reply</span><span class="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[10px] text-slate-500">Make a plan</span></div>
           </div>
         </article>
@@ -53,17 +53,17 @@ const steps = [
         <h2 class="section-title mt-4">A meeting companion<br class="hidden sm:block"> that can speak up.</h2>
         <p class="section-copy mt-4">Thinky joins a call as itself, listens to the room, and can respond out loud when someone asks or a brief contribution would help. It isn’t there to impersonate a person—or to narrate every minute.</p>
         <ul class="mt-7 space-y-3 text-sm text-slate-600">
-          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#2f6bff]" /> Introduces itself clearly as an AI participant.</li>
-          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#2f6bff]" /> Hears the live conversation and can answer in a natural voice.</li>
-          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#2f6bff]" /> Leaves the room—and the floor—to people when it has nothing useful to add.</li>
+          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#111827]" /> Introduces itself clearly as an AI participant.</li>
+          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#111827]" /> Hears the live conversation and can answer in a natural voice.</li>
+          <li class="flex gap-3"><UIcon name="i-lucide-check" class="mt-0.5 size-4 shrink-0 text-[#111827]" /> Leaves the room—and the floor—to people when it has nothing useful to add.</li>
         </ul>
         <UButton to="/meeting-assistant" color="primary" variant="link" class="mt-6 px-0 font-medium">Explore meeting participation <UIcon name="i-lucide-arrow-up-right" class="size-4" /></UButton>
       </div>
       <div class="relative">
         <img src="/thinky-meeting.png" alt="Colleagues listening and sharing ideas around a bright meeting table" class="aspect-[4/3] w-full rounded-[24px] object-cover shadow-[0_18px_60px_-36px_rgba(15,23,42,0.35)] outline outline-1 outline-black/10 -outline-offset-1">
         <div class="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/80 bg-white/95 p-4 shadow-lg backdrop-blur sm:bottom-6 sm:left-6 sm:right-auto sm:w-[min(24rem,calc(100%-3rem))]">
-          <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="relative grid size-8 place-items-center rounded-full bg-blue-50 text-[#2f6bff]"><UIcon name="i-lucide-audio-lines" class="size-4"/><span class="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-white bg-emerald-500"/></span><div><p class="text-xs font-semibold text-slate-900">Thinky is listening</p><p class="text-[11px] text-slate-500">Live meeting · Google Meet</p></div></div><span class="rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-medium text-blue-700">Ready when asked</span></div>
-          <div class="mt-3 flex items-center gap-1.5" aria-label="Voice activity waveform"><span v-for="(height, index) in [10,16,9,22,13,18,8,15,11,20,12,16,8,14,10,19,12,8,16,11,20,14,9,17]" :key="index" class="w-1 rounded-full bg-blue-200" :style="{ height: `${height}px` }"/></div>
+          <div class="flex items-center justify-between gap-3"><div class="flex items-center gap-2"><span class="relative grid size-8 place-items-center rounded-full bg-slate-100 text-[#111827]"><UIcon name="i-lucide-audio-lines" class="size-4"/><span class="absolute -right-0.5 -top-0.5 size-2.5 rounded-full border-2 border-white bg-emerald-500"/></span><div><p class="text-xs font-semibold text-slate-900">Thinky is listening</p><p class="text-[11px] text-slate-500">Live meeting · Google Meet</p></div></div><span class="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-900">Ready when asked</span></div>
+          <div class="mt-3 flex items-center gap-1.5" aria-label="Voice activity waveform"><span v-for="(height, index) in [10,16,9,22,13,18,8,15,11,20,12,16,8,14,10,19,12,8,16,11,20,14,9,17]" :key="index" class="w-1 rounded-full bg-slate-300" :style="{ height: `${height}px` }"/></div>
         </div>
       </div>
     </div>
@@ -78,7 +78,7 @@ const steps = [
       </div>
       <ol class="mt-12 grid gap-8 md:grid-cols-3 md:gap-10">
         <li v-for="step in steps" :key="step.number" class="border-t border-slate-200 pt-5">
-          <span class="font-mono text-xs text-[#2f6bff]">{{ step.number }}</span>
+          <span class="font-mono text-xs text-[#111827]">{{ step.number }}</span>
           <h3 class="mt-5 text-lg font-semibold tracking-[-0.03em] text-slate-950">{{ step.title }}</h3>
           <p class="mt-2 max-w-sm text-sm leading-6 text-slate-500">{{ step.copy }}</p>
         </li>
@@ -100,9 +100,9 @@ const steps = [
           <div class="flex items-center gap-2"><span class="grid size-7 place-items-center rounded-lg bg-amber-50 text-amber-700"><UIcon name="i-lucide-calendar-days" class="size-4"/></span><span class="text-xs font-semibold text-slate-800">Keep Friday afternoons clear</span></div><p class="mt-2 pl-9 text-xs leading-5 text-slate-500">You use that time to wrap up the week and plan ahead.</p>
         </div>
         <div class="absolute left-[16%] top-[51%] w-[76%] rotate-[2deg] rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:left-[21%] sm:w-[68%]">
-          <div class="flex items-center gap-2"><span class="grid size-7 place-items-center rounded-lg bg-blue-50 text-[#2f6bff]"><UIcon name="i-lucide-users" class="size-4"/></span><span class="text-xs font-semibold text-slate-800">Project Atlas · next up</span></div><p class="mt-2 pl-9 text-xs leading-5 text-slate-500">Share the revised timeline with the team before Thursday.</p>
+          <div class="flex items-center gap-2"><span class="grid size-7 place-items-center rounded-lg bg-slate-100 text-[#111827]"><UIcon name="i-lucide-users" class="size-4"/></span><span class="text-xs font-semibold text-slate-800">Project Atlas · next up</span></div><p class="mt-2 pl-9 text-xs leading-5 text-slate-500">Share the revised timeline with the team before Thursday.</p>
         </div>
-        <div class="absolute bottom-[8%] right-[9%] rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[11px] font-medium text-blue-700">Connected to your work</div>
+        <div class="absolute bottom-[8%] right-[9%] rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-900">Connected to your work</div>
       </div>
     </div>
   </section>

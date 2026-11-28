@@ -6,7 +6,7 @@ const menuOpen = ref(false);
   <header class="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
     <div class="mx-auto flex h-[68px] max-w-7xl items-center justify-between px-5 sm:px-8">
       <NuxtLink to="/" aria-label="Thinky home" class="flex items-center gap-2.5">
-        <AppLogo class="size-8 text-[#2f6bff]" />
+        <AppLogo class="size-8 text-[#111827]" />
         <span class="text-[15px] font-semibold tracking-[-0.04em] text-slate-950">thinky</span>
       </NuxtLink>
 
@@ -38,7 +38,7 @@ const menuOpen = ref(false);
       <NuxtLink to="/capabilities" class="rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50" @click="menuOpen = false">What Thinky does</NuxtLink>
       <NuxtLink to="/meeting-assistant" class="rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50" @click="menuOpen = false">Meetings</NuxtLink>
       <NuxtLink to="/#how-it-works" class="rounded-lg px-3 py-2.5 text-sm text-slate-700 hover:bg-slate-50" @click="menuOpen = false">How it works</NuxtLink>
-      <NuxtLink to="/login" class="mt-1 rounded-lg bg-[#2f6bff] px-3 py-2.5 text-center text-sm font-medium text-white" @click="menuOpen = false">Get started</NuxtLink>
+      <NuxtLink to="/login" class="mt-1 rounded-lg bg-[#111827] px-3 py-2.5 text-center text-sm font-medium text-white" @click="menuOpen = false">Get started</NuxtLink>
     </nav>
   </header>
 </template>

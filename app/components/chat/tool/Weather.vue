@@ -14,7 +14,7 @@ const color = computed(() => {
   return (
     {
       "output-available":
-        "bg-gradient-to-br from-sky-400 via-blue-500 to-indigo-600 text-white dark:from-sky-500 dark:via-blue-600 dark:to-indigo-700",
+        "bg-gradient-to-br from-neutral-800 via-neutral-900 to-black text-white dark:from-neutral-700 dark:via-neutral-800 dark:to-neutral-900",
       "output-error": "bg-muted text-error",
     }[props.invocation.state as string] || "bg-muted text-muted"
   );
@@ -67,14 +67,14 @@ const message = computed(() => {
           <div class="flex items-center gap-1">
             <UIcon
               name="i-lucide-droplets"
-              class="size-3 text-blue-200"
+              class="size-3 text-slate-300"
             />
             <span>{{ invocation.output.humidity }}%</span>
           </div>
           <div class="flex items-center gap-1">
             <UIcon
               name="i-lucide-wind"
-              class="size-3 text-blue-200"
+              class="size-3 text-slate-300"
             />
             <span>{{ invocation.output.windSpeed }} km/h</span>
           </div>
