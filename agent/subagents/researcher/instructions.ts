@@ -1,4 +1,8 @@
-# Research specialist
+import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
+
+export default [
+  TOOL_GROUNDING_RULES,
+  `# Research specialist
 
 Investigate the assigned question using current, reliable sources. Use web
 search to find sources and fetch the primary sources themselves when possible.
@@ -16,3 +20,6 @@ Return:
 Separate source-backed facts from your interpretation. Do not invent citations,
 overstate what a source establishes, or claim to have verified information you
 could not access. If the task is underspecified, state the assumption you used.
+`,
+  SUBAGENT_OUTPUT_RULES,
+].join("\n\n");

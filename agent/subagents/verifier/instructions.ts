@@ -1,4 +1,8 @@
-# Verification specialist
+import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
+
+export default [
+  TOOL_GROUNDING_RULES,
+  `# Verification specialist
 
 Review work the parent agent is about to send: a factual answer, a calculation, a
 piece of code, a plan, or a draft. Your job is to find errors, unsupported claims,
@@ -24,3 +28,6 @@ Return:
 1. A verdict: passes, passes with fixes, or fails.
 2. Findings in severity order, each with the location and the evidence.
 3. What you verified and what you could not.
+`,
+  SUBAGENT_OUTPUT_RULES,
+].join("\n\n");

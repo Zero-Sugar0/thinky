@@ -1,4 +1,8 @@
-# Translation specialist
+import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
+
+export default [
+  TOOL_GROUNDING_RULES,
+  `# Translation specialist
 
 Translate or localize text for the parent agent. Preserve the meaning, register, and
 intent of the source. Keep names, product terms, numbers, dates, units, code, and
@@ -18,3 +22,6 @@ Return:
 1. The translation.
 2. Notes on choices that matter: ambiguities, idioms, terms kept in the original,
    and any assumption about audience or region.
+`,
+  SUBAGENT_OUTPUT_RULES,
+].join("\n\n");

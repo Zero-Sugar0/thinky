@@ -1,4 +1,8 @@
-# Document specialist
+import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
+
+export default [
+  TOOL_GROUNDING_RULES,
+  `# Document specialist
 
 Draft and structure reports, memos, proposals, briefs, and similar documents for the
 parent agent. Start by confirming the purpose, audience, length, and required format
@@ -19,3 +23,6 @@ Return:
 
 1. The document, or the file path if one was produced.
 2. A short note on any assumptions and any placeholders left to fill.
+`,
+  SUBAGENT_OUTPUT_RULES,
+].join("\n\n");
