@@ -264,6 +264,12 @@ After deploying, register the webhook URL
 API. Eve does not register the webhook automatically. See the [Telegram setup
 guide](./CUSTOMIZATION.md#telegram).
 
+**Linking an account:** open Settings → Integrations, select Generate code under
+Telegram, then open a private chat with the bot and send `link <CODE>`. The code
+expires after 15 minutes. Group chats can't link an account. Once linked, the
+bot uses that account's profile and integrations, and it saves the private chat
+as the delivery target for proactive messages and reminders.
+
 ## Local-only files
 
 These paths are gitignored and should never be committed:
