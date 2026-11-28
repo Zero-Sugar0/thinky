@@ -15,13 +15,15 @@ export function useTelegramLink() {
   async function generateLinkCode() {
     generating.value = true;
     try {
-      await $fetch("/api/telegram/link/code", { method: "POST" });
+      const { code } = await $fetch<{ code: string; expiresAt: string }>("/api/telegram/link/code", { method: "POST" });
       await refresh();
+      // Show the code in the toast too, so it is visible even when the card is covered.
       toast.add({
-        title: "Link code ready",
-        description: "Send it to your Thinky bot on Telegram to finish linking.",
+        title: `Your link code: ${code}`,
+        description: `In Telegram, message your Thinky bot: link ${code}`,
         color: "success",
         icon: "i-lucide-link",
+        duration: 0,
       });
     }
     catch (cause) {
