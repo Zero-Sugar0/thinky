@@ -44,6 +44,7 @@ const servicesDescription = computed(() => {
             description="Link messaging platforms to your Thinky account."
           >
             <IntegrationsSlackLinkCard />
+            <IntegrationsIMessageCard />
             <IntegrationsTelegramLinkCard />
           </SettingsSection>
 

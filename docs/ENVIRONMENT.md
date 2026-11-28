@@ -248,6 +248,15 @@ sending that key because browsers cannot attach the service authorization
 header. noVNC may expose the shared browser display, so a reachable URL is not
 proof of user isolation and must not be shared until access is restricted.
 
+## iMessage agent number
+
+Set `PHOTON_AGENT_NUMBER` on the Nuxt app (for example in the Vercel project) to the
+shared-line number people text, in E.164 format (for example `+15551234567`). Settings →
+Integrations shows it, and the Text Thinky button opens Messages with a message ready to send.
+Users link their number by saving it on their profile. This is public information, so it is
+not a secret. Confirm with Photon that messages from numbers that were never assigned to a
+shared-line handle still reach the agent before relying on a single number.
+
 ## Telegram (optional)
 
 Create a bot with [@BotFather](https://t.me/botfather), then set these variables
