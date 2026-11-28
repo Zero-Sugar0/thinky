@@ -54,9 +54,12 @@ export const IMESSAGE_MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
 export type AttachmentBytes = { bytes: Uint8Array; contentType: string; filename?: string };
 
 export class AttachmentTooLargeError extends Error {
-  constructor(readonly sizeBytes: number) {
+  readonly sizeBytes: number;
+
+  constructor(sizeBytes: number) {
     super(`Attachment is ${sizeBytes} bytes, above the ${IMESSAGE_MAX_ATTACHMENT_BYTES} byte limit`);
     this.name = "AttachmentTooLargeError";
+    this.sizeBytes = sizeBytes;
   }
 }
 
