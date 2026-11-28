@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { requireSessionUserId } from "~~/server/utils/session";
-import { SpeechError, synthesizeSpeech  } from "~~/server/utils/speech";
+import { SpeechError, synthesizeSpeech  } from "#shared/speech";
 
 function toHttpError(error: unknown) {
   if (error instanceof SpeechError) {
