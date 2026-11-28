@@ -3,7 +3,7 @@
     <div class="mx-auto grid max-w-7xl gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
       <div>
         <NuxtLink to="/" aria-label="Thinky home" class="inline-flex items-center gap-2.5">
-          <AppLogo class="size-8 text-[#2f6bff]" />
+          <AppLogo class="size-8 text-[#111827]" />
           <span class="text-[15px] font-semibold tracking-[-0.04em] text-slate-950">thinky</span>
         </NuxtLink>
         <p class="mt-4 max-w-xs text-sm leading-6 text-slate-500">A little more room to think. An assistant that remembers the context and helps you move things forward.</p>

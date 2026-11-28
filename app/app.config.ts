@@ -14,7 +14,7 @@ export default defineAppConfig({
   },
   ui: {
     colors: {
-      primary: "blue",
+      primary: "neutral",
       neutral: "neutral",
     },
     button: {
