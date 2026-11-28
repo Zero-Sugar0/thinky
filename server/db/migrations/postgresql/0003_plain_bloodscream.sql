@@ -1,5 +1,3 @@
--- Idempotent: the agent_action_log table can already exist in a database that was
--- created outside migration tracking. meetings is created by 0002_meetings.sql.
 CREATE TABLE IF NOT EXISTS "agent_action_log" (
 	"id" text PRIMARY KEY NOT NULL,
 	"user_id" text NOT NULL,
@@ -26,15 +24,13 @@ CREATE TABLE IF NOT EXISTS "agent_tasks" (
 --> statement-breakpoint
 ALTER TABLE "account" ADD COLUMN IF NOT EXISTS "issuer" text;
 --> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "agent_action_log" ADD CONSTRAINT "agent_action_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+ALTER TABLE "agent_action_log" DROP CONSTRAINT IF EXISTS "agent_action_log_user_id_user_id_fk";
 --> statement-breakpoint
-DO $$ BEGIN
- ALTER TABLE "agent_tasks" ADD CONSTRAINT "agent_tasks_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
-EXCEPTION WHEN duplicate_object THEN NULL;
-END $$;
+ALTER TABLE "agent_action_log" ADD CONSTRAINT "agent_action_log_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
+--> statement-breakpoint
+ALTER TABLE "agent_tasks" DROP CONSTRAINT IF EXISTS "agent_tasks_user_id_user_id_fk";
+--> statement-breakpoint
+ALTER TABLE "agent_tasks" ADD CONSTRAINT "agent_tasks_user_id_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."user"("id") ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "agent_action_log_user_created_idx" ON "agent_action_log" USING btree ("user_id","created_at");
 --> statement-breakpoint
