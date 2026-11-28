@@ -224,9 +224,9 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
               side: 'right',
               variant: 'naked',
               ui: {
-                container: 'ms-auto flex w-fit max-w-[min(85%,32rem)] justify-end pb-2',
-                content: 'w-fit max-w-full space-y-1',
-                body: 'w-fit max-w-full',
+                container: 'ms-auto flex w-full max-w-full justify-end pb-2',
+                content: 'flex w-full max-w-full justify-end space-y-1',
+                body: 'flex w-full max-w-full justify-end',
                 header: 'mb-1 justify-end',
               },
             }"

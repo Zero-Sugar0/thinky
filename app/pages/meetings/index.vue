@@ -31,9 +31,10 @@ const newMeeting = reactive({
 });
 
 const voiceItems = MEETING_VOICES.map(voice => ({
-  label: `${voice.name} · ${voice.accent} ${voice.gender.toLowerCase()} · ${voice.character.split(",")[0]}`,
+  label: `${voice.name} · ${voice.accent} ${voice.gender.toLowerCase()}`,
   value: voice.id,
 }));
+const selectedVoice = computed(() => MEETING_VOICES.find(voice => voice.id === newMeeting.voice));
 
 async function handleCreateMeeting() {
   if (!newMeeting.meetingUrl) return;
@@ -163,15 +164,37 @@ function getStatusBadgeColor(st: string) {
                 />
               </div>
 
-              <div>
-                <label class="block text-sm font-medium mb-1">Thinky's voice</label>
+              <div class="space-y-2">
+                <label for="meeting-voice" class="block text-sm font-medium text-highlighted">Choose Thinky's voice</label>
                 <USelect
+                  id="meeting-voice"
                   v-model="newMeeting.voice"
                   :items="voiceItems"
                   value-key="value"
                   class="w-full"
+                  aria-describedby="meeting-voice-help"
                 />
-                <p class="mt-1 text-xs text-muted">Chosen for this meeting. The voice can't change once the bot has joined.</p>
+                <div
+                  v-if="selectedVoice"
+                  class="flex items-start gap-3 rounded-xl border border-default/70 bg-elevated/40 p-3"
+                  aria-live="polite"
+                >
+                  <span class="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                    <UIcon name="i-lucide-audio-lines" class="size-4" aria-hidden="true" />
+                  </span>
+                  <div class="min-w-0">
+                    <p class="text-sm font-medium text-highlighted">
+                      {{ selectedVoice.name }}
+                      <span class="font-normal text-muted">· {{ selectedVoice.accent }} {{ selectedVoice.gender.toLowerCase() }}</span>
+                    </p>
+                    <p class="mt-0.5 text-xs leading-5 text-muted">
+                      {{ selectedVoice.character }}
+                    </p>
+                  </div>
+                </div>
+                <p id="meeting-voice-help" class="text-xs leading-5 text-muted">
+                  Selected for this meeting. You can choose a different voice before the bot joins.
+                </p>
               </div>
 
               <div>
