@@ -9,12 +9,12 @@ defineProps<{
 
 <template>
   <div
-    class="px-4 py-3"
-    :class="inline ? 'flex items-center justify-between gap-4' : undefined"
+    class="px-4 py-4 sm:px-5"
+    :class="inline ? 'grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(14rem,0.9fr)] sm:items-center sm:gap-6' : undefined"
   >
     <div
       class="min-w-0"
-      :class="inline ? 'flex-1' : 'mb-3'"
+      :class="inline ? undefined : 'mb-3'"
     >
       <p class="text-sm text-highlighted">
         {{ label }}
@@ -29,8 +29,8 @@ defineProps<{
 
     <div
       v-if="$slots.default"
-      class="min-w-0"
-      :class="inline ? 'shrink-0' : 'w-full'"
+      class="min-w-0 w-full sm:w-auto"
+      :class="inline ? 'sm:flex sm:justify-end' : undefined"
     >
       <slot />
       <p
