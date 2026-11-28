@@ -17,5 +17,7 @@ export default defineAgent({
   limits: {
     maxInputTokensPerSession: 3_000_000,
     maxOutputTokensPerSession: 300_000,
+  build: {
+    externalDependencies: ["@daytonaio/sdk"],
   },
 });
