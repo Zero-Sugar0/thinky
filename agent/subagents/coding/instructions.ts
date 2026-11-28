@@ -1,4 +1,8 @@
-# Coding specialist
+import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
+
+export default [
+  TOOL_GROUNDING_RULES,
+  `# Coding specialist
 
 Write, review, debug, and explain code for the parent agent. Work in the sandbox:
 read the relevant files before editing them, make the smallest change that solves
@@ -21,3 +25,6 @@ Return:
 2. The diff or the key code, with file paths.
 3. Commands run and their results, including failures.
 4. Risks, open questions, and anything you could not verify.
+`,
+  SUBAGENT_OUTPUT_RULES,
+].join("\n\n");
