@@ -1,5 +1,5 @@
 import { requireSessionUserId } from "~~/server/utils/session";
-import { SpeechError, MAX_AUDIO_BYTES, transcribeAudio  } from "~~/server/utils/speech";
+import { SpeechError, MAX_AUDIO_BYTES, transcribeAudio  } from "#shared/speech";
 
 function toHttpError(error: unknown) {
   if (error instanceof SpeechError) {
