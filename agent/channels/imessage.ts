@@ -1,5 +1,6 @@
 import { defineChannel, POST } from "eve/channels";
 import { Photon } from "@photon-ai/api";
+import { Webhook } from "standardwebhooks";
 import { buildAppSessionAuth } from "../../shared/app-auth.js";
 import { fetchPhoneLink } from "../lib/phone-internal.js";
 import { saveDeliveryTarget } from "../lib/delivery-targets-internal.js";
@@ -35,8 +36,16 @@ export type BetaMessage = {
 
 const seenMessageIds: string[] = [];
 
+/** Beta webhook envelope: the public event with the message under data.object. */
+export type BetaWebhookEvent = {
+  id: string;
+  type: string;
+  app_installation_id?: string;
+  data: { organizationId: string; projectId: string; object: BetaMessage };
+};
+
 export function isPhotonBetaEnabled(): boolean {
-  return Boolean(process.env.PHOTON_PROJECT_ID && process.env.PHOTON_API_KEY);
+  return Boolean(process.env.PHOTON_PROJECT_ID && process.env.PHOTON_API_KEY && process.env.PHOTON_WEBHOOK_SIGNING_SECRET);
 }
 
 let client: Photon | undefined;
@@ -112,11 +121,28 @@ export async function sendIMessageReply(address: string, text: string, replyKey:
 }
 
 /**
- * Verifies a Photon webhook delivery. Not implemented yet: until the Beta signing
- * scheme is confirmed from the webhook docs, every delivery is rejected.
+ * Verifies a Photon webhook delivery with the Standard Webhooks scheme
+ * (webhook-id / webhook-timestamp / webhook-signature, HMAC-SHA256). Verifies the
+ * raw body bytes and rejects timestamps more than five minutes away. Returns the
+ * parsed event, or undefined when verification fails.
  */
-export function verifyPhotonWebhook(_request: Request, _rawBody: string): boolean {
-  return false;
+export function verifyPhotonWebhook(request: Request, rawBody: string): BetaWebhookEvent | undefined {
+  const secret = process.env.PHOTON_WEBHOOK_SIGNING_SECRET;
+  if (!secret) return undefined;
+
+  const headers = {
+    "webhook-id": request.headers.get("webhook-id") ?? "",
+    "webhook-timestamp": request.headers.get("webhook-timestamp") ?? "",
+    "webhook-signature": request.headers.get("webhook-signature") ?? "",
+  };
+
+  try {
+    const event = new Webhook(secret).verify(rawBody, headers) as BetaWebhookEvent;
+    return event.id === headers["webhook-id"] ? event : undefined;
+  }
+  catch {
+    return undefined;
+  }
 }
 
 /** Turns one verified inbound message into an agent turn. */
@@ -170,14 +196,20 @@ export default defineChannel({
       }
 
       const rawBody = await request.text();
-      if (!verifyPhotonWebhook(request, rawBody)) {
-        return new Response("Unverified webhook", { status: 401 });
+      const event = verifyPhotonWebhook(request, rawBody);
+      if (!event) {
+        // Photon's documented response for failed verification.
+        return new Response("Webhook verification failed", { status: 400 });
       }
 
-      const message = JSON.parse(rawBody) as BetaMessage;
-      const work = handleInbound(message, from as unknown as FromFn);
+      // Only inbound messages are handled here; other event types are acknowledged and ignored.
+      if (event.type !== "message.received") {
+        return new Response(null, { status: 204 });
+      }
+
+      const work = handleInbound(event.data.object, from as unknown as FromFn);
       waitUntil(work);
-      return new Response(null, { status: 202 });
+      return new Response(null, { status: 204 });
     }),
   ],
 
