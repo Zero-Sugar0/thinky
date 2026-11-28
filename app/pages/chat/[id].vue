@@ -108,7 +108,12 @@ async function toggleRecording() {
 
   try {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mimeType = MediaRecorder.isTypeSupported("audio/webm") ? "audio/webm" : "";
+    const mimeType = [
+      "audio/webm;codecs=opus",
+      "audio/webm",
+      "audio/mp4",
+      "audio/ogg;codecs=opus",
+    ].find(type => MediaRecorder.isTypeSupported(type));
     recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
     recordedChunks = [];
 
@@ -120,7 +125,7 @@ async function toggleRecording() {
       stream.getTracks().forEach(track => track.stop());
       recording.value = false;
 
-      const blob = new Blob(recordedChunks, { type: recorder?.mimeType || "audio/webm" });
+      const blob = new Blob(recordedChunks, { type: recorder?.mimeType || mimeType || "audio/webm" });
       if (blob.size === 0) return;
 
       transcribing.value = true;
@@ -130,7 +135,10 @@ async function toggleRecording() {
           headers: { "content-type": blob.type },
           body: blob,
         });
-        if (!response.ok) throw new Error(`Transcription failed (${response.status})`);
+        if (!response.ok) {
+          const payload = await response.json().catch(() => null) as { statusMessage?: string; message?: string } | null;
+          throw new Error(payload?.statusMessage || payload?.message || `Transcription failed (${response.status})`);
+        }
 
         const { text } = await response.json() as { text: string };
         if (text) {
@@ -140,8 +148,12 @@ async function toggleRecording() {
           toast.add({ title: "No speech detected", color: "warning" });
         }
       }
-      catch {
-        toast.add({ title: "Could not transcribe that recording", color: "error" });
+      catch (error) {
+        toast.add({
+          title: "Could not transcribe that recording",
+          description: error instanceof Error ? error.message : "Please check your microphone and try again.",
+          color: "error",
+        });
       }
       finally {
         transcribing.value = false;
@@ -180,7 +192,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
 <template>
   <UDashboardPanel
     id="chat"
-    class="relative min-h-0"
+    class="relative min-h-0 min-w-0"
     :ui="{ body: 'p-0 sm:p-0 overscroll-none' }"
   >
     <template #header>
@@ -203,9 +215,9 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
 
       <div
         v-else
-        class="flex flex-1"
+        class="flex min-h-0 min-w-0 flex-1"
       >
-        <UContainer class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-2 px-3 sm:px-4">
+        <UContainer class="mx-auto flex w-full max-w-3xl min-w-0 flex-1 flex-col gap-2 px-2 pb-[env(safe-area-inset-bottom)] sm:px-4">
           <UChatMessages
             should-auto-scroll
             :messages="messages"
@@ -268,6 +280,14 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
             />
           </div>
 
+          <p
+            v-if="recording || transcribing"
+            class="px-3 text-xs text-muted"
+            role="status"
+            aria-live="polite"
+          >
+            {{ recording ? "Recording… tap the microphone again to finish." : "Transcribing audio…" }}
+          </p>
           <UChatPrompt
             v-model="input"
             :error="chatError"
@@ -290,6 +310,7 @@ function handleInputResponses(responses: Parameters<typeof respond>[0]) {
                 :variant="recording ? 'soft' : 'ghost'"
                 :loading="transcribing"
                 size="sm"
+                class="min-h-10 min-w-10 sm:min-h-8 sm:min-w-8"
                 :aria-label="recording ? 'Stop recording' : 'Dictate a message'"
                 :title="recording ? 'Stop recording' : 'Dictate a message'"
                 @click="toggleRecording"

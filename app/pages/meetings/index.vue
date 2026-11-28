@@ -99,11 +99,13 @@ function getStatusBadgeColor(st: string) {
         <template #right>
           <UButton
             icon="i-lucide-video"
-            label="Send Bot to Meeting"
             color="primary"
             size="sm"
+            aria-label="Send Bot to Meeting"
             @click="isModalOpen = true"
-          />
+          >
+            <span class="hidden sm:inline">Send Bot to Meeting</span>
+          </UButton>
         </template>
       </UDashboardNavbar>
     </template>
@@ -266,8 +268,8 @@ function getStatusBadgeColor(st: string) {
             :to="`/meetings/${m.id}`"
             class="block rounded-xl border border-default/70 bg-elevated/40 p-4 transition-colors hover:border-primary/50 hover:bg-elevated/70"
           >
-            <div class="flex items-start justify-between gap-4">
-              <div class="space-y-1 min-w-0">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div class="min-w-0 space-y-1">
                 <div class="flex items-center gap-2">
                   <h3 class="text-base font-medium text-highlighted truncate">
                     {{ m.title || "Untitled Meeting" }}

@@ -1,6 +1,8 @@
+import { defineInstructions } from "eve/instructions";
 import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
 
-export default [
+export default defineInstructions({
+  content: [
   TOOL_GROUNDING_RULES,
   `# Verification specialist
 
@@ -30,4 +32,5 @@ Return:
 3. What you verified and what you could not.
 `,
   SUBAGENT_OUTPUT_RULES,
-].join("\n\n");
+].join("\n\n"),
+});

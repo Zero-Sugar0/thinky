@@ -284,7 +284,7 @@ function resetForm() {
       >
         <div
           v-if="isDirty && !pending"
-          class="border-t border-default bg-elevated/95 backdrop-blur supports-[backdrop-filter]:bg-elevated/90"
+          class="border-t border-default bg-elevated/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-elevated/90"
         >
           <div class="mx-auto w-full max-w-2xl px-4 sm:px-6">
             <div class="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">

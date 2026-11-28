@@ -14,12 +14,12 @@ function isActive(path: string) {
 </script>
 
 <template>
-  <nav class="grid w-full grid-cols-4 gap-0 overflow-hidden rounded-xl border border-default bg-elevated/20 p-1 sm:flex sm:gap-1 sm:overflow-visible sm:rounded-none sm:border-0 sm:border-b sm:bg-transparent sm:p-0">
+  <nav class="grid w-full grid-cols-2 gap-1 overflow-hidden rounded-xl border border-default bg-elevated/20 p-1 sm:flex sm:gap-1 sm:overflow-visible sm:rounded-none sm:border-0 sm:border-b sm:bg-transparent sm:p-0">
     <NuxtLink
       v-for="item in items"
       :key="item.to"
       :to="item.to"
-      class="relative inline-flex min-w-0 items-center justify-center gap-1 border-b-2 px-1.5 py-2.5 text-[11px] transition-colors sm:-mb-px sm:gap-2 sm:px-3 sm:text-sm"
+      class="relative inline-flex min-h-11 min-w-0 items-center justify-center gap-1 border-b-2 px-2 py-2.5 text-xs transition-colors sm:-mb-px sm:gap-2 sm:px-3 sm:text-sm"
       :class="isActive(item.to)
         ? 'border-highlighted font-medium text-highlighted'
         : 'border-transparent text-muted hover:text-toned'"

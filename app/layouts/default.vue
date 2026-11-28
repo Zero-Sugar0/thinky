@@ -43,7 +43,7 @@ defineShortcuts({
 </script>
 
 <template>
-  <UDashboardGroup unit="rem">
+  <UDashboardGroup unit="rem" class="min-h-[100dvh] overflow-hidden">
     <UDashboardSidebar
       id="default"
       v-model:open="sidebarOpen"

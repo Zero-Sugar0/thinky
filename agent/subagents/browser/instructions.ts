@@ -1,6 +1,8 @@
+import { defineInstructions } from "eve/instructions";
 import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
 
-export default [
+export default defineInstructions({
+  content: [
   TOOL_GROUNDING_RULES,
   `# Browser specialist
 
@@ -25,4 +27,5 @@ Rules:
 Return the answer, the source URL, and anything you could not reach or verify.
 `,
   SUBAGENT_OUTPUT_RULES,
-].join("\n\n");
+].join("\n\n"),
+});

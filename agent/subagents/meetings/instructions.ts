@@ -1,6 +1,8 @@
+import { defineInstructions } from "eve/instructions";
 import { SUBAGENT_OUTPUT_RULES, TOOL_GROUNDING_RULES } from "../../lib/instructions/grounding.js";
 
-export default [
+export default defineInstructions({
+  content: [
   TOOL_GROUNDING_RULES,
   `# Meeting Assistant Specialist
 
@@ -33,4 +35,5 @@ Your purpose is to help with business meetings: join transparently as an AI part
 - If a transcript is still processing, advise the user to wait briefly for post-meeting processing to finish.
 `,
   SUBAGENT_OUTPUT_RULES,
-].join("\n\n");
+].join("\n\n"),
+});
