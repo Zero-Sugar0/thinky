@@ -26,6 +26,18 @@ DMs and @mentions on Slack. Link your Slack account to your web profile so memor
 
 Reach the agent from a Telegram bot in private chats, groups, and forum topics. Configure a BotFather token and webhook; see [Telegram setup](./docs/CUSTOMIZATION.md#telegram).
 
+### iMessage — Photon 2.0 Beta
+
+Text the agent over iMessage through Photon's 2.0 Beta API. Inbound messages arrive as signed Standard Webhooks at `/imessage/webhook`, and replies are sent through the Photon project. Set `PHOTON_PROJECT_ID`, `PHOTON_API_KEY`, and `PHOTON_WEBHOOK_SIGNING_SECRET`; see [ENVIRONMENT.md](./docs/ENVIRONMENT.md#imessage-photon-20-beta-optional).
+
+### Voice — Deepgram Dictation and Speech
+
+Record a message in web chat with the mic button; the transcript is added to the input box for you to review before sending. Replies can be read aloud through the speech route. Set `DEEPGRAM_API_KEY` to enable it; see [ENVIRONMENT.md](./docs/ENVIRONMENT.md).
+
+### Proactive Check-ins — Your Cadence
+
+The agent can check in with overdue or due-soon tasks, follow-ups, updates, or a normal conversation. You choose how often in Settings → Profile (every 2 hours, 4 hours, 8 hours, or daily). Urgent items bypass the cadence, but never the daily cap.
+
 ### GitHub — Repos, PRs, and CI
 
 Use Composio to discover and run GitHub actions on demand. Connect GitHub from the Apps settings page before asking about repositories, pull requests, issues, or workflows.
@@ -116,7 +128,7 @@ Thinky is the example agent persona. See the [Customization Guide](./docs/CUSTOM
 
 The `profile` slot ([`agent/memory/profile.ts`](agent/memory/profile.ts)) binds Eve's `fileMemory()` provider to one document per authenticated principal. Eve recalls it before every turn and after compaction, and gives the agent `profile__save_memory` and `profile__remove_memory` to maintain it.
 
-Documents live in private Vercel Blob storage — attach a Blob store to the project before deploying.
+On Vercel, documents live in private Vercel Blob storage, and the memory slots pass `vercelBlob()` explicitly — attach a Blob store to the project before deploying. Locally, `eve dev` uses in-memory storage.
 
 ## How It Works
 
