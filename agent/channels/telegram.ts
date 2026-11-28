@@ -4,18 +4,25 @@ import { saveDeliveryTarget } from "../lib/delivery-targets-internal.js";
 import {
   consumeTelegramLinkCodeRemote,
   fetchTelegramLinkForMember,
-  parseTelegramLinkCommand,
 } from "../lib/telegram-internal.js";
+import { isBareStartCommand, parseTelegramLinkCommand } from "../../shared/telegram-link.js";
 
 const TITLE = "Telegram";
 
-function appBaseUrl(): string {
-  return process.env.BETTER_AUTH_URL ? process.env.BETTER_AUTH_URL.replace(/\/$/, "") : "Thinky";
-}
+const SETTINGS_PLACE = "Settings → Integrations in Thinky";
+
+const WELCOME =
+  "Hi, I'm Thinky. To link this chat to your Thinky account, open Settings → Integrations in Thinky, generate a link code, and send it to me here.";
 
 /** Handles "link <code>" from a private chat. Returns true when the message was a link command. */
 async function tryHandleLinkCommand(ctx: TelegramContext, message: TelegramMessage): Promise<boolean> {
   const text = message.text || message.caption;
+
+  if (isBareStartCommand(text)) {
+    await ctx.telegram.sendMessage(WELCOME);
+    return true;
+  }
+
   const code = parseTelegramLinkCommand(text);
   if (!code || !message.from) return false;
 
@@ -39,8 +46,8 @@ async function tryHandleLinkCommand(ctx: TelegramContext, message: TelegramMessa
 
   await ctx.telegram.sendMessage(
     result.reason === "expired"
-      ? `That link code has expired. Generate a new one in ${appBaseUrl()}/settings/integrations.`
-      : `That link code is invalid. Generate a fresh code in ${appBaseUrl()}/settings/integrations.`,
+      ? `That link code has expired. Generate a new one in ${SETTINGS_PLACE}.`
+      : `That link code is invalid. Generate a fresh code in ${SETTINGS_PLACE}.`,
   );
   return true;
 }
@@ -62,7 +69,7 @@ export default telegramChannel({
         title: TITLE,
         context: [
           "This Telegram account is not linked to a Thinky profile, so you have no access to the caller's memory or integrations.",
-          `If they ask for anything that needs those, tell them to open ${appBaseUrl()}/settings/integrations, generate a link code, and send \`link <code>\` to you in a private chat.`,
+          `If they ask for anything that needs those, tell them to open ${SETTINGS_PLACE}, generate a link code, and send it to you in a private chat.`,
         ],
       };
     }

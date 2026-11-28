@@ -39,7 +39,4 @@ export async function consumeTelegramLinkCodeRemote(input: {
 }
 
 /** Accepts "link ABC123" or "/link ABC123" as the whole message. */
-export function parseTelegramLinkCommand(text: string) {
-  const match = text.trim().match(/^\/?link\s+([A-Z0-9]{6})$/i);
-  return match?.[1]?.toUpperCase();
-}
+export { parseTelegramLinkCommand } from "../../shared/telegram-link.js";

@@ -40,6 +40,7 @@ export async function consumeSlackLinkCodeRemote(input: {
 }
 
 export function parseSlackLinkCommand(text: string) {
-  const match = text.match(/\blink\s+([A-Z0-9]{6})\b/i);
+  const value = text.trim();
+  const match = value.match(/\blink\s+([0-9A-F]{6})\b/i) ?? value.match(/^([0-9A-F]{6})$/i);
   return match?.[1]?.toUpperCase();
 }

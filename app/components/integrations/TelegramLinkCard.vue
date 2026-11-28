@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { telegramStartLink } from "~~/shared/telegram-link";
+
 const {
   data: telegramLink,
   pending,
@@ -18,6 +20,11 @@ const botLabel = computed(() => {
   return username ? `@${username}` : "your Thinky bot";
 });
 
+const startLink = computed(() => {
+  const username = telegramLink.value?.botUsername;
+  const code = pendingCode.value ?? telegramLink.value?.pendingCode;
+  return username && code ? telegramStartLink(username, code) : undefined;
+});
 const expiresLabel = computed(() => {
   const expiresAt = telegramLink.value?.pendingExpiresAt;
   if (!expiresAt) {
@@ -127,7 +134,8 @@ async function copyCode() {
       <ol class="space-y-2 text-xs text-muted">
         <li class="flex gap-2">
           <span class="text-dimmed">1.</span>
-          <span>Open a private chat with {{ botLabel }} on Telegram and send <code class="text-toned">link {{ pendingCode }}</code></span>
+          <span v-if="startLink">Tap Open Telegram below and press Start. The code is sent for you.</span>
+          <span v-else>Open a private chat with {{ botLabel }} on Telegram and send <code class="text-toned">link {{ pendingCode }}</code></span>
         </li>
         <li class="flex gap-2">
           <span class="text-dimmed">2.</span>
@@ -136,6 +144,17 @@ async function copyCode() {
       </ol>
 
       <div class="mt-3 flex items-center gap-2">
+        <UButton
+          v-if="startLink"
+          as="a"
+          :href="startLink"
+          target="_blank"
+          rel="noopener noreferrer"
+          size="xs"
+          icon="i-simple-icons-telegram"
+        >
+          Open Telegram
+        </UButton>
         <code class="rounded-md border border-default bg-elevated px-2.5 py-1 font-mono text-sm tracking-widest text-highlighted">
           {{ pendingCode }}
         </code>
