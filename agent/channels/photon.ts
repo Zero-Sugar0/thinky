@@ -28,8 +28,8 @@ export default photonIMessageChannel({
   userName: agent.name,
 
   async onMessage(ctx, message) {
-    // Photon 2.0 (agent/channels/imessage.ts) owns iMessage once its project is configured.
-    if (process.env.IMESSAGE_PROJECT_ID) {
+    // Photon 2.0 (agent/channels/imessage.ts, Beta platform) owns iMessage once it is configured.
+    if (process.env.PHOTON_PROJECT_ID && process.env.PHOTON_API_KEY) {
       return null;
     }
 
