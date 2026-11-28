@@ -18,7 +18,6 @@ import type {
   CamofoxOpenUIToolInvocation,
   CamofoxScreenshotUIToolInvocation,
 } from "~~/shared/utils/tools/camofox";
-import { agent } from "~~/shared/agent";
 
 const props = defineProps<{
   message: UIMessage;
@@ -48,41 +47,53 @@ const specialistProfiles: Record<string, { name: string; team: string }> = {
   finance: { name: "Daniel Brooks", team: "Finance" },
 };
 
+function getTerminalToolName(toolName: string) {
+  return toolName.split(/__|:/).filter(Boolean).at(-1) ?? toolName;
+}
+
+function humanizeToolName(value: string) {
+  return value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .trim()
+    .replace(/\b\w/g, letter => letter.toUpperCase());
+}
+
 function getVisibleToolName(part: Parameters<typeof getToolName>[0]) {
   const toolName = getToolName(part);
-  const baseName = toolName.split("__").at(-1) ?? toolName;
+  const baseName = getTerminalToolName(toolName);
   const specialist = specialistProfiles[baseName];
   if (specialist) return `${specialist.name} · ${specialist.team}`;
 
   if (isDynamicToolUIPart(part)) {
     const dynamicPart = part as EveDynamicToolPart;
     const namespace = getToolNamespace(dynamicPart);
-    const isComposioTool = namespace === "composio" || toolName.startsWith("composio_");
-    const composioAction = baseName.replace(/^composio_/, "");
+    const isComposioTool = namespace === "composio" || /(?:^|[:_])composio(?:[:_]|$)/i.test(toolName);
+    const composioAction = toolName
+      .replace(/^.*?composio(?:__|:|_)/i, "")
+      .replace(/^.*?(?:__|:)/, "");
 
-    if (isComposioTool && composioAction === "search") return "Find an app action";
-    if (isComposioTool && composioAction === "status") return "Connected apps";
-    if (baseName === "load_skill") return `${agent.name} skill`;
+    if (isComposioTool && /^(search|find)$/i.test(composioAction)) return "Find an app action";
+    if (isComposioTool && /^(status|list_apps)$/i.test(composioAction)) return "Connected apps";
+    if (isComposioTool) return humanizeToolName(composioAction || "App action");
+    if (baseName === "load_skill") return "Thinky skill";
 
     return getToolDisplayName(dynamicPart);
   }
-  return toolName
-    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
-    .replace(/[_-]+/g, " ")
-    .replace(/\b\w/g, letter => letter.toUpperCase());
+  return humanizeToolName(baseName);
 }
 
 function getVisibleToolTeam(part: Parameters<typeof getToolName>[0]) {
   const toolName = getToolName(part);
-  const baseName = toolName.split("__").at(-1) ?? toolName;
+  const baseName = getTerminalToolName(toolName);
   if (specialistProfiles[baseName]) return specialistProfiles[baseName].team;
   if (!isDynamicToolUIPart(part)) return undefined;
 
   const dynamicPart = part as EveDynamicToolPart;
   const namespace = getToolNamespace(dynamicPart);
-  return namespace === "composio" || toolName.startsWith("composio_")
+  return namespace === "composio" || /(?:^|[:_])composio(?:[:_]|$)/i.test(toolName)
     ? "Apps"
-    : namespace;
+    : undefined;
 }
 
 const showThinking = computed(
@@ -204,7 +215,7 @@ const showThinking = computed(
       </div>
         <div
           v-else
-          class="chat-prose chat-user-bubble w-fit max-w-full rounded-none border border-default bg-elevated px-2 py-1 text-[13px] leading-[1.35] text-highlighted [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-1 [&_pre]:max-w-full [&_table]:text-[12px]"
+          class="chat-prose chat-user-bubble ml-auto w-fit max-w-[min(100%,32rem)] rounded-xl border border-default bg-elevated px-3 py-2 text-[13px] leading-[1.4] text-highlighted [overflow-wrap:anywhere] [&_a]:font-medium [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_pre]:my-1 [&_pre]:max-w-full [&_table]:text-[12px]"
         >
           <ChatComark
             :value="part.text"

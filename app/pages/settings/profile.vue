@@ -199,7 +199,7 @@ function resetForm() {
                 :filter-fields="['label', 'value', 'description']"
                 placeholder="Search timezone…"
                 icon="i-lucide-globe"
-                class="w-48"
+                class="w-full sm:w-48"
                 :ui="{ content: 'min-w-(--reka-combobox-trigger-width)' }"
               />
             </SettingsRow>
@@ -217,7 +217,7 @@ function resetForm() {
                 :filter-fields="['label', 'value', 'description']"
                 placeholder="Search language…"
                 icon="i-lucide-languages"
-                class="w-40"
+                class="w-full sm:w-40"
               />
             </SettingsRow>
           </SettingsSection>
@@ -248,7 +248,7 @@ function resetForm() {
                 label-key="label"
                 description-key="description"
                 placeholder="Select frequency…"
-                class="w-60"
+                class="w-full sm:w-60"
               />
             </SettingsRow>
 
@@ -265,7 +265,7 @@ function resetForm() {
                 label-key="label"
                 description-key="description"
                 placeholder="Select channel…"
-                class="w-60"
+                class="w-full sm:w-60"
               />
             </SettingsRow>
           </SettingsSection>
@@ -286,12 +286,12 @@ function resetForm() {
           v-if="isDirty && !pending"
           class="border-t border-default bg-elevated/95 backdrop-blur supports-[backdrop-filter]:bg-elevated/90"
         >
-          <div class="mx-auto w-full max-w-2xl px-6">
-            <div class="flex items-center justify-between gap-4 py-3">
+          <div class="mx-auto w-full max-w-2xl px-4 sm:px-6">
+            <div class="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <p class="text-sm text-muted">
                 You have unsaved changes
               </p>
-              <div class="flex gap-2">
+              <div class="flex gap-2 sm:shrink-0">
                 <UButton
                   color="neutral"
                   variant="outline"
