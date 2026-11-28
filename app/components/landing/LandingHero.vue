@@ -2,11 +2,11 @@
   <section class="overflow-hidden px-5 pb-14 pt-14 sm:px-8 sm:pb-20 sm:pt-20 lg:pt-24">
     <div class="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-14">
       <div class="max-w-xl">
-        <p class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-[11px] font-medium text-blue-700">
-          <span class="size-1.5 rounded-full bg-[#2f6bff]" /> A personal assistant with continuity
+        <p class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1.5 text-[11px] font-medium text-slate-900">
+          <span class="size-1.5 rounded-full bg-[#111827]" /> A personal assistant with continuity
         </p>
         <h1 class="mt-5 text-balance text-[2.35rem] font-medium leading-[1.08] text-slate-950 sm:text-5xl lg:text-[3.25rem]">
-          A little more room <span class="text-[#2f6bff]">to think.</span>
+          A little more room <span class="text-[#111827]">to think.</span>
         </h1>
         <p class="mt-4 max-w-lg text-pretty text-[15px] leading-6 text-slate-600">
           Thinky remembers the context you choose to share, works across your tools, and can join the conversation when you need another thoughtful voice.
@@ -27,7 +27,7 @@
         <div class="relative overflow-hidden rounded-none border border-slate-200 bg-white">
           <div class="flex items-center justify-between border-b border-slate-200 px-3 py-2.5 sm:px-4">
             <div class="flex min-w-0 items-center gap-2">
-              <AppLogo class="size-5 shrink-0 text-[#2f6bff]" />
+              <AppLogo class="size-5 shrink-0 text-[#111827]" />
               <span class="text-[13px] font-medium text-slate-900">Thinky</span>
               <span class="truncate text-[12px] text-slate-500">Personal assistant</span>
             </div>
@@ -62,7 +62,7 @@
                   <p class="text-[13px] font-medium text-slate-900">What’s on your mind?</p>
                   <p class="mt-0.5 text-[12px] leading-4 text-slate-500">A thought, a question, or a task to untangle.</p>
                 </div>
-                <div class="ml-auto w-fit max-w-[85%] bg-[#2f6bff] px-2 py-1 text-[13px] leading-[1.35] text-white">
+                <div class="ml-auto w-fit max-w-[85%] bg-[#111827] px-2 py-1 text-[13px] leading-[1.35] text-white">
                   Help me prep for tomorrow’s project check-in.
                 </div>
                 <div class="flex w-full items-start">
@@ -78,7 +78,7 @@
               <div class="mt-3 border border-slate-200 bg-white p-1.5">
                 <div class="flex min-h-9 items-center justify-between gap-3 px-1.5">
                   <span class="text-[13px] text-slate-400">Ask Thinky anything…</span>
-                  <span class="grid size-7 place-items-center bg-[#2f6bff] text-white">
+                  <span class="grid size-7 place-items-center bg-[#111827] text-white">
                     <UIcon name="i-lucide-arrow-up" class="size-3.5" />
                   </span>
                 </div>
