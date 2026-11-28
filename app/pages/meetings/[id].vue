@@ -80,7 +80,7 @@ onBeforeUnmount(() => {
     <template #header>
       <UDashboardNavbar>
         <template #left>
-          <div class="flex items-center gap-2">
+          <div class="flex min-w-0 items-center gap-2">
             <UButton
               to="/meetings"
               icon="i-lucide-arrow-left"
