@@ -7,6 +7,7 @@ export interface PhoneCode {
 }
 
 export const PHONE_CODES: PhoneCode[] = [
+  { name: "Ghana", code: "GH", emoji: "🇬🇭", dialCode: "+233", mask: "### ### ####" },
   { name: "France", code: "FR", emoji: "🇫🇷", dialCode: "+33", mask: "# ## ## ## ##" },
   { name: "United States", code: "US", emoji: "🇺🇸", dialCode: "+1", mask: "(###) ###-####" },
   { name: "United Kingdom", code: "GB", emoji: "🇬🇧", dialCode: "+44", mask: "#### ######" },
@@ -56,7 +57,8 @@ export function parsePhoneNumber(value: string, defaultCountry = "FR") {
 
 export function formatPhoneNumber(countryCode: string, local: string) {
   const country = findPhoneCode(countryCode);
-  const digits = local.replace(/\D/g, "");
+  // Most countries write local numbers with a leading trunk 0 (e.g. 024 … in Ghana); the country code replaces it.
+  const digits = local.replace(/\D/g, "").replace(/^0/, "");
   if (!country || !digits) {
     return "";
   }

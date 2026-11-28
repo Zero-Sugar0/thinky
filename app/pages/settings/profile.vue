@@ -162,7 +162,7 @@ function resetForm() {
             >
               <ProfilePhoneInput
                 v-model="form.phoneNumber"
-                :default-country="form.locale === 'fr' ? 'FR' : 'US'"
+                :default-country="form.locale === 'fr' ? 'FR' : 'GH'"
               />
             </SettingsRow>
 
