@@ -11,4 +11,7 @@ export default defineAgent({
       },
     },
   },
+  build: {
+    externalDependencies: ["@daytonaio/sdk"],
+  },
 });
