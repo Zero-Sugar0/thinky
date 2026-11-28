@@ -1,6 +1,7 @@
 import { callSlackApi } from "eve/channels/slack";
 import type { DeliveryChannel } from "#shared/types/delivery";
 import type { DeliveryPlanEntry } from "#shared/delivery-plan";
+import { isPhotonBetaEnabled, sendIMessageText } from "#shared/imessage";
 
 export interface SendResult {
   ok: boolean;
@@ -31,19 +32,27 @@ export async function sendTelegramMessage(chatId: string, text: string): Promise
   return response.ok ? { ok: true } : { ok: false, reason: `Telegram returned ${response.status}` };
 }
 
-/**
- * iMessage can only be sent through an Eve channel handoff, which needs the agent runtime.
- * This dispatcher runs as a QStash route outside it, so iMessage is reported as not yet sent.
- */
-export function sendIMessage(): SendResult {
-  return { ok: false, reason: "iMessage delivery needs an Eve channel handoff, which the QStash dispatcher cannot start yet" };
+/** Sends through the Photon 2.0 Beta project to the saved conversation address. */
+export async function sendIMessage(address: string, text: string, idempotencyKey: string): Promise<SendResult> {
+  if (!isPhotonBetaEnabled()) {
+    return { ok: false, reason: "iMessage is not configured" };
+  }
+  try {
+    await sendIMessageText(address, text, idempotencyKey);
+    return { ok: true };
+  }
+  catch (error) {
+    return { ok: false, reason: `iMessage: ${error instanceof Error ? error.message : "send failed"}` };
+  }
 }
 
 /**
  * Sends one message to every planned channel. Returns the channels that accepted it.
+ * The idempotency key identifies the message (for example, the reminder or notification id), so a
+ * retried job does not send it twice on channels that support idempotency keys.
  * Web chat is recorded when the notification is completed, so it is reported as delivered here.
  */
-export async function deliverToPlan(plan: DeliveryPlanEntry[], text: string): Promise<DeliveryChannel[]> {
+export async function deliverToPlan(plan: DeliveryPlanEntry[], text: string, idempotencyKey: string): Promise<DeliveryChannel[]> {
   const delivered: DeliveryChannel[] = [];
 
   for (const entry of plan) {
@@ -58,8 +67,11 @@ export async function deliverToPlan(plan: DeliveryPlanEntry[], text: string): Pr
       else if (entry.channel === "telegram" && entry.target) {
         result = await sendTelegramMessage(entry.target, text);
       }
+      else if (entry.channel === "imessage" && entry.target) {
+        result = await sendIMessage(entry.target, text, `${idempotencyKey}:imessage`);
+      }
       else {
-        result = sendIMessage();
+        result = { ok: false, reason: `${entry.channel} has no address` };
       }
     }
     catch (error) {

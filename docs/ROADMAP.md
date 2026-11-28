@@ -19,7 +19,7 @@ Status of the platform build-out. **Done** means implemented and tested in this 
 
 | Item | Status | Notes |
 |------|--------|-------|
-| Proactive suggestions to every channel | Partial | Web chat and Slack are delivered by QStash. Telegram is delivered once a chat is linked. iMessage needs an Eve channel handoff. |
+| Proactive suggestions to every channel | Partial | Web chat, Slack, Telegram (once linked), and iMessage (once the user has messaged Thinky) are delivered by QStash. |
 | Proactive suggestions driven by tasks, not just memory and thread titles | Done | Overdue, due-soon, and stale tasks shape the check-in policy and wording. |
 | Reminders at due time | Done | Tasks with `remindAt` are sent once by the QStash dispatcher, every minute. |
 | Hard enforcement of standing rules | Partial | Rules are injected and the playbook says to apply them. Nothing checks an action against them before it runs. |
@@ -34,7 +34,7 @@ Status of the platform build-out. **Done** means implemented and tested in this 
 | Random, varied check-ins (important, undone task, follow-up, conversation, update) | Done | Pure policy in `server/utils/checkin-policy.ts`, with quiet hours, daily cap, cooldowns, and a random gate. |
 | Composio trigger signals feed check-ins | Done | The Composio webhook records toolkit, trigger and time only. Message content is never stored. |
 | Telegram account linking | Next | Telegram chats cannot be tied to a Thinky user yet. Needs a link-code flow like Slack's. |
-| iMessage delivery from QStash | Next | Needs an Eve channel handoff reachable from a route, or an iMessage send API. |
+| iMessage delivery from QStash | Done | Sent directly through the Photon 2.0 Beta API. |
 
 ## Extraordinary features
 

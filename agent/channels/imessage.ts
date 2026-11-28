@@ -1,23 +1,21 @@
 import { defineChannel, POST } from "eve/channels";
-import { Photon } from "@photon-ai/api";
 import { Webhook } from "standardwebhooks";
 import { buildAppSessionAuth } from "../../shared/app-auth.js";
+import { conversationAddress, isPhotonBetaEnabled, parseConversationAddress, sendIMessageText } from "../../shared/imessage.js";
 import { fetchPhoneLink } from "../lib/phone-internal.js";
 import { saveDeliveryTarget } from "../lib/delivery-targets-internal.js";
 
-// iMessage on Photon 2.0 (the Beta platform, api.photon.codes, @photon-ai/api).
+// iMessage on Photon 2.0 Beta (api.photon.codes). Inbound messages arrive as Standard Webhooks
+// deliveries; replies and proactive messages go out through shared/imessage.ts.
 //
-// Status: outbound replies are implemented against the Beta SDK. Inbound delivery is
-// NOT live yet: the route fails closed (401) until the Beta webhook signature
-// verification is implemented from the Photon webhook docs. Nothing is accepted unverified.
-//
-// Replies need no in-memory state. The conversation's Space ID and the agent's User ID
-// are encoded in the channel's conversation address, so any instance can reply.
+// Delivery guarantees:
+// - The route returns 204 only after eve has accepted the message. eve buffers an accepted
+//   message durably, so a restart after 204 does not lose it.
+// - If anything fails before acceptance, the route returns 503 and Photon retries the delivery.
+// - A message id is recorded only after it is handled, so a retry is not dropped as a duplicate.
 
 const TITLE = "iMessage";
-const MAX_REPLY_CHARS = 1500;
 const SEEN_LIMIT = 500;
-const ADDRESS_PREFIX = "imessage:";
 
 type SendOptions = { auth: ReturnType<typeof buildAppSessionAuth> | null; title?: string; context?: string[] };
 type FromFn = (address: string) => { send: (text: string, options: SendOptions) => Promise<unknown> };
@@ -34,8 +32,6 @@ export type BetaMessage = {
   content: { type: string; format?: string; text?: string };
 };
 
-const seenMessageIds: string[] = [];
-
 /** Beta webhook envelope: the public event with the message under data.object. */
 export type BetaWebhookEvent = {
   id: string;
@@ -44,28 +40,18 @@ export type BetaWebhookEvent = {
   data: { organizationId: string; projectId: string; object: BetaMessage };
 };
 
-export function isPhotonBetaEnabled(): boolean {
-  return Boolean(process.env.PHOTON_PROJECT_ID && process.env.PHOTON_API_KEY && process.env.PHOTON_WEBHOOK_SIGNING_SECRET);
+const handledMessageIds: string[] = [];
+
+function wasHandled(messageId: string): boolean {
+  return handledMessageIds.includes(messageId);
 }
 
-let client: Photon | undefined;
-
-function photon(): Photon {
-  if (!client) {
-    const key = process.env.PHOTON_API_KEY;
-    if (!key) throw new Error("PHOTON_API_KEY is required for Photon 2.0.");
-    client = new Photon({ headers: { Authorization: `Bearer ${key}` } });
-  }
-  return client;
+function markHandled(messageId: string): void {
+  handledMessageIds.push(messageId);
+  if (handledMessageIds.length > SEEN_LIMIT) handledMessageIds.shift();
 }
 
-/** Remembers a message id so at-least-once webhook redelivery does not start a second turn. */
-function firstDelivery(messageId: string): boolean {
-  if (seenMessageIds.includes(messageId)) return false;
-  seenMessageIds.push(messageId);
-  if (seenMessageIds.length > SEEN_LIMIT) seenMessageIds.shift();
-  return true;
-}
+export { conversationAddress, parseConversationAddress };
 
 /** iMessage handles are phone numbers or Apple IDs; only the former can match a profile. */
 function asPhoneNumber(handle: string) {
@@ -76,48 +62,9 @@ function asPhoneNumber(handle: string) {
   return /^\+[1-9]\d{7,14}$/.test(normalized) ? normalized : undefined;
 }
 
-function chunkReply(text: string): string[] {
-  const chunks: string[] = [];
-  let rest = text.trim();
-  while (rest.length > MAX_REPLY_CHARS) {
-    const cut = rest.lastIndexOf("\n", MAX_REPLY_CHARS);
-    const at = cut > MAX_REPLY_CHARS / 2 ? cut : MAX_REPLY_CHARS;
-    chunks.push(rest.slice(0, at).trim());
-    rest = rest.slice(at).trim();
-  }
-  if (rest) chunks.push(rest);
-  return chunks;
-}
-
-/** Conversation address: the Space and the agent's User, so replies need no stored state. */
-export function conversationAddress(spaceId: string, agentId: string): string {
-  return `${ADDRESS_PREFIX}${spaceId}|${agentId}`;
-}
-
-export function parseConversationAddress(address: string): { spaceId: string; agentId: string } | undefined {
-  if (!address.startsWith(ADDRESS_PREFIX)) return undefined;
-  const [spaceId, agentId] = address.slice(ADDRESS_PREFIX.length).split("|");
-  return spaceId && agentId ? { spaceId, agentId } : undefined;
-}
-
-/** Sends one reply through the Beta API. The idempotency key ties it to the reply, not the attempt. */
-export async function sendIMessageReply(address: string, text: string, replyKey: string): Promise<void> {
-  const target = parseConversationAddress(address);
-  const projectId = process.env.PHOTON_PROJECT_ID;
-  if (!target || !projectId) return;
-
-  const chunks = chunkReply(text);
-  for (const [index, chunk] of chunks.entries()) {
-    await photon().projects.sendMessage({
-      path: { id: projectId },
-      headers: { "idempotency-key": `${replyKey}:${index}` },
-      body: {
-        spaceId: target.spaceId,
-        senderId: target.agentId,
-        content: { type: "text", format: "plain", text: chunk },
-      },
-    });
-  }
+/** Sends a reply to the conversation. Errors propagate so the webhook can ask Photon to retry. */
+async function reply(address: string, text: string, key: string): Promise<void> {
+  await sendIMessageText(address, text, key);
 }
 
 /**
@@ -145,19 +92,24 @@ export function verifyPhotonWebhook(request: Request, rawBody: string): BetaWebh
   }
 }
 
-/** Turns one verified inbound message into an agent turn. */
+/**
+ * Turns one verified inbound message into an agent turn. Throws when the message could not be
+ * accepted, so the caller can return 503 and Photon retries.
+ */
 export async function handleInbound(message: BetaMessage, from: FromFn): Promise<void> {
-  if (!message?.id || !firstDelivery(message.id)) return;
-  if (message.status !== "received" || message.platform !== "imessage") return;
-  if (message.sentBy.kind === "agent" || !message.receivedBy) return;
-  if (message.space.kind !== "direct") return;
+  if (!message?.id || wasHandled(message.id)) return;
+  if (message.status !== "received" || message.platform !== "imessage") return markHandled(message.id);
+  if (message.sentBy.kind === "agent" || !message.receivedBy) return markHandled(message.id);
+
+  // Group conversations are not supported yet; shared lines are direct-only (see the plan).
+  if (message.space.kind !== "direct") return markHandled(message.id);
 
   const address = conversationAddress(message.space.id, message.receivedBy.id);
   const text = message.content.type === "text" && message.content.format === "plain" ? message.content.text?.trim() : undefined;
 
   if (!text) {
-    await sendIMessageReply(address, "I can read text messages for now. Send it as text and I'll help.", `unsupported:${message.id}`);
-    return;
+    await reply(address, "I can read text messages for now. Voice notes and attachments aren't supported on this line yet.", `unsupported:${message.id}`);
+    return markHandled(message.id);
   }
 
   const handle = message.sentBy.handle;
@@ -173,7 +125,7 @@ export async function handleInbound(message: BetaMessage, from: FromFn): Promise
         "If they ask for anything that needs those, tell them to add this number under Settings → Profile.",
       ],
     });
-    return;
+    return markHandled(message.id);
   }
 
   // Remember the conversation so proactive messages can reach the user here later.
@@ -186,11 +138,12 @@ export async function handleInbound(message: BetaMessage, from: FromFn): Promise
     }),
     title: TITLE,
   });
+  markHandled(message.id);
 }
 
 export default defineChannel({
   routes: [
-    POST("/imessage/webhook", async (request, { from, waitUntil }) => {
+    POST("/imessage/webhook", async (request, { from }) => {
       if (!isPhotonBetaEnabled()) {
         return new Response("iMessage channel is not configured", { status: 404 });
       }
@@ -207,8 +160,13 @@ export default defineChannel({
         return new Response(null, { status: 204 });
       }
 
-      const work = handleInbound(event.data.object, from as unknown as FromFn);
-      waitUntil(work);
+      try {
+        await handleInbound(event.data.object, from as unknown as FromFn);
+      }
+      catch (error) {
+        console.error("[imessage] inbound not accepted; asking Photon to retry", error);
+        return new Response("Temporarily unavailable", { status: 503 });
+      }
       return new Response(null, { status: 204 });
     }),
   ],
@@ -217,8 +175,13 @@ export default defineChannel({
     async "message.completed"(event, channel) {
       const text = event.message?.trim();
       if (!text) return;
-      await sendIMessageReply(channel.continuation?.token ?? "", text, `reply:${channel.continuation?.token}:${event.turnId}`);
+      const address = channel.continuation?.token ?? "";
+      try {
+        await reply(address, text, `reply:${channel.continuation?.token}:${event.turnId}`);
+      }
+      catch (error) {
+        console.error("[imessage] reply failed", error);
+      }
     },
   },
 });
-

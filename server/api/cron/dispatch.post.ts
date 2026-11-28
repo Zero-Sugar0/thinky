@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     try {
       const targets = await listDeliveryTargets(reminder.userId);
       const { attempt } = planDelivery(["chat", "slack", "imessage", "telegram"], targets);
-      const delivered = await deliverToPlan(attempt, text);
+      const delivered = await deliverToPlan(attempt, text, `reminder:${reminder.id}`);
       await completeReminder(reminder.id, reminder.userId, delivered, text);
       remindersSent++;
     }
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
     try {
       const targets = await listDeliveryTargets(notification.userId);
       const { attempt } = planDelivery(notification.channels, targets);
-      const delivered = await deliverToPlan(attempt, notification.content);
+      const delivered = await deliverToPlan(attempt, notification.content, `notification:${notification.id}`);
 
       if (delivered.length === 0 && attempt.length > 0) {
         await releaseNotification(notification.id, "no channel accepted the message");

@@ -143,7 +143,7 @@ The check-in policy is random within limits: quiet hours 22:00 to 08:00 in the u
 | `TELEGRAM_BOT_TOKEN` | Used to send Telegram check-ins and reminders (see the Telegram section) |
 | `ANTHROPIC_API_KEY` | Optional. Writes check-in wording. Without it, fixed templates are used. |
 
-Delivery channels: web chat (always, recorded in the thread), Slack (via the linked Slack account), and Telegram (once a chat is linked). iMessage delivery needs an Eve channel handoff, which the QStash dispatcher cannot start yet, so iMessage check-ins are recorded as not sent. The thread for iMessage is saved when the user messages Thinky, so only the send step is missing.
+Delivery channels: web chat (always, recorded in the thread), Slack (via the linked Slack account), Telegram (once a chat is linked), and iMessage (once the user has messaged Thinky from their linked number). The QStash dispatcher sends iMessage directly through Photon, so no agent turn is needed. Each reminder or notification uses its id as the idempotency key, so a retried job does not send twice. On a shared line, Photon only lets the agent message a person after they have texted that line first. A notification that no channel accepts is released and retried. Reminders always keep web chat as a fallback, so an iMessage reminder that fails is not retried.
 
 ## Growth Engine (Treg) (optional)
 
@@ -288,12 +288,12 @@ anything.
 
 ## Voice: Deepgram (optional)
 
-`DEEPGRAM_API_KEY` enables voice. The web chat has a dictation button that records a clip, transcribes it on the server through `POST /api/voice/transcribe`, and places the text in the composer for review. `POST /api/voice/speak` returns MP3 audio for a reply. iMessage voice notes are transcribed before the agent reads them. Without the key, dictation shows an error and voice notes are answered with a note that transcription is off.
+`DEEPGRAM_API_KEY` enables voice in web chat. The dictation button records a clip, transcribes it on the server through `POST /api/voice/transcribe`, and places the text in the composer for review. `POST /api/voice/speak` returns MP3 audio for a reply. Without the key, dictation shows an error. iMessage voice notes are not transcribed yet; they get a reply saying only text is supported.
 
 ## iMessage: Photon 2.0 Beta (optional)
 
 Set `PHOTON_PROJECT_ID` (the `pho_prj_…` ID) and `PHOTON_API_KEY` (a project key with `project:read` and `project:write`) on the eve service. This switches iMessage to `agent/channels/imessage.ts`, which replies through `api.photon.codes` (`@photon-ai/api`), and disables the Eve Photon channel so messages are not answered twice.
 
-Status: outbound replies are implemented. Inbound delivery is not live: the webhook route at `POST /imessage/webhook` rejects every request (401) until Photon's webhook signature verification is implemented. Set `PHOTON_WEBHOOK_SIGNING_SECRET` once that is done.
+Inbound: `POST /imessage/webhook` verifies each delivery with the Standard Webhooks scheme (`webhook-id`, `webhook-timestamp`, `webhook-signature`, HMAC-SHA256) using `PHOTON_WEBHOOK_SIGNING_SECRET`. Verification failures return 400. The route returns 204 only after eve accepts the message, and 503 otherwise so Photon retries. Create the webhook destination with `apiVersion` `2026-07-01`, `enabledEvents` `["message.received"]`, and the public URL `https://<eve-domain>/imessage/webhook`.
 
-Replies need no stored state. The conversation's Space ID and the agent's User ID are carried in the conversation address, so they survive restarts. Proactive iMessage check-ins are still recorded as not sent.
+Replies need no stored state. The conversation's Space ID and the agent's User ID are carried in the conversation address, so they survive restarts. The same address is saved as the user's iMessage delivery target for proactive messages. Group conversations and non-text messages (voice notes, attachments) are not handled yet.
