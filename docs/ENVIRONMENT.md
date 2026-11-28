@@ -141,7 +141,6 @@ The check-in policy is random within limits: quiet hours 22:00 to 08:00 in the u
 | `QSTASH_NEXT_SIGNING_KEY` | Next signing key from Upstash QStash console (for key rotation) |
 | `CRON_SECRET` | Optional fallback bearer token for cron jobs |
 | `TELEGRAM_BOT_TOKEN` | Used to send Telegram check-ins and reminders (see the Telegram section) |
-| `ANTHROPIC_API_KEY` | Optional. Writes check-in wording. Without it, fixed templates are used. |
 
 Delivery channels: web chat (always, recorded in the thread), Slack (via the linked Slack account), and Telegram (once a chat is linked). iMessage delivery needs an Eve channel handoff, which the QStash dispatcher cannot start yet, so iMessage check-ins are recorded as not sent. The thread for iMessage is saved when the user messages Thinky, so only the send step is missing.
 

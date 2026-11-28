@@ -11,6 +11,12 @@ export default defineAgent({
       },
     },
   },
+  // Compact earlier than the 0.9 default so each request carries less history.
+  compaction: { thresholdPercent: 0.6 },
+  // Default is 40M input tokens per session. Cap long-lived chats well below that.
+  limits: {
+    maxInputTokensPerSession: 3_000_000,
+    maxOutputTokensPerSession: 300_000,
   build: {
     externalDependencies: ["@daytonaio/sdk"],
   },
