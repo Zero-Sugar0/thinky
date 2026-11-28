@@ -1,74 +1,62 @@
 import { defineChannel, POST } from "eve/channels";
-import { Spectrum } from "spectrum-ts";
-import { imessage } from "@spectrum-ts/imessage";
-import { agent } from "../../shared/agent.js";
+import { Photon } from "@photon-ai/api";
+import { Webhook } from "standardwebhooks";
+import { buildAppSessionAuth } from "../../shared/app-auth.js";
 import { fetchPhoneLink } from "../lib/phone-internal.js";
 import { saveDeliveryTarget } from "../lib/delivery-targets-internal.js";
-import { isSpeechConfigured, transcribeAudio } from "../../server/utils/speech.js";
-import { buildAppSessionAuth } from "../../shared/app-auth.js";
 
-// iMessage through Photon 2.0 (Spectrum). Photon posts signed webhooks to
-// /imessage/webhook; each inbound message starts or continues an agent session
-// keyed to its iMessage conversation, and the agent's reply goes back out
-// through the same Spectrum space.
+// iMessage on Photon 2.0 (the Beta platform, api.photon.codes, @photon-ai/api).
 //
-// Enabled when IMESSAGE_PROJECT_ID is set. The Eve Photon channel
-// (agent/channels/photon.ts) stands down in that case so messages are not
-// answered twice.
+// Status: outbound replies are implemented against the Beta SDK. Inbound delivery is
+// NOT live yet: the route fails closed (401) until the Beta webhook signature
+// verification is implemented from the Photon webhook docs. Nothing is accepted unverified.
+//
+// Replies need no in-memory state. The conversation's Space ID and the agent's User ID
+// are encoded in the channel's conversation address, so any instance can reply.
 
 const TITLE = "iMessage";
 const MAX_REPLY_CHARS = 1500;
 const SEEN_LIMIT = 500;
+const ADDRESS_PREFIX = "imessage:";
 
 type SendOptions = { auth: ReturnType<typeof buildAppSessionAuth> | null; title?: string; context?: string[] };
 type FromFn = (address: string) => { send: (text: string, options: SendOptions) => Promise<unknown> };
 
-const spacesByAddress = new Map<string, SpaceLike>();
+/** Inbound message as the Beta API describes it (see Photon's Messages reference). */
+export type BetaMessage = {
+  id: string;
+  platform: string;
+  status: string;
+  createdAt: string;
+  sentBy: { id: string; kind: string; handle: string; platform: string };
+  receivedBy?: { id: string; kind: string; handle: string; platform: string } | null;
+  space: { id: string; kind: string; platform: string };
+  content: { type: string; format?: string; text?: string };
+};
+
 const seenMessageIds: string[] = [];
 
-type SpaceLike = { id: string; __platform: string; type?: string };
-// The subset of the Spectrum v2 client this channel uses. Declared here rather than
-// inferred from Spectrum()'s overloads, which are heavy enough to destabilise typecheck.
-interface SpectrumClient {
-  webhook(
-    request: Request,
-    handler: (space: unknown, message: unknown) => void | Promise<void>,
-  ): Promise<Response>;
-  send(space: never, content: string): Promise<unknown>;
-}
-type InboundContent = {
-  type: string;
-  text?: string;
-  mimeType?: string;
-  read?: () => Promise<Buffer>;
-};
-type InboundMessage = {
+/** Beta webhook envelope: the public event with the message under data.object. */
+export type BetaWebhookEvent = {
   id: string;
-  content: InboundContent;
-  sender?: { id: string; kind?: string; platform?: string };
+  type: string;
+  app_installation_id?: string;
+  data: { organizationId: string; projectId: string; object: BetaMessage };
 };
 
-export function isSpectrumEnabled(): boolean {
-  return Boolean(process.env.IMESSAGE_PROJECT_ID);
+export function isPhotonBetaEnabled(): boolean {
+  return Boolean(process.env.PHOTON_PROJECT_ID && process.env.PHOTON_API_KEY && process.env.PHOTON_WEBHOOK_SIGNING_SECRET);
 }
 
-let spectrumPromise: Promise<SpectrumClient> | undefined;
+let client: Photon | undefined;
 
-function getSpectrum(): Promise<SpectrumClient> {
-  if (!spectrumPromise) {
-    const projectId = process.env.IMESSAGE_PROJECT_ID;
-    const projectSecret = process.env.IMESSAGE_PROJECT_SECRET;
-    if (!projectId || !projectSecret) {
-      throw new Error("IMESSAGE_PROJECT_ID and IMESSAGE_PROJECT_SECRET are required for Photon 2.0.");
-    }
-    spectrumPromise = Promise.resolve(Spectrum({
-      projectId,
-      projectSecret,
-      webhookSecret: process.env.IMESSAGE_WEBHOOK_SECRET,
-      providers: [imessage.config()],
-    })).then(client => client as unknown as SpectrumClient);
+function photon(): Photon {
+  if (!client) {
+    const key = process.env.PHOTON_API_KEY;
+    if (!key) throw new Error("PHOTON_API_KEY is required for Photon 2.0.");
+    client = new Photon({ headers: { Authorization: `Bearer ${key}` } });
   }
-  return spectrumPromise;
+  return client;
 }
 
 /** Remembers a message id so at-least-once webhook redelivery does not start a second turn. */
@@ -101,88 +89,80 @@ function chunkReply(text: string): string[] {
   return chunks;
 }
 
-/** Voice notes become text here so the agent reads them like typed messages. */
-async function messageText(content: InboundContent): Promise<string | undefined> {
-  if (content.type === "text" && content.text) return content.text;
-
-  if (content.type === "voice" && content.read) {
-    if (!isSpeechConfigured()) {
-      return "[The caller sent a voice note, but transcription is not configured.]";
-    }
-    try {
-      const audio = new Uint8Array(await content.read());
-      const transcript = await transcribeAudio(audio, content.mimeType ?? "audio/mp4");
-      return transcript ? `[Voice note transcript] ${transcript}` : "[Voice note with no speech in it]";
-    }
-    catch (error) {
-      console.warn("iMessage voice note could not be transcribed", error);
-      return "[The caller sent a voice note that could not be transcribed.]";
-    }
-  }
-
-  return undefined;
+/** Conversation address: the Space and the agent's User, so replies need no stored state. */
+export function conversationAddress(spaceId: string, agentId: string): string {
+  return `${ADDRESS_PREFIX}${spaceId}|${agentId}`;
 }
 
-export default defineChannel({
-  routes: [
-    POST("/imessage/webhook", async (request, { from, waitUntil }) => {
-      if (!isSpectrumEnabled()) {
-        return new Response("iMessage channel is not configured", { status: 404 });
-      }
+export function parseConversationAddress(address: string): { spaceId: string; agentId: string } | undefined {
+  if (!address.startsWith(ADDRESS_PREFIX)) return undefined;
+  const [spaceId, agentId] = address.slice(ADDRESS_PREFIX.length).split("|");
+  return spaceId && agentId ? { spaceId, agentId } : undefined;
+}
 
-      const spectrum = await getSpectrum();
+/** Sends one reply through the Beta API. The idempotency key ties it to the reply, not the attempt. */
+export async function sendIMessageReply(address: string, text: string, replyKey: string): Promise<void> {
+  const target = parseConversationAddress(address);
+  const projectId = process.env.PHOTON_PROJECT_ID;
+  if (!target || !projectId) return;
 
-      return spectrum.webhook(request, (space, rawMessage) => {
-        const message = rawMessage as unknown as InboundMessage;
-        // The SDK's from() carries a wider send signature than we use here; the narrowing is safe.
-        const work = handleInbound(space as unknown as SpaceLike, message, from as unknown as FromFn);
-        waitUntil(work);
-        return work;
-      });
-    }),
-  ],
+  const chunks = chunkReply(text);
+  for (const [index, chunk] of chunks.entries()) {
+    await photon().projects.sendMessage({
+      path: { id: projectId },
+      headers: { "idempotency-key": `${replyKey}:${index}` },
+      body: {
+        spaceId: target.spaceId,
+        senderId: target.agentId,
+        content: { type: "text", format: "plain", text: chunk },
+      },
+    });
+  }
+}
 
-  events: {
-    async "message.completed"(event, channel) {
-      const text = event.message?.trim();
-      if (!text) return;
+/**
+ * Verifies a Photon webhook delivery with the Standard Webhooks scheme
+ * (webhook-id / webhook-timestamp / webhook-signature, HMAC-SHA256). Verifies the
+ * raw body bytes and rejects timestamps more than five minutes away. Returns the
+ * parsed event, or undefined when verification fails.
+ */
+export function verifyPhotonWebhook(request: Request, rawBody: string): BetaWebhookEvent | undefined {
+  const secret = process.env.PHOTON_WEBHOOK_SIGNING_SECRET;
+  if (!secret) return undefined;
 
-      const space = spacesByAddress.get(channel.continuation?.token ?? "");
-      if (!space) {
-        // The space is only known to the process that received the inbound message.
-        console.warn("iMessage reply skipped: no Spectrum space cached for this conversation");
-        return;
-      }
+  const headers = {
+    "webhook-id": request.headers.get("webhook-id") ?? "",
+    "webhook-timestamp": request.headers.get("webhook-timestamp") ?? "",
+    "webhook-signature": request.headers.get("webhook-signature") ?? "",
+  };
 
-      const spectrum = await getSpectrum();
-      for (const chunk of chunkReply(text)) {
-        await spectrum.send(space as never, chunk);
-      }
-    },
-  },
-});
+  try {
+    const event = new Webhook(secret).verify(rawBody, headers) as BetaWebhookEvent;
+    return event.id === headers["webhook-id"] ? event : undefined;
+  }
+  catch {
+    return undefined;
+  }
+}
 
-async function handleInbound(
-  space: SpaceLike,
-  message: InboundMessage,
-  from: FromFn,
-) {
+/** Turns one verified inbound message into an agent turn. */
+export async function handleInbound(message: BetaMessage, from: FromFn): Promise<void> {
   if (!message?.id || !firstDelivery(message.id)) return;
-  if (message.sender?.kind === "agent") return;
+  if (message.status !== "received" || message.platform !== "imessage") return;
+  if (message.sentBy.kind === "agent" || !message.receivedBy) return;
+  if (message.space.kind !== "direct") return;
 
-  const handle = message.sender?.id ?? "";
-  const phoneNumber = asPhoneNumber(handle);
-  const link = phoneNumber ? await fetchPhoneLink(phoneNumber) : undefined;
-  const address = `imessage:${space.id}`;
+  const address = conversationAddress(message.space.id, message.receivedBy.id);
+  const text = message.content.type === "text" && message.content.format === "plain" ? message.content.text?.trim() : undefined;
 
-  spacesByAddress.set(address, space);
-
-  const text = await messageText(message.content);
   if (!text) {
-    // Attachments and effects are not read yet. Say so rather than going silent.
-    await sendReply(space, "I can read text and voice notes for now. Send it as text and I'll help.");
+    await sendIMessageReply(address, "I can read text messages for now. Send it as text and I'll help.", `unsupported:${message.id}`);
     return;
   }
+
+  const handle = message.sentBy.handle;
+  const phoneNumber = asPhoneNumber(handle);
+  const link = phoneNumber ? await fetchPhoneLink(phoneNumber) : undefined;
 
   if (!link) {
     await from(address).send(text, {
@@ -197,7 +177,7 @@ async function handleInbound(
   }
 
   // Remember the conversation so proactive messages can reach the user here later.
-  await saveDeliveryTarget(link.appUserId, "imessage", space.id).catch(() => undefined);
+  await saveDeliveryTarget(link.appUserId, "imessage", address).catch(() => undefined);
 
   await from(address).send(text, {
     auth: buildAppSessionAuth(link.appUserId, {
@@ -208,9 +188,37 @@ async function handleInbound(
   });
 }
 
-async function sendReply(space: SpaceLike, text: string) {
-  const spectrum = await getSpectrum();
-  await spectrum.send(space as never, text);
-}
+export default defineChannel({
+  routes: [
+    POST("/imessage/webhook", async (request, { from, waitUntil }) => {
+      if (!isPhotonBetaEnabled()) {
+        return new Response("iMessage channel is not configured", { status: 404 });
+      }
 
-export const channelName = agent.name;
+      const rawBody = await request.text();
+      const event = verifyPhotonWebhook(request, rawBody);
+      if (!event) {
+        // Photon's documented response for failed verification.
+        return new Response("Webhook verification failed", { status: 400 });
+      }
+
+      // Only inbound messages are handled here; other event types are acknowledged and ignored.
+      if (event.type !== "message.received") {
+        return new Response(null, { status: 204 });
+      }
+
+      const work = handleInbound(event.data.object, from as unknown as FromFn);
+      waitUntil(work);
+      return new Response(null, { status: 204 });
+    }),
+  ],
+
+  events: {
+    async "message.completed"(event, channel) {
+      const text = event.message?.trim();
+      if (!text) return;
+      await sendIMessageReply(channel.continuation?.token ?? "", text, `reply:${channel.continuation?.token}:${event.turnId}`);
+    },
+  },
+});
+

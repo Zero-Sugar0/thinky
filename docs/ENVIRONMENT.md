@@ -290,9 +290,10 @@ anything.
 
 `DEEPGRAM_API_KEY` enables voice. The web chat has a dictation button that records a clip, transcribes it on the server through `POST /api/voice/transcribe`, and places the text in the composer for review. `POST /api/voice/speak` returns MP3 audio for a reply. iMessage voice notes are transcribed before the agent reads them. Without the key, dictation shows an error and voice notes are answered with a note that transcription is off.
 
-## iMessage: Photon 2.0 / Spectrum (optional)
+## iMessage: Photon 2.0 Beta (optional)
 
-Set `IMESSAGE_PROJECT_ID`, `IMESSAGE_PROJECT_SECRET` and `IMESSAGE_WEBHOOK_SECRET` on the eve service. This switches iMessage to `agent/channels/imessage.ts`, which receives Spectrum webhooks at `POST /imessage/webhook` and replies through the same conversation. The Eve Photon channel stands down while these are set, so messages are not answered twice. Point the Photon webhook at the eve service's `/imessage/webhook` URL.
+Set `PHOTON_PROJECT_ID` (the `pho_prj_…` ID) and `PHOTON_API_KEY` (a project key with `project:read` and `project:write`) on the eve service. This switches iMessage to `agent/channels/imessage.ts`, which replies through `api.photon.codes` (`@photon-ai/api`), and disables the Eve Photon channel so messages are not answered twice.
 
-Known limits: replies are sent from a conversation cached in the process that received the message. On a server that restarts or scales out, a reply can be skipped for that conversation until the next message arrives. Proactive iMessage check-ins are still recorded as not sent.
+Status: outbound replies are implemented. Inbound delivery is not live: the webhook route at `POST /imessage/webhook` rejects every request (401) until Photon's webhook signature verification is implemented. Set `PHOTON_WEBHOOK_SIGNING_SECRET` once that is done.
 
+Replies need no stored state. The conversation's Space ID and the agent's User ID are carried in the conversation address, so they survive restarts. Proactive iMessage check-ins are still recorded as not sent.
